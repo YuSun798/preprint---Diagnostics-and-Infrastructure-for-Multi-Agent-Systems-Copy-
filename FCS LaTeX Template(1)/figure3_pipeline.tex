@@ -1,6 +1,7 @@
 % Multi-agent causal trace pipeline: distinguish prospective intervention from post-hoc attribution.
 \begin{figure*}[t]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[font=\small,>=Latex,
  node/.style={draw=black!80,rounded corners,align=center,fill=black!4,text width=3.05cm,minimum height=1.15cm}]
 \node[node] (evt) at (0,1.1) {\textbf{Event sequence}\\A$\rightarrow$B messages; tools};
@@ -17,7 +18,8 @@
 \draw[-Latex,thick] (snapshot) -- (offline);
 \draw[-Latex,thick] (offline) -- (valid);
 \draw[dashed,thick] (online.south) -- node[right,font=\scriptsize,align=left]{same event IDs\\different timing} (offline.north);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Causally ordered runtime diagnostic workflow. Online alarms must use only observations available before intervention; retrospective attribution can inspect retained history, subject to the snapshot/replay constraints.}
 \label{fig:pipeline}
 \end{figure*}
