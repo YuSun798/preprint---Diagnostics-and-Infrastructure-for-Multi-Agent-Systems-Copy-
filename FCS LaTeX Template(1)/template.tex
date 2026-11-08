@@ -1,8 +1,8 @@
 % !TeX program = pdflatex
-% Journal-independent preprint manuscript.
-\documentclass[11pt,a4paper]{article}
+% Elsevier elsarticle review manuscript for Neurocomputing.
+% Main file: template.tex (set this as the Overleaf main document).
+\documentclass[preprint,12pt]{elsarticle}
 
-\usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
@@ -10,80 +10,74 @@
 \usepackage{subfig}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{url}
-\usepackage{cite}
 \usepackage{enumitem}
-\usepackage[hidelinks]{hyperref}
-\usepackage{authblk}
 \usepackage{placeins}
 \usepackage{float}
-\renewcommand\Affilfont{\small}
-\setlength{\affilsep}{0.45em}
-\setlength{\parskip}{0.25em}
 \usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+\usepackage[hidelinks]{hyperref}
 \usepackage{caption}
 \captionsetup{font=small}
-
 \graphicspath{{figures/}}
-
-\title{Diagnostics and Infrastructure for Foundation Model-Based Multi-Agent Systems: A Review of the Runtime Stack}
-\author[1]{Yu Sun\thanks{Corresponding author: yu.sun@alumni.upenn.edu}}
-\author[2]{Zuodong Xiang}
-\author[3]{Yike Zhang}
-\author[4]{Xinyu Guan}
-\author[5]{Pengcheng Xu}
-\author[3]{Yizirui Fang}
-\author[6]{Zhenhua Huang}
-\author[7]{Hailu Xu}
-\affil[1]{School of Engineering and Applied Science, University of Pennsylvania, Philadelphia, PA, United States}
-\affil[2]{Department of Electrical and Computer Engineering, College of Engineering, University of California, Davis, Davis, CA, United States}
-\affil[3]{Department of Computer Science, Whiting School of Engineering, Johns Hopkins University, Baltimore, MD, United States}
-\affil[4]{University of Glasgow, Glasgow, Scotland, United Kingdom}
-\affil[5]{Department of Computer Science, University of California, Irvine, Irvine, CA, United States}
-\affil[6]{School of Computer Science, South China Normal University, Guangzhou, Guangdong, China}
-\affil[7]{Department of Computer Engineering and Computer Science, College of Engineering, California State University, Long Beach, Long Beach, CA, United States}
-\date{}
 \setcounter{secnumdepth}{3}
+\journal{Neurocomputing}
 
 \begin{document}
-\maketitle
-
+\begin{frontmatter}
+\title{Diagnostics and Serving Infrastructure for Foundation Model-Based Multi-Agent Systems: An Evidence-Aware Review}
+\author[upenn]{Yu Sun\corref{cor1}}
+\ead{yu.sun@alumni.upenn.edu}
+\author[ucd]{Zuodong Xiang}
+\author[jhu]{Yike Zhang}
+\author[glasgow]{Xinyu Guan}
+\author[uci]{Pengcheng Xu}
+\author[jhu]{Yizirui Fang}
+\author[scnu]{Zhenhua Huang}
+\author[csulb]{Hailu Xu}
+\cortext[cor1]{Corresponding author}
+\address[upenn]{School of Engineering and Applied Science, University of Pennsylvania, Philadelphia, PA, United States}
+\address[ucd]{Department of Electrical and Computer Engineering, University of California, Davis, Davis, CA, United States}
+\address[jhu]{Department of Computer Science, Whiting School of Engineering, Johns Hopkins University, Baltimore, MD, United States}
+\address[glasgow]{University of Glasgow, Glasgow, Scotland, United Kingdom}
+\address[uci]{Department of Computer Science, University of California, Irvine, Irvine, CA, United States}
+\address[scnu]{School of Computer Science, South China Normal University, Guangzhou, Guangdong, China}
+\address[csulb]{Department of Computer Engineering and Computer Science, California State University, Long Beach, Long Beach, CA, United States}
 \begin{abstract}
 \input{abstract}
 \end{abstract}
-\noindent\textbf{Keywords:} multi-agent systems; foundation models; diagnostics; observability; serving infrastructure; memory management; scheduling; runtime reliability
+\begin{keyword}
+Multi-agent systems \sep Foundation models \sep Failure localization \sep Observability \sep LLM serving \sep KV-cache management \sep Runtime reliability
+\end{keyword}
+\end{frontmatter}
 
 \section{Introduction}\label{sec:introduction}
 \input{introduction}
-
 \section{Background and Review Methodology}\label{sec:background}
 \input{background}
-
 \section{Diagnostics}\label{sec:diagnostics}
 \input{diagnostics}
-
-\section{Infrastructure}\label{sec:infrastructure}
+\section{Serving Infrastructure}\label{sec:infrastructure}
 \input{infrastructure}
-
-\section{Diagnostics--Infrastructure Retention Tension}\label{sec:tension}
+\section{Conditional Cross-Layer Retention Trade-offs}\label{sec:tension}
 \input{tension}
-
 \section{Discussion and Research Directions}\label{sec:discussion}
 \input{discussion}
-
 \section{Conclusion}\label{sec:conclusion}
 \input{conclusion}
 
-\fontsize{8.5pt}{10pt}\selectfont
 \section*{Acknowledgements}
-The authors acknowledge the use of AI-assisted tools for language editing and manuscript preparation. All technical claims, interpretations, citations, and conclusions were reviewed and remain the responsibility of the authors.
+The authors acknowledge AI-assisted tools for language editing and manuscript preparation. Technical claims and citations remain the authors' responsibility.
+\section*{Declaration of competing interest}
+The authors declare no competing interests.
+\section*{Data availability}
+This article is a literature review and does not report a new experimental dataset. The bibliography and an evidence-audit checklist are maintained with the manuscript source; the proposed validation protocol has not yet been executed.
 
-\section*{Competing interests}
-The authors declare that they have no competing interests or financial conflicts to disclose.
-
-\bibliographystyle{plain}
+\bibliographystyle{elsarticle-num}
 \bibliography{references}
-
 \end{document}
