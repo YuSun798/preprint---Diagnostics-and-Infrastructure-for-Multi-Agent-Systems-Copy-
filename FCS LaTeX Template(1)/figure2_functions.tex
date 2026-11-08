@@ -1,0 +1,25 @@
+% Distinguish function from method family instead of misleading one-level taxonomy.
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[font=\small,>=Latex,
+ head/.style={draw=black!90,fill=black!11,rounded corners,text width=3.05cm,minimum height=0.85cm,align=center},
+ detail/.style={draw=black!75,fill=black!3,rounded corners,text width=3.05cm,minimum height=2.05cm,align=left,inner sep=7pt}]
+\node[head] (h1) at (0,1.25) {\textbf{Evidence capture}};
+\node[head] (h2) at (4.3,1.25) {\textbf{Failure localization}};
+\node[head] (h3) at (8.6,1.25) {\textbf{Safety intervention}};
+\node[head] (h4) at (12.9,1.25) {\textbf{Evaluation resources}};
+\node[detail] (d1) at (0,-1.1) {Input: tool/agent spans\\Output: causal trace\\Timing: online capture};
+\node[detail] (d2) at (4.3,-1.1) {Input: trace + replay?\\Output: agent/step cause\\Training: may be RL};
+\node[detail] (d3) at (8.6,-1.1) {Input: policy + context\\Output: block or repair\\Timing: pre/post action};
+\node[detail] (d4) at (12.9,-1.1) {Input: labeled failures\\Output: accuracy/cost\\Scope: offline evaluation};
+\draw[-Latex,thick] (h1.south) -- (d1.north);
+\draw[-Latex,thick] (h2.south) -- (d2.north);
+\draw[-Latex,thick] (h3.south) -- (d3.north);
+\draw[-Latex,thick] (h4.south) -- (d4.north);
+\draw[-Latex,dashed,thick] (d1.east) -- node[above,font=\scriptsize]{evidence} (d2.west);
+\draw[-Latex,dashed,thick] (d2.east) -- node[above,font=\scriptsize]{signals} (d3.west);
+\draw[-Latex,dashed,thick] (d3.east) -- node[above,font=\scriptsize]{outcomes} (d4.west);
+\end{tikzpicture}
+\caption{Four operational roles, not mutually exclusive algorithm classes. Each method is additionally coded along orthogonal evidence, training, replay, attribution-granularity, timing, and cost dimensions.}
+\label{fig:taxonomy}
+\end{figure*}
