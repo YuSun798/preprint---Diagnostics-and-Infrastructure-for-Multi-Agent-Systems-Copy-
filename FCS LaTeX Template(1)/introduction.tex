@@ -2,29 +2,27 @@ Foundation model-based multi-agent systems (MAS), in which multiple Large Langua
 
 Existing surveys largely treat these concerns separately. Orchestration frameworks (LangGraph, CrewAI, AutoGen) have received substantial survey attention~\cite{zhu2026orchestration}, as have offline agent evaluation~\cite{evalbenchmark2025, evalagents2026, llmbenchsurvey2025}, safety~\cite{safellmagentsurvey2026, trustworthyagents2025}, AgentOps~\cite{agentopssurvey2025, agentopscsiro2024, architectingops2026}, and single-model serving and latency optimization~\cite{latencysurvey2026}. In our curated corpus, we count 45 systems across our own tables\footnote{Counted across our own system tables: 12 failure-localization methods, 12 observability and safety systems, and 21 infrastructure systems. Benchmarks (8) and comparator surveys (6) are excluded.}. The resulting literature exposes complementary pieces of the runtime stack, but the relationship between the state required for diagnosis and the state managed by serving policies remains under-analyzed.
 
-This review therefore brings the two operational layers into one frame. Table~\ref{tab:surveys} contrasts our scope against six adjacent surveys. General agent surveys~\cite{li2024, abouali2025, wang2026classical, tran2025} cover architectural patterns and collaboration mechanisms; \cite{beyondindiv2026} surveys collaboration and failure but not serving infrastructure; and \cite{li2024} uses ``infrastructure'' for the workflow layer rather than runtime memory, scheduling, cache lifecycle, or power. In the surveyed literature, we did not find a review that jointly organizes runtime diagnostics and multi-agent serving infrastructure while also making the verification depth of quantitative claims explicit.
+This review examines the interface between these two selected runtime functions; the title does not imply exhaustive treatment of orchestration, storage, networking, security operations, or all layers of a production stack. Our analytical contribution is a state-dependency and cost framework, not a claim that the reviewed mechanisms themselves are new. Table~\ref{tab:surveys} contrasts our scope against six adjacent surveys. General agent surveys~\cite{li2024, abouali2025, wang2026classical, tran2025} cover architectural patterns and collaboration mechanisms; \cite{beyondindiv2026} surveys collaboration and failure but not serving infrastructure; and \cite{li2024} uses ``infrastructure'' for the workflow layer rather than runtime memory, scheduling, cache lifecycle, or power. The distinctive question here is which state dependencies cross the diagnostic/serving boundary, and which apparent similarities do not constitute resource competition.
 
-This is a curated critical review rather than a systematic review. The inclusion boundary, evidence-selection rules, and verification tiers are described in Section~\ref{sec:background}. Quantitative claims used for comparison come from full-text sources; abstract-level results are marked \emph{[a]} and are not used to compute cross-system deltas or rankings. Figure~\ref{fig:overview} illustrates the scope.
+This is a curated critical review rather than a systematic review. The inclusion boundary, evidence-selection rules, and verification tiers are described in Section~\ref{sec:background}. Quantitative claims used for comparison come from full-text sources; abstract-level results are marked \emph{[a]} and are not used to compute cross-system deltas or rankings. Figure~\ref{fig:overview} illustrates the bounded scope and distinguishes stored execution evidence from serving KV state.
 
 \begin{table*}[t]
 \centering
-\caption{Comparison with existing surveys. $\bullet$ = covered, $\circ$ = not covered. $^a$A 2026 survey of MAS collaboration and failure; it organises failure conceptually and does not catalogue system-level localization methods or cover infrastructure. $^b$A 2024 survey covering workflow and architecture; its ``infrastructure'' is at that level, not multi-agent serving (memory, scheduling, cache lifecycle, power). ``Quant.'' denotes that the survey reports quantitative results for the systems it reviews, at the verification depth described in Section~\ref{sec:background}; it does not imply that those numbers are compared across systems. \textbf{Pub.}: $\checkmark$ = peer-reviewed venue, $\circ$ = preprint, --- = not a publication. Pub.\ records the venue only and is not a quality judgement.}
+\caption{Conceptual differences from adjacent reviews. The entries describe emphases rather than binary claims of exclusive coverage. Our contribution is a comparison of evidence requirements and state-lifetime dependencies across diagnosis and serving, not a claim to invent the component techniques.}
 \label{tab:surveys}
 \footnotesize
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{@{}llcccccc@{}}
+\begin{tabularx}{\textwidth}{@{}p{0.19\textwidth}p{0.24\textwidth}p{0.25\textwidth}X@{}}
 \toprule
-\textbf{Survey} & \textbf{Year} & \textbf{Venue} & \textbf{Orch.} & \textbf{Diag.} & \textbf{Infra} & \textbf{Quant.} & \textbf{Pub.} \\
+\textbf{Review area} & \textbf{Typical unit of analysis} & \textbf{Principal concern} & \textbf{Dimension added here} \\
 \midrule
-Zhu et al. & 2026 & Future Internet & $\bullet$ & $\circ$ & $\circ$ & $\circ$ & $\checkmark$ \\
-AgentOps & 2025 & preprint & $\circ$ & $\bullet$ & $\circ$ & $\circ$ & $\circ$ \\
-Mohammadi et al. & 2025 & ACM KDD & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\checkmark$ \\
-Latency survey & 2026 & IEEE Access & $\circ$ & $\circ$ & $\bullet$ & $\circ$ & $\checkmark$ \\
-Qi et al.$^a$ & 2026 & preprint & $\circ$ & $\bullet$ & $\circ$ & $\circ$ & $\circ$ \\
-Li et al.$^b$ & 2024 & Vicinagearth & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\checkmark$ \\
-\textbf{Ours} & 2026 & --- & $\circ$ & $\bullet$ & $\bullet$ & $\bullet$ & --- \\
+MAS orchestration~\cite{zhu2026orchestration} & Agent roles and workflow graph & Coordination and framework design & Serving-state lifetimes and diagnostic dependencies \\
+AgentOps~\cite{agentopssurvey2025} & Telemetry and operational practice & Monitoring and trace collection & Evidence preservation versus reclamation cost \\
+Agent evaluation~\cite{evalbenchmark2025} & Benchmark tasks and scores & Offline task quality & Replayability, granularity, and online timing \\
+LLM-serving efficiency~\cite{latencysurvey2026} & Requests, KV blocks, workers & Latency and throughput & Agent-level future calls and restoration constraints \\
+MAS collaboration/failures~\cite{beyondindiv2026} & Inter-agent interactions & Failure and collaboration patterns & Shared evidence and explicit retention conditions \\
+\textbf{This review} & \textbf{Diagnostic evidence and serving state} & \textbf{Conditional cross-layer dependencies} & \textbf{Input, training, replay, timing, cost, and recoverability} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table*}
 
 \begin{figure*}[t]
@@ -36,7 +34,7 @@ Li et al.$^b$ & 2024 & Vicinagearth & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\
 
 Our contributions are:
 \begin{enumerate}
-\item \textbf{Diagnostics taxonomy.} We organize multi-agent diagnostics into four subcategories spanning failure localization (Section~\ref{sec:diag_fl}), observability (Section~\ref{sec:diag_obs}), safety (Section~\ref{sec:diag_safety}), and benchmarks (Section~\ref{sec:diag_bench}), covering three failure-localization paradigms (statistical, LLM-guided, RL-trained) and three safety paradigms (topology-based, policy verification, ML-layered).
-\item \textbf{Infrastructure challenge analysis.} We identify three multi-agent workload characteristics---sparse activation, invocation distance, and inter-agent memory sharing---that are only partially exposed to general-purpose serving policies, and synthesize application-aware systems spanning memory optimization (ScaleSim, up to 1.74$\times$ speedup~\cite{zhou2026}), prefix-aware scheduling (TokenCake~\cite{tokencake2025}), cache lifecycle (Continuum), and power management (KAIROS).
-\item \textbf{Cross-layer tension analysis.} We synthesize a cross-layer retention tension: diagnostics benefits from preserving runtime evidence, while serving infrastructure benefits from reclaiming state under memory and latency budgets. We connect this tension to observed mechanisms in the surveyed systems and derive four co-design opportunities that are made testable in Section~\ref{sec:discussion}.
+\item \textbf{A multi-axis diagnostic comparison.} We separate \emph{function} (localization, trace capture, intervention, or evaluation) from methods' evidence inputs, training requirements, replay demands, attribution granularity, and intervention timing. These dimensions may overlap and are not mutually exclusive method families.
+\item \textbf{A workload-conditioned serving analysis.} We distinguish textual context reuse, exact KV-cache reuse, and cross-model cache transfer and state the compatibility, recomputation, and placement assumptions that delimit each optimization.
+\item \textbf{A falsifiable cross-layer hypothesis.} We formalize when state reclamation can actually harm diagnosis, document counterexamples, and specify measurements and baselines for future joint evaluations. The claim is a synthesis and research proposal; it is not presented as validated end-to-end system performance.
 \end{enumerate}
