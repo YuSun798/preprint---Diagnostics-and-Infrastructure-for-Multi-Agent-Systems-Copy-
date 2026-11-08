@@ -1,0 +1,25 @@
+% Vector replacement for Figure 1; encodes data flows and conditional resource coupling.
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[font=\small,>=Latex,box/.style={draw=black!85,rounded corners,align=center,text width=3.15cm,minimum height=1.16cm,fill=black!4},flow/.style={-Latex,thick,draw=black!80}]
+\node[box] (agent) at (0,1.6) {\textbf{Agent workflow}\\messages, tool calls, state};
+\node[box] (capture) at (4.35,1.6) {\textbf{Evidence capture}\\spans, tool returns, causal IDs};
+\node[box] (diag) at (8.7,1.6) {\textbf{Diagnostics}\\attribution and intervention};
+\node[box] (out) at (13.05,1.6) {\textbf{Reliability outcomes}\\task success, recovery, alerts};
+\node[box] (serv) at (0,-1.35) {\textbf{Serving workload}\\requests, prefixes, agent pauses};
+\node[box] (cache) at (4.35,-1.35) {\textbf{Serving state}\\KV blocks, adapters, placement};
+\node[box] (budget) at (8.7,-1.35) {\textbf{Resource constraints}\\GPU, storage, I/O, latency};
+\node[box] (question) at (13.05,-1.35) {\textbf{Conditional interface}\\replayability, evidence lifetime};
+\draw[flow] (agent) -- (capture);
+\draw[flow] (capture) -- (diag);
+\draw[flow] (diag) -- (out);
+\draw[flow] (serv) -- (cache);
+\draw[flow] (cache) -- (budget);
+\draw[flow] (budget) -- (question);
+\draw[flow,dashed] (capture.south) -- node[right,font=\scriptsize,align=left]{shared only if\\storage/I/O is coupled} (cache.north);
+\draw[flow,dashed] (diag.south) -- node[right,font=\scriptsize]{cost constraints} (budget.north);
+\draw[flow,dashed] (question.north) -- node[right,font=\scriptsize]{testable impact} (out.south);
+\end{tikzpicture}
+\caption{Bounded review scope. Diagnostic records and serving KV tensors are different objects; their resource budgets and recoverability can be coupled but need not be. Dashed arrows indicate conditional cross-layer dependencies rather than an assumed universal conflict.}
+\label{fig:overview}
+\end{figure*}
