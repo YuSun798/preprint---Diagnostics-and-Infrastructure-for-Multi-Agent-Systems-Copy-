@@ -1,11 +1,6 @@
 This section separates operational functions from algorithmic dimensions. Failure localization is an inference task, observability provides evidence, safety is an intervention function, and benchmarks are evaluation resources. These roles can coexist. The sections cover: failure localization (Section~\ref{sec:diag_fl}), observability (Section~\ref{sec:diag_obs}), safety (Section~\ref{sec:diag_safety}), and benchmarks (Section~\ref{sec:diag_bench}). Figure~\ref{fig:taxonomy} maps the landscape of diagnostic functions and representative systems, whereas Figure~\ref{fig:pipeline} provides a complementary process view showing where tracing, localization, root-cause output, and safety act along execution.
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.75\textwidth]{figure2.png}
-\caption{Landscape of multi-agent diagnostics across four subcategories. Stars ($\star$) mark Tier~1 systems (Tier~1a or 1b); unmarked leaves are Tier~2 (abstract-verified) or, for standards and tooling, Tier~3. The tier rule and the 1a/1b split are given in Section~\ref{sec:background}.}
-\label{fig:taxonomy}
-\end{figure*}
+\input{figure2_functions}
 
 \subsection{Failure Localization}\label{sec:diag_fl}
 
