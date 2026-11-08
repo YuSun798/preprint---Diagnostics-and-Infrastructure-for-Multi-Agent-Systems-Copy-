@@ -1,6 +1,7 @@
 % Distinguish function from method family instead of misleading one-level taxonomy.
 \begin{figure*}[t]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[font=\small,>=Latex,
  head/.style={draw=black!90,fill=black!11,rounded corners,text width=3.05cm,minimum height=0.85cm,align=center},
  detail/.style={draw=black!75,fill=black!3,rounded corners,text width=3.05cm,minimum height=2.05cm,align=left,inner sep=7pt}]
@@ -19,7 +20,8 @@
 \draw[-Latex,dashed,thick] (d1.east) -- node[above,font=\scriptsize]{evidence} (d2.west);
 \draw[-Latex,dashed,thick] (d2.east) -- node[above,font=\scriptsize]{signals} (d3.west);
 \draw[-Latex,dashed,thick] (d3.east) -- node[above,font=\scriptsize]{outcomes} (d4.west);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Four operational roles, not mutually exclusive algorithm classes. Each method is additionally coded along orthogonal evidence, training, replay, attribution-granularity, timing, and cost dimensions.}
 \label{fig:taxonomy}
 \end{figure*}
