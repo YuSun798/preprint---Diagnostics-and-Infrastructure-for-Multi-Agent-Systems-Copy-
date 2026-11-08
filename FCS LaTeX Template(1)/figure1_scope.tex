@@ -1,6 +1,7 @@
 % Vector replacement for Figure 1; encodes data flows and conditional resource coupling.
 \begin{figure*}[t]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[font=\small,>=Latex,box/.style={draw=black!85,rounded corners,align=center,text width=3.15cm,minimum height=1.16cm,fill=black!4},flow/.style={-Latex,thick,draw=black!80}]
 \node[box] (agent) at (0,1.6) {\textbf{Agent workflow}\\messages, tool calls, state};
 \node[box] (capture) at (4.35,1.6) {\textbf{Evidence capture}\\spans, tool returns, causal IDs};
@@ -19,7 +20,8 @@
 \draw[flow,dashed] (capture.south) -- node[right,font=\scriptsize,align=left]{shared only if\\storage/I/O is coupled} (cache.north);
 \draw[flow,dashed] (diag.south) -- node[right,font=\scriptsize]{cost constraints} (budget.north);
 \draw[flow,dashed] (question.north) -- node[right,font=\scriptsize]{testable impact} (out.south);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Bounded review scope. Diagnostic records and serving KV tensors are different objects; their resource budgets and recoverability can be coupled but need not be. Dashed arrows indicate conditional cross-layer dependencies rather than an assumed universal conflict.}
 \label{fig:overview}
 \end{figure*}
