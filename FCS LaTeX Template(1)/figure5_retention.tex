@@ -1,6 +1,7 @@
 % Replacement for former Figure 5: evidence-loss conditions vs cache-recovery path.
 \begin{figure*}[t]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[font=\small, >=Latex, node distance=0.55cm,
   obj/.style={draw=black!85,rounded corners=2pt,align=center,text width=3.0cm,minimum height=1.05cm,fill=black!4},
   outcome/.style={draw=black!90,rounded corners=2pt,align=center,text width=3.4cm,minimum height=1.05cm},
@@ -20,7 +21,8 @@
 \draw[-Latex] (recover) -- (latency);
 \draw[-Latex] (no) -- (loss);
 \draw[-Latex] (yes) -- (fidelity);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Conditional outcomes of reclamation, separating cost-only cache misses from information loss. The latter requires unique, needed evidence to be discarded without faithful reconstruction (Eq.~\ref{eq:loss}). The three paths represent distinct mechanisms rather than labelling all of them as eviction.}
 \label{fig:tension}
 \end{figure*}
