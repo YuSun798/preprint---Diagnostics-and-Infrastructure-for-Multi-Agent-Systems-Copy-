@@ -27,28 +27,45 @@ Several methods extend failure localization toward repair and intervention. Rela
 
 \begin{table*}[t]
 \centering
-\caption{Failure localization methods for multi-agent systems. Tier~1 results are from full-text verification, except those marked $^\dagger$, which are venue-published but reported from the published text without page-level cross-verification (Tier~1b); Tier~2 results marked [a] are as reported in source abstracts and are not independently verified. The tier rule and the 1a/1b split are given in Section~\ref{sec:background}. \textbf{Pub.}: $\checkmark$ = peer-reviewed main-track venue, $\circ$ = preprint or workshop paper. --- = not stated in the source. \emph{These numbers come from different benchmarks, protocols, and observability settings; this table is a landscape summary, not a head-to-head comparison (see Section~\ref{sec:tension}).}}
+\caption{Multi-axis comparison of failure-localization methods. NR = not reported or not established at the current evidence depth. Environment replays, token reduction, and model size are deliberately separate; zero replay does not mean zero inference cost. T1b is full-text but not page-verified, whereas T2 denotes abstract-level evidence.}
 \label{tab:failure_loc}
 \scriptsize
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{@{}p{0.145\textwidth}p{0.155\textwidth}lp{0.115\textwidth}p{0.125\textwidth}p{0.135\textwidth}cp{0.04\textwidth}@{}}
+\setlength{\tabcolsep}{2.1pt}
+\begin{tabularx}{\textwidth}{@{}p{0.115\textwidth}p{0.185\textwidth}p{0.135\textwidth}p{0.085\textwidth}p{0.13\textwidth}p{0.09\textwidth}X@{}}
 \toprule
-\textbf{System} & \textbf{Approach} & \textbf{Gran.} & \textbf{Bench.} & \textbf{Overhead} & \textbf{Key Result} & \textbf{Tier} & \textbf{Pub.} \\
+\textbf{Method} & \textbf{Evidence input} & \textbf{Training} & \textbf{Env. replay} & \textbf{Tokens / calls} & \textbf{Model} & \textbf{Output / scope} \\
 \midrule
-FAMAS & Stat. (SBFL) & Action & Who\&When & 20 replays & 66\% top-1 & 1 & $\circ$ \\
-TrajAudit & LLM-guided & Step & RootSE & 86--92\% tok. & +24.7pp & 1 & $\circ$ \\
-AgenTracer & RL (8B) & Agent & Who\&When & 8B train & 69.10\% & 1$^\dagger$ & $\checkmark$ \\
-AgentRx & LLM-guided & Step & --- & --- & +23.6pp step [a] & 2 & $\circ$ \\
-FALAT & Dependency & Step & Who\&When & --- & 46.0\% step [a] & 2 & $\circ$ \\
-DoVer & Interv.+Replay & Step & --- & multiple replays & 18--28\% [a] & 2 & $\checkmark$ \\
-MASPrism & Prefill SLM & Step & --- & --- & --- [a] & 2 & $\circ$ \\
-RAFFLES & Reasoning & Step & Who\&When & --- & --- [a] & 2 & $\checkmark$ \\
-AgentLocate & LLM judge & Step & --- & --- & --- [a] & 2 & $\checkmark$ \\
-CausalFlow & Stat. (Causal) & Step & --- & --- & 36.2\% [a] & 2 & $\circ$ \\
-StepFinder & Temporal sem. & Step & Who\&When & --- & +10.35pp [a] & 2 & $\circ$ \\
-EAGER & Contrastive & System & --- & --- & prelim. [a] & 2 & $\circ$ \\
+FAMAS & Re-executable runs & No tracer RL & 20 & NR & NR & Action; T1a \\
+TrajAudit & Complete trajectories & NR & 0 & 86--92\% obs.\ folding & NR & Step; T1a \\
+AgenTracer & Failure trajectories & RL & NR & NR & 8B & Agent; T1b \\
+MASPrism & Prefill scores/attention & No task training & 0 & Two prefill passes & 0.6B & Step; T2 \\
+CHIEF & Hierarchical causal trace & NR & 0 & LLM calls; NR & NR & Agent/step; T2 \\
+AgentRx & Agent trace & NR & NR & NR & NR & Step; T2 \\
+FALAT & Dependency evidence & NR & NR & NR & NR & Step; T2 \\
+DoVer & Intervention snapshots & NR & Re-executes & NR & NR & Step/recovery; T2 \\
+RAFFLES & Execution trace & NR & NR & NR & NR & Attribution; T2 \\
+AgentLocate & Trace and judgments & NR & NR & NR & NR & Step; T2 \\
+StepFinder & Temporal evidence & NR & NR & NR & NR & Step; T2 \\
+EAGER & Trace representations & Contrastive & NR & NR & NR & System; T2 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\caption{Representative source-specific results with incompatible cost units shown separately. Tier 1b and Tier 2 values still require location-level full-text checks before cross-method claims are made.}
+\label{tab:localization_cost}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}p{0.17\textwidth}p{0.19\textwidth}p{0.19\textwidth}X@{}}
+\toprule
+\textbf{Method} & \textbf{Replay / compute} & \textbf{Token / size unit} & \textbf{Source-specific outcome} \\
+\midrule
+FAMAS~\cite{famas2025} & 20 environment replays & Tokens NR & 66\% top-1 action accuracy on replayable subset (T1a) \\
+TrajAudit~\cite{trajaudit2026} & Model diagnostic calls & 86--92\% observation folding & +24.7 percentage points step accuracy on RootSE (T1a) \\
+AgenTracer~\cite{agentracer2026} & Training FLOPs NR & 8B parameters (not cost) & 69.10\% agent accuracy on Who\&When (T1b) \\
+MASPrism~\cite{masprism2026} & Two prefill passes & 0.6B parameters & No output decoding; latency comparison needs full-text check (T2) \\
+\bottomrule
+\end{tabularx}
 \end{table*}
 \vspace{-2pt}
 {\footnotesize \emph{Non-comparability.} The ``Key Result'' column aggregates measurements taken on different benchmarks (Who\&When, RootSE, or task-specific sets), under different observability settings (output-only vs.\ full traces), and against different baselines. Methods also differ in what they require at inference time (replay budget, training, token cost). The rows therefore describe a landscape of approaches, not a ranked comparison; no cross-row ranking should be inferred. Pub.\ records the publication venue only and is not a quality judgement.}
@@ -117,24 +134,23 @@ Beyond failure attribution, ReliabilityBench~\cite{reliabilitybench2026} reveals
 
 \begin{table*}[t]
 \centering
-\caption{Diagnostics and safety benchmarks. \textbf{Pub.}: $\checkmark$ = peer-reviewed venue, $\circ$ = preprint / no confirmed venue. Pub.\ records the venue only and is not a quality judgement.}
+\caption{Benchmark metadata at the available evidence depth. NR is missing verification, not evidence that a benchmark does not report a property. Verified counts are failures, not numbers of agents or interactions.}
 \label{tab:benchmarks}
 \footnotesize
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabularx}{\textwidth}{@{}p{0.24\textwidth}p{0.17\textwidth}p{0.24\textwidth}p{0.20\textwidth}X@{}}
 \toprule
-\textbf{Benchmark} & \textbf{Scale} & \textbf{Traces} & \textbf{Domain} & \textbf{Tier} & \textbf{Pub.} \\
+\textbf{Benchmark} & \textbf{Scale} & \textbf{Trace type} & \textbf{Domain} & \textbf{Tier} \\
 \midrule
-TraceElephant & 220 & Full & Multi & 1 & $\circ$ \\
-Who\&When & 184 & Output & Multi & 2 & $\checkmark$ \\
-RootSE & 93 & Full & SWE & 1 & $\circ$ \\
-MultiAgentBench & --- & --- & Collab & 2 & $\checkmark$ \\
-Agent-SafetyBench & --- & --- & Safety & 2 & $\circ$ \\
-AgentHarm & --- & --- & Safety & 2 & $\circ$ \\
-ReliabilityBench & --- & --- & Reliab. & 2 & $\circ$ \\
-BenchGuard & --- & --- & Meta & 2 & $\circ$ \\
+TraceElephant & 220 failures & Full and ablated traces & Multi-agent failures & 1a \\
+Who\&When & 184 failures & Output-level logs & Attribution & 2 \\
+RootSE & 93 failures & Full trajectories & Software engineering & 1a \\
+MultiAgentBench & NR & NR & Collaboration & 2 \\
+Agent-SafetyBench & NR & NR & Safety & 2 \\
+AgentHarm & NR & NR & Safety & 2 \\
+ReliabilityBench & NR & NR & Reliability & 2 \\
+BenchGuard & NR & NR & Meta-evaluation & 2 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table*}
 
 Among the benchmarks surveyed here, none evaluates diagnostics--infrastructure interaction: how diagnostic overhead affects serving performance, or how retention and serving policies affect diagnostic fidelity.
