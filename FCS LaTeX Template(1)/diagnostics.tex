@@ -152,9 +152,4 @@ Among the benchmarks surveyed here, none evaluates diagnostics--infrastructure i
 
 \paragraph*{Diagnostics synthesis.} Across the four diagnostic subcategories, the common dependency is retained execution evidence: localization methods require traces or replays, observability determines what evidence exists, and safety mechanisms must inspect enough context to intervene. The literature is broad but methodologically heterogeneous, so the taxonomy is most useful for comparing assumptions---trace fidelity, replay budget, granularity, and intervention timing---rather than headline accuracy across rows. This shared dependence on runtime evidence motivates the retention analysis in Section~\ref{sec:tension}.
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.9\textwidth]{figure3.png}
-\caption{Process view of multi-agent diagnostics. Execution traces are collected through observability infrastructure, then processed through failure localization to produce root-cause attribution, while safety mechanisms may operate continuously alongside execution. This figure complements the landscape in Figure~\ref{fig:taxonomy}: it shows when diagnostic functions act rather than reclassifying the systems.}
-\label{fig:pipeline}
-\end{figure*}
+\input{figure3_pipeline}
