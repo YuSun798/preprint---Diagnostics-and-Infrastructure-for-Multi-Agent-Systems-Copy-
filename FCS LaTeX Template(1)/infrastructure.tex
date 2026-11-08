@@ -10,6 +10,10 @@ Single-model serving systems (vLLM~\cite{kwon2023}, SGLang~\cite{sglang2024}, Di
 
 \textbf{Inter-agent memory sharing.} Agents may share context such as system prompts, environment descriptions, and tool schemas, and general serving systems already reuse such prefixes once they appear: SGLang's RadixAttention and vLLM's automatic prefix caching both do this. The additional opportunity in agentic systems is to use application-level future call structure (dependency graphs, message queues, or execution order) to guide prefetching and eviction. TokenDance~\cite{tokendance2026} proposes collective KV-cache sharing across agents, DroidSpeak~\cite{droidspeak2024} enables cache reuse across different model variants, KVFlow~\cite{kvflow2025} exploits an agent step graph to evict workflow-aware and prefetch ahead of the predicted next call, and KVCOMM~\cite{kvcomm2025} aligns cache offsets across divergent per-agent prefixes so that cross-agent reuse survives the prefix change (all abstract-verified). Persistent agent-memory systems (for example A-MEM and the Mesh Memory Protocol) address a related but distinct problem, long-term memory representation rather than serving-time cache reuse, and are outside our scope. Concept-graph memory for vision--language adaptation provides another example of structured long-term representation, distinct from serving-time KV-cache management~\cite{zhou2026comem}.
 
+\paragraph*{Three different meanings of context reuse.} \emph{Textual sharing} means two agents consume equal prompt segments or retrieved documents; reusing text does not by itself avoid a prefill computation. \emph{Exact KV reuse} additionally requires compatible tokenization, model parameters and adapters, attention implementation, positional indexing, and unmodified common prefixes. If an agent inserts instructions ahead of the common segment, its resulting KV cannot simply be relabelled as an identical cache without a sound offset/alignment mechanism. \emph{Cross-model KV transfer} is stronger still: systems such as DroidSpeak~\cite{droidspeak2024} propose reuse across different model variants, requiring an explicit compatibility or conversion argument and accuracy checks. Sharing mechanisms may consume bandwidth, copying time, synchronization or metadata storage; a predicted cache hit is not free. The diagnostic implication depends on whether raw messages and tool outputs are separately persisted: a discarded KV tensor normally changes prefill cost, not the existence of an execution log.
+
+\paragraph*{Agent-specific information beyond generic serving.} Generic prefix caches already recognize repeated token prefixes and general schedulers can exploit application DAGs~\cite{parrot2024}. Multi-agent runtimes can additionally expose speaker/recipient identities, tool-call boundaries, predicted next-agent activation, dependency readiness, branch selection, response fan-out, per-agent pause distributions, and shared environmental provenance. Such signals can improve prefetch placement and retention \emph{when their predictions are reliable}; unpredictable user input, speculative branches, heterogeneous models, and privacy isolation can eliminate or reverse the gains. The relevant baseline is an equally instrumented general serving engine receiving the same prompt sequences, not a deliberately blind cache.
+
 \subsection{Application-Aware Serving}\label{sec:infra_scalesim}
 
 Recent systems show how multi-agent or agentic workload structure can be exploited across four optimization axes: memory optimization, prefix-aware scheduling, cache lifecycle, and power management.
@@ -21,7 +25,7 @@ ScaleSim~\cite{zhou2026} introduces invocation distance as a first-class schedul
 TokenCake~\cite{tokencake2025} and TOPAS~\cite{topas2026} exploit shared prefixes across agents. TokenCake reports 47\% latency reduction and 16.9\% memory improvement over vLLM (abstract-verified). These figures are reported as stated by the source and are not comparable to ScaleSim's verified up to 1.74$\times$, since the two measure different quantities on different workloads. ForkKV~\cite{forkkv2026} introduces copy-on-write semantics for disaggregated KV caches, which allows efficient prefix sharing without redundant copies (abstract-verified). Prediction-based KV-cache management~\cite{predkvcache2026} applies learned policies to anticipate cache needs (abstract-verified).
 
 \paragraph*{Cache lifecycle and power management.}
-Continuum~\cite{continuum2025} introduces KV cache TTL policies for interactive tool-calling agents with unpredictable pauses (abstract-verified). KAIROS~\cite{kairos2026} introduces context-aware power management adapting GPU power states to agentic workload phases (abstract-verified). Together with ScaleSim and TokenCake, these systems illustrate that multi-agent serving exposes optimization opportunities along multiple axes; in the surveyed set, coverage remains partial rather than end-to-end.
+Continuum~\cite{continuum2025} introduces KV cache TTL policies for interactive tool-calling agents with unpredictable pauses (abstract-verified). KAIROS~\cite{kairos2026} introduces context-aware power management adapting GPU power states to agentic workload phases (abstract-verified). Together with ScaleSim and TokenCake, these systems illustrate that multi-agent serving exposes optimization opportunities along multiple axes; in the surveyed set, coverage remains partial rather than end-to-end; Table~\ref{tab:infrastructure} identifies the preconditions that would need to hold before transferring these mechanisms to another agent workload.
 
 \subsection{System Landscape}\label{sec:infra_landscape}
 
@@ -31,37 +35,37 @@ Table~\ref{tab:infrastructure} summarizes the broader infrastructure landscape. 
 
 \begin{table*}[t]
 \centering
-\caption{Multi-agent infrastructure systems. [a] = abstract-verified. \textbf{Pub.}: $\checkmark$ = peer-reviewed venue, $\circ$ = preprint / no confirmed venue, --- = no publication (platform/docs). Pub.\ records the venue only and is not a quality judgement.}
+\caption{Serving-system applicability matrix. Assumptions and limitations are mechanism-level hypotheses for comparison, not validated full-text findings for the predominantly abstract-verified Tier 2 entries. A system can operate on multiple optimization axes. The evidence audit identifies where stronger source support remains necessary.}
 \label{tab:infrastructure}
-\footnotesize
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}llcc@{}}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{@{}p{0.14\textwidth}p{0.18\textwidth}p{0.27\textwidth}Xc@{}}
 \toprule
-\textbf{System} & \textbf{Category} & \textbf{Tier} & \textbf{Pub.} \\
+\textbf{System} & \textbf{Primary mechanism} & \textbf{Workload / compatibility assumption} & \textbf{Potential limitation or failure condition} & \textbf{Tier} \\
 \midrule
-ScaleSim & Memory mgmt. & 1 & $\circ$ \\
-TokenCake & KV-cache sched. & 2 & $\circ$ \\
-TOPAS & Prefix-aware & 2 & $\circ$ \\
-KVFlow & Prefix KV-cache & 2 & $\circ$ \\
-ForkKV & Copy-on-write KV & 2 & $\circ$ \\
-Continuum & Cache lifecycle & 2 & $\circ$ \\
-KAIROS & Power mgmt. & 2 & $\circ$ \\
-TokenDance & KV sharing & 2 & $\circ$ \\
-DroidSpeak & Cross-LLM KV & 2 & $\circ$ \\
-Autellix & Agent serving & 2 & $\circ$ \\
-INFRAMIND & Infra-aware & 2 & $\circ$ \\
-KVCOMM & Cross-agent KV & 2 & $\checkmark$ \\
-Mooncake & KV-cache pool & 2 & $\checkmark$ \\
-Parrot & App-level DAG & 2 & $\checkmark$ \\
-InferCept & KV intercept & 2 & $\checkmark$ \\
-Sarathi-Serve & Chunked prefill & 2 & $\checkmark$ \\
-Preble & Prompt sharing & 2 & $\checkmark$ \\
-S-LoRA & Multi-adapter & 2 & $\checkmark$ \\
-dLoRA & Adapter orch. & 2 & $\checkmark$ \\
-vLLM & Baseline serving & 2 & $\checkmark$ \\
-SGLang & Baseline serving & 2 & $\checkmark$ \\
+ScaleSim & State placement / prefetch & Predictable invocation distance in simulations & Prediction error; PCIe transfer/placement cost & 1a \\
+TokenCake & Prefix-aware scheduling & Repeated compatible prefixes & Prefix divergence and scheduling overhead & 2 \\
+TOPAS & Prefix locality & Detectable prefix overlap & Low overlap; extra metadata & 2 \\
+KVFlow & Agent-step graph caching & Forecastable step dependencies & Dynamic branching; stale prefetch & 2 \\
+ForkKV & Copy-on-write KV & Same-model compatible shared blocks & Branch writes and reference coordination & 2 \\
+Continuum & Cache TTL & Pause/resume time structure & Expiry forces recomputation or reload & 2 \\
+KAIROS & Phase-aware GPU power & Distinct compute / idle phases & Transition latency; poor phase forecasts & 2 \\
+TokenDance & Collective KV sharing & Reusable agent prompt segments & Cache isolation and synchronization & 2 \\
+DroidSpeak & Cross-model reuse & Compatible model variants / conversion & Approximation error and conversion cost & 2 \\
+Autellix & Agent execution scheduling & Multi-step service-level metadata & Online scheduling complexity & 2 \\
+INFRAMIND & Infra-aware orchestration & Observable infrastructure state & Application-runtime coordination cost & 2 \\
+KVCOMM & Cross-agent KV alignment & Correct positional/prefix alignment & Divergent prefixes; transfer overhead & 2 \\
+Mooncake & Cluster KV pool & Disaggregated storage/network & Network bandwidth and cache lookup & 2 \\
+Parrot & Semantic dependency DAG & Known application dataflow & Hidden dynamic agent dependencies & 2 \\
+InferCept & Suspended request KV & Tool call interruptions & Retained-state pressure while paused & 2 \\
+Sarathi-Serve & Chunked prefill & Mixed prefill/decode traffic & Chunk scheduling trade-offs & 2 \\
+Preble & Distributed prefix reuse & Cross-request prompt repetition & Routing / load-balance constraints & 2 \\
+S-LoRA & Multi-adapter batches & Shared base model with adapters & Adapter locality and memory pressure & 2 \\
+dLoRA & Adapter orchestration & Adapter-specific traffic bursts & Load/eviction overhead & 2 \\
+vLLM & Paged KV baseline & Same-model cached requests & Does not alone infer future agent calls & 2 \\
+SGLang & Radix prefix cache & Identical token prefixes & Limited to compatible prefix reuse & 2 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table*}
 
 \begin{figure*}[t]
