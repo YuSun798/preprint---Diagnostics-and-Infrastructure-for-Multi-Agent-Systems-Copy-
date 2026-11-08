@@ -1,0 +1,18 @@
+% Corrects former Figure 6's duplicated labels.
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[font=\small, >=Latex,
+ box/.style={draw=black!85,rounded corners,fill=black!4,align=left,text width=6.1cm,minimum height=1.2cm,inner sep=8pt}]
+\node[box] (a) at (0,1.1) {\textbf{Retention-aware reclamation}\\Value proxy + reuse prediction $\rightarrow$ fidelity at fixed bytes};
+\node[box] (b) at (7,1.1) {\textbf{Failure-aware scheduling}\\Online anomaly + dependency graph $\rightarrow$ containment/latency};
+\node[box] (c) at (0,-1.0) {\textbf{Budgeted observability}\\Selective trace capture $\rightarrow$ attribution/storage frontier};
+\node[box] (d) at (7,-1.0) {\textbf{Infrastructure-triggered diagnostics}\\Cache/queue/tool anomaly $\rightarrow$ alarm lead time and FPR};
+\node[draw,rounded corners,fill=black!12,align=center,text width=7.7cm,minimum height=0.85cm] (common) at (3.5,-3.4) {\textbf{Common controlled harness}\\Same tasks, online information, state budget, and failure injections};
+\draw[-Latex,thick] (a.south) -- ++(0,-0.2) -| (common.north west);
+\draw[-Latex,thick] (b.south) -- ++(0,-0.2) -| (common.north east);
+\draw[-Latex,thick] (c.south) -- ++(0,-0.2) -| (common.north west);
+\draw[-Latex,thick] (d.south) -- ++(0,-0.2) -| (common.north east);
+\end{tikzpicture}
+\caption{Four distinct, testable co-design directions. The lower-right panel is infrastructure-triggered diagnostics, not a duplicate of budgeted observability. The common harness ensures online causal timing and budget parity.}
+\label{fig:codesign}
+\end{figure*}
