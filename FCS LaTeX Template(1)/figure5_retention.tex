@@ -1,0 +1,26 @@
+% Replacement for former Figure 5: evidence-loss conditions vs cache-recovery path.
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[font=\small, >=Latex, node distance=0.55cm,
+  obj/.style={draw=black!85,rounded corners=2pt,align=center,text width=3.0cm,minimum height=1.05cm,fill=black!4},
+  outcome/.style={draw=black!90,rounded corners=2pt,align=center,text width=3.4cm,minimum height=1.05cm},
+  every path/.style={draw=black!75,thick}]
+\node[obj] (kv) at (0,2) {KV eviction\\raw execution logs persist};
+\node[obj] (log) at (0,0) {Log or snapshot deletion\\unique evidence not persisted};
+\node[obj] (compress) at (0,-2) {Compression / sampling\\lossy evidence reduction};
+\node[obj] (recover) at (5.1,2) {Cache can be rebuilt\\from prompts and weights};
+\node[obj] (no) at (5.1,0) {No faithful replay\\or alternate evidence};
+\node[obj] (yes) at (5.1,-2) {Critical detail required\\after capture cutoff};
+\node[outcome,fill=black!2] (latency) at (10.2,2) {Extra latency or recomputation\\not evidence loss};
+\node[outcome,fill=black!9] (loss) at (10.2,0) {Potential evidence loss\\affects attribution};
+\node[outcome,fill=black!9] (fidelity) at (10.2,-2) {Potential fidelity loss\\under token/storage budget};
+\draw[-Latex] (kv) -- (recover);
+\draw[-Latex] (log) -- (no);
+\draw[-Latex] (compress) -- (yes);
+\draw[-Latex] (recover) -- (latency);
+\draw[-Latex] (no) -- (loss);
+\draw[-Latex] (yes) -- (fidelity);
+\end{tikzpicture}
+\caption{Conditional outcomes of reclamation, separating cost-only cache misses from information loss. The latter requires unique, needed evidence to be discarded without faithful reconstruction (Eq.~\ref{eq:loss}). The three paths represent distinct mechanisms rather than labelling all of them as eviction.}
+\label{fig:tension}
+\end{figure*}
