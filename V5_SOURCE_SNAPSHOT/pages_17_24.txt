@@ -1,0 +1,393 @@
+V5 AUTHORITATIVE PDF TEXT EXTRACTION (not native LaTeX source)
+Source: Survey_MAS_Diagnostics_Neurocomputing_v5_evidence_audit(1).pdf
+Pages: 17-24 / 56
+Formatting / image figures must be verified against the uploaded PDF.
+
+<PARSED TEXT FOR PAGE: 17 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  17
+
+
+
+15.6s for short and 29.2s for long trajectories (Table 11). The system is entirely simulation-free:
+it operates on the static execution log without replays, using an iterative memory H that stores
+prior evaluator rationales and confidence scores across reasoning rounds.
+
+Emerging patterns. Three trends are visible across the failure-localization systems surveyed.
+First, zero-replay methods dominate: 10 of 12 methods operate on a single trajectory with-
+out environment re-execution. This reduces the infrastructure burden from multi-minute re-
+plays to single-pass inference and makes failure localization compatible with production work-
+loads where replay may be infeasible (non-deterministic environments, stateful APIs, cost con-
+straints).
+    Second, multi-granular attribution is becoming standard: AgenTracer, CHIEF, and Who&When
+Pro all support simultaneous agent-level and step-level attribution, recognizing that different de-
+bugging workflows require different granularities.
+    Third, small models are competitive: MASPrism’s 0.6B model achieves accuracy compa-
+rable to frontier models at 6.69× lower latency. This suggests that diagnostic signal extraction
+does not require the same model capacity as task execution, opening the door to dedicated
+lightweight diagnostic co-processors that run alongside the serving infrastructure.
+
+Design trade-offs. Table 2 presents the multi-axis comparison. Three trade-off axes emerge:
+  1. Replay cost vs. statistical coverage. FAMAS and DoVer are the only methods among
+     the surveyed T1 systems that require environment replays (FAMAS: k=20 blind replays
+     for spectrum analysis; DoVer: 4–12 hypothesis-directed re-executions). All other T1
+     methods operate on a single trajectory without re-execution.
+  2. Model size vs. cost. MASPrism uses a 0.6B model at 2.66s/case; CHIEF uses a 671B
+     model at 55K tokens/case. The accuracy gap (MASPrism varies by benchmark; CHIEF
+     at 77.59% agent-level) does not scale linearly with model size.
+  3. Agent-level vs. step-level accuracy. Across all methods, step-level accuracy is substan-
+     tially lower than agent-level accuracy. The best step-level result is 52.0% (TrajAudit
+     RootSE and CHIEF on algorithm-generated scenarios), suggesting that fine-grained attri-
+     bution remains an open challenge.
+
+4.2    Observability and Tracing
+Observability systems continuously capture execution evidence during agent operation, pro-
+viding the raw data that localization and safety methods consume. We identify three levels of
+maturity: conceptual taxonomies that define what should be traced, protocol-level standards
+that specify how traces are encoded, and tooling that implements the capture pipeline.
+
+Conceptual taxonomies. The Agent Traces survey [39] proposes a six-dimensional prove-
+nance taxonomy that structures the observability design space. The six dimensions are: (1) trace
+sources (instructions/inputs, reasoning, retrieval, tool use, MCP boundaries, memory, environ-
+ment, multi-agent communication); (2) evidence and execution units (content-bearing artifacts
+vs. occurrences with actor and timestamp); (3) provenance relations (nine relations in four fam-
+ilies: semantic support, content derivation, causal dependence, and procedural dependence);
+(4) tracing granularity and timing (run, step, tool-call, parameter, claim, and token/span lev-
+els; pre-execution, runtime, post-hoc, continuous); (5) representation forms (structured logs,
+execution graphs, evidence graphs, provenance graphs, runtime state); and (6) trust functions
+
+<PARSED TEXT FOR PAGE: 18 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                      18
+
+
+Table 2: Multi-axis comparison of failure-localization methods. NR = not reported at the current evi-
+dence depth. Environment replays, token cost, and model size are separated as distinct cost dimensions.
+T1a/T1b denote Tier-1 evidence with/without page-level citations; T2 denotes abstract-verified.
+
+Method         Category        Evidence input Train?         Re-      Tok.   Model     Gran.     Tier
+                                                            plays
+FAMAS          Statistical     Re-exec runs      No          20        NR    72B Action           T1a
+TrajAudit      LLM-guided      Trajectories      No           0      138K frontier Step           T1a
+AgenTracer     RL-trained      Fail. trajs       RL 8B        0        NR      8B Agt+Stp         T1b
+MASPrism       Signal-ext      Prefill NLL       No           0        7K    0.6B Step            T1a
+CHIEF          LLM-guided      Hier. causal      No           0       55K   671B Agt/Stp          T1a
+AgentRx        LLM-guided      Traj+schemas      No          0      5–16K frontier Step           T1a
+RAFFLES        LLM-guided      Exec trace        No           0        NR     NR Step             T1a
+Xia et al.     Supervised      Trace+verif       LoRA         0        NR     NR Agent            T1b
+StepFinder     Supervised      Temporal          BiLSTM       0        NR     NR Step              T2
+FALAT          LLM-guided      Dep. evid         No           0        NR     NR Step              T2
+DoVer          Intervention    Interv. snaps     No         4–12       NR     NR Stp/Rec           T2
+VerifyMAS      LLM-guided      Hyp+NLI           Opt. SFT    0         NR     NR Agt+Err           T2
+
+
+(verification, attribution, debugging, safety enforcement, audit, recovery). Two cross-cutting at-
+tributes qualify every relation: provenance origin (instrumented, inferred, declared, or derived)
+and trace assurance (logged, tamper-evident, or attested), with attested being “the least devel-
+oped attribute in the works reviewed” (§2.2). The survey catalogs 27 representative systems
+(Table 3), 25 benchmarks (Table 8), 20 guardrail systems (Table 5), and 11 memory systems
+(Table 6). A key architectural insight is the distinction between evidence units (content-bearing
+artifacts such as tool outputs) and execution units (occurrences with actor and timestamp), which
+determines whether a trace record is sufficient for post-hoc attribution. Three gaps are identi-
+fied: limited integration of fine-grained provenance with trust functions, no benchmark evalu-
+ating complete provenance chains, and insufficient tamper-evident reporting.
+
+Protocol-level standards. The OpenTelemetry GenAI semantic conventions [25] provide vendor-
+neutral attributes for LLM inference spans. Core gen_ai.* attributes include operation name
+(chat, embeddings, execute_tool, create_agent, invoke_agent, invoke_workflow),
+provider and model identity, input/output token counts, cache read/creation tokens (v1.40), rea-
+soning output tokens for chain-of-thought models (v1.41), streaming flags and TTFT (v1.41),
+and agent/tool identifiers. MCP-specific attributes (mcp.method.name, mcp.session.id,
+mcp.protocol.version) were added in v1.39. Content events (prompts, completions,
+system instructions) are opt-in, controlled by an environment flag for privacy. Proposed agentic
+extensions (Issue #35: task, action, team, artifact, and memory attributes) remain in “Todo”
+status as of November 2026.
+    The specification remains at Development status with no stabilization timeline, and provider
+coverage is uneven: OpenAI instrumentation is the most complete, while Anthropic, AWS
+Bedrock, and Google Vertex AI libraries have less detailed support. Framework-level integra-
+tion for LangGraph and CrewAI is in progress but incomplete. A fundamental architectural
+limitation is that OTel captures telemetry about model calls but provides no enforcement ca-
+pability: “telemetry can’t answer enforcement questions.” For cross-layer analysis, the most
+significant gap is the absence of serving-side attributes (cache residency, eviction events, mem-
+ory pressure, adapter loading status) that would enable correlating diagnostic trace availability
+with infrastructure state.
+
+<PARSED TEXT FOR PAGE: 19 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 19
+
+
+
+Tooling. AgentTrace [2] implements three logging surfaces — operational (method-level ex-
+ecution tracing with paired start/complete events), cognitive (LLM reasoning chain extrac-
+tion including CoT parsing, confidence estimates, and plan/reflection fields), and contextual
+(outbound API interactions auto-instrumented via OTel monkey-patching) — unified under a
+schema-validated append-only envelope with UUID, surface type, trace/span IDs, and UTC
+timestamps (§3.1–3.6). The system produces dual output: JSONL files for local analysis and
+OTel spans for distributed backends. While the architecture is well-specified with pseudocode
+(Algorithm 1, §4.2), no empirical evaluation of overhead, latency, or storage costs is reported
+(§4.5 states only “low overhead” qualitatively). No repository link or package name is provided.
+    Insights Generator [23] provides analytics over collected execution traces, enabling aggre-
+gate analysis across multiple agent runs: failure frequency by step type, time-to-failure dis-
+tributions, and cross-agent correlation patterns. The view-oriented debugging compiler [46]
+transforms raw execution logs into interactive visual representations: the compiler applies view
+transformations (filtering, aggregation, temporal alignment) to produce domain-specific debug-
+ging views from a common trace format, enabling human inspectors to navigate complex multi-
+agent executions without manually parsing log files.
+    LangSmith (LangChain, commercial tooling) provides a production-grade trace collection
+and analysis platform with built-in LLM evaluation, but its proprietary nature limits independent
+verification of overhead and accuracy claims.
+    The observability layer’s principal limitation for cross-layer analysis is coverage: no ex-
+isting standard captures the serving-side state (KV cache residency, eviction events, memory
+pressure) that Section 6 identifies as relevant for diagnostic-infrastructure interaction. Extend-
+ing OTel GenAI conventions to include serving-side attributes is one of the open directions
+proposed in Section 7.
+
+4.3    Safety Intervention and Guardrails
+Safety systems actively monitor and intervene in agent execution to prevent harmful actions.
+We review eight Tier-1 systems spanning three architectural patterns: graph-based guardrails,
+modular safety agents, and control-theoretic recovery.
+
+Graph-based guardrails. G-Safeguard [37] addresses a specific threat model: adversarial
+agents embedded within a multi-agent system that manipulate other agents through malicious
+utterances. The system constructs a multi-agent utterance graph from inter-agent communica-
+tion, using SentenceBERT/MiniLM embeddings as node features and a learnable permutation-
+invariant fusion of interaction histories as edge features. An edge-featured GNN with a soft
+probabilistic classifier detects attacker nodes after each dialogue round. Trained on 800 samples
+from a GPT-4o-mini-based 8-agent MAS, the system scales to 20–80 agents without retraining.
+A key limitation is that detection is reactive: “by the time G-Safeguard identifies an attacker,
+certain nodes within the MAS have already been successfully compromised.” The system oper-
+ates purely on the utterance graph and does not inspect internal model serving state (ACL 2025
+Long Papers).
+
+Modular safety agents. ShieldAgent [8] represents safety policies as Linear Temporal Logic
+(LTL) formulas organized into action-based probabilistic rule circuits via Markov Logic Net-
+works. For each agent action, the system extracts action/state predicates from policy documents,
+applies spectral clustering on state predicates for rule grouping, and evaluates via two fine-
+tuned guardrail models on InternVL2-2B. The Autonomous Safety Policy Manager (ASPM)
+
+<PARSED TEXT FOR PAGE: 20 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 20
+
+
+
+optimization reduces the number of predicates by 50–65% and rules by 50–76%, enabling ef-
+ficient runtime verification. The system uses short-term memory (KV-cache, discarded after
+verification) and long-term memory (successful workflows, permanently stored), and is built on
+the MCP framework (ICML 2025).
+    LlamaFirewall [9] implements a three-layer defense architecture with distinct models per
+layer. PromptGuard 2 classifies input prompts for jailbreak/injection using energy-based loss
+with hardened tokenization, available in 86M-parameter (mDeBERTa-base) and 22M-parameter
+(DeBERTa-xsmall) variants. AlignmentCheck evaluates each agent action against the user’s
+stated goal using the execution trace and selected action via few-shot prompting (no fine-tuning;
+Llama 4 Maverick recommended as backing LLM). CodeShield performs two-tiered code scan-
+ning: Semgrep rules plus regex patterns covering 50+ CWEs across 7–8 programming lan-
+guages. The three layers have different timing: PromptGuard is preventive (pre-processing),
+AlignmentCheck is reactive (post-action), and CodeShield is reactive (pre-execution). The sys-
+tem is open-source.
+
+Control-theoretic recovery. ReGuard [29] applies control-theoretic principles to agent re-
+covery: when a safety violation is detected, the system computes a corrective action using a
+formal model of the agent’s state transition dynamics, rather than simply blocking the action.
+This enables graceful degradation rather than hard stops, but requires a tractable state model.
+
+Additional safety systems. SAIGuard [34] implements proactive defense via communication-
+state simulation: it constructs an interaction graph over the MAS, encodes messages with
+Qwen3-Embedding-0.6B (2-layer GNN, 1024 hidden dimensions), and estimates the impact
+of incoming messages on local and global agent states. Risky messages are detected via recon-
+struction deviations from benign patterns and sanitized before propagation — making SAIGuard
+the only preventive safety system in the survey. It reduces attack success rate from 16.51%
+to 5.37% (67.47% reduction) while maintaining 89.83% task accuracy and 98.68% detection
+F1. A “systemic risk amplification” finding is notable: aggregated multi-agent attack success
+(51.78%) far exceeds per-agent vulnerability (3.00%).
+    SentinelAgent [12] implements three-level anomaly detection: node-level (individual agent
+behavior), edge-level (inter-agent communication anomalies), and path-level (multi-hop exe-
+cution chain attacks). Path-level detection catches all 6 tested scenarios but has the highest
+compute cost. The system uses IBM Granite Guardian 3.2 and LlamaFirewall as pre-trained
+backends without custom training. Evaluation is qualitative only (2 case studies).
+    AGrail [21] provides a lifelong agent guardrail framework combining rule-based constraints
+with learned safety policies. The “lifelong” aspect enables policy updates as agents encounter
+new scenarios without retraining. AgentDoG 1.5 [18] uses anomaly detection on execution
+patterns to identify both safety violations and performance degradation simultaneously — the
+only system producing both a safety verdict and a diagnostic attribution from the same analysis.
+    ReGuard [29] applies control-theoretic recovery: when a safety violation is detected, it
+models state transition dynamics and computes a corrective action rather than simply blocking
+the agent. This enables graceful degradation but requires a tractable state model.
+
+Diagnostic-safety overlap. Safety systems and diagnostic systems share a key requirement:
+both need access to the agent’s execution state (tool calls, outputs, and intermediate reasoning).
+Three of the eight safety systems (SentinelAgent, AGrail, AgentDoG) explicitly consume di-
+agnostic traces as input to their safety decisions. This overlap suggests that serving-side state
+
+<PARSED TEXT FOR PAGE: 21 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  21
+
+
+
+management — particularly KV cache eviction policies — can affect safety system effective-
+ness when it removes state that safety monitors depend on. We formalize this interaction in
+Section 6.
+
+4.4    Benchmarks
+Progress in diagnostics depends on benchmarks that vary in failure coverage, trace fidelity, and
+evaluation scope. Table 3 summarizes 12 Tier-1 benchmarks.
+
+Failure-attribution benchmarks. TraceElephant [6] provides the highest trace fidelity among
+surveyed benchmarks: 220 annotated agent failures across three production systems (Captain-
+Agent, Magentic-One, SWE-Agent) and three task sources (GAIA, AssistantBench, SWE-
+Bench Verified), with 380 total execution traces (§3.1, Table 1). Each trace is a structured JSON
+with two layers: trace metadata (task ID, system architecture, agent configuration) and step-
+level records (agent ID, input context, output content, tool logs with tool name/inputs/outputs/status)
+(§3.3). Annotation was performed by three human annotators with at least one year of MAS de-
+bugging experience in a three-round protocol (independent → joint consensus → cross-review),
+achieving Krippendorff’s α of 0.72 at the agent level and 0.64 at the step level (§3.4).
+    The central quantitative finding is the impact of trace completeness on attribution accuracy.
+Under the same All-at-Once attribution protocol, complete traces raise agent-level accuracy
+from 51% (output-only logs matching Who&When’s observability) to 62.2% (+11.2 percent-
+age points, a 22% relative gain) (ACL 2026, §4.3, Table 3). At the step level, the gain is more
+pronounced: 16% to 28.1% (+12.1pp, 76% relative), confirming that step-level attribution is
+substantially more sensitive to missing trace information. Dynamic replay-based attribution
+adds a further 10% step improvement (Table 2). Environment-interacting agents account for
+over 50% of failure attributions, with orchestrators responsible for 18–29% (§4.2.2, Figure 4).
+Average LLM invocations per trace range from 20.5 (Captain-Agent) to 29.3 (Magentic-One)
+(§4.2.3). The benchmark is available under CC BY 4.0 with a reproducible execution environ-
+ment.
+    Who&When [48] provides 184 failures from 127 multi-agent systems as the first dedicated
+failure-attribution benchmark (ICML 2025). The benchmark uses algorithm-generated (via
+CaptainAgent) and hand-crafted (via Magentic-One) MAS configurations with up to 5 agents
+each, producing log lengths of 5–130 steps (§3.1). Attribution is defined through a “decisive
+error” concept (Definitions 2.1, 2.2): the earliest agent action whose correction would change
+the task outcome from failure to success. Three annotators with AI-agent expertise performed
+an 84.3 human-hour annotation protocol (§3.3), with 15–30% of instances marked as uncertain.
+Best reported accuracy is 53.5% at the agent level and only 14.2% at the step level; step-level
+accuracy degrades to approximately 0% on trajectories exceeding 93 steps (§4.4, Figure 4). The
+hybrid attribution method costs 149,177 tokens per instance (Table 3), making it one of the most
+expensive evaluation protocols.
+    Domain-specific alternatives include RootSE (introduced alongside TrajAudit [35], 102
+coding failures with step-level annotations from 35 repositories across Python, Go, and JavaScript;
+average 51.7 steps per trajectory) and τ -bench (airline and retail customer-service scenarios
+used in AgentRx evaluation). The Who&When Pro benchmark (NeurIPS 2026) extends the
+original with 12,326 traces across 26 benchmarks.
+
+Reliability and safety benchmarks. ReliabilityBench (1,280 episodes) evaluates pass@1
+overestimation by 20–40% [a], identifying a systematic optimism bias in current evaluation:
+
+<PARSED TEXT FOR PAGE: 22 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 22
+
+
+
+agents appear more capable than they are when evaluated on single attempts rather than re-
+peated trials. BenchGuard (COLM 2026) audits benchmark quality itself, examining three ex-
+isting benchmarks for annotation consistency, task ambiguity, and reproducibility issues.
+    Safety-specific benchmarks span three evaluation dimensions. GuardianAgentBench (580
+scenarios, 81 tools, 5 failure types across 3 agent frameworks) is the most comprehensive, pro-
+viding multi-agent scenarios with structured failure-type annotations. Agent Security Bench
+(ASB, ICLR 2025) evaluates security vulnerabilities across 10 scenarios with 400+ tools, find-
+ing that existing defense mechanisms are “barely effective” against adversarial attacks (attack
+success above 84%). TAMAS (ACL 2026) tests adversarial robustness of multi-agent systems
+with 300 instances covering Byzantine, colluding, and contradicting agent behaviors. OSGuard
+(324 examples, 45 tasks) evaluates OS-level action safety with a guardrail architecture. Agent-
+SafetyBench (2,000 test cases) and AgentHarm (440 tasks, ICLR 2025) focus on single-agent
+safety evaluation.
+
+Gap: no cross-layer benchmark. A striking finding from the benchmark analysis is that
+none of the 12 Tier-1 benchmarks evaluates the diagnostics-infrastructure interaction:
+how diagnostic trace capture affects serving throughput, or how serving-side eviction policies
+affect diagnostic fidelity. TraceElephant’s middleware is described as “lightweight” (§3.2) but
+provides no quantitative overhead measurements. Who&When’s attribution is purely offline
+post-hoc analysis. This gap is not merely an oversight — it reflects the architectural separation
+between diagnostic and serving research communities, and motivates the validation protocol
+proposed in Section 7.
+
+Cross-cutting analysis. Figure 4 presents a coverage matrix across 10 evaluation dimensions
+for all 12 benchmarks. Three systematic gaps are visible:
+   1. No benchmark tests diagnostic-infrastructure interaction. The “Diag-infra interac-
+       tion” column is entirely empty: 0 of 12 benchmarks measure how diagnostic trace cap-
+       ture affects serving throughput, or how eviction policies affect attribution accuracy. This
+       is the strongest visual evidence for the survey’s gap thesis.
+   2. No benchmark tests concurrent agents. All attribution benchmarks evaluate single-
+       agent or sequential multi-agent traces; none evaluates attribution under concurrent agent
+       execution where KV cache contention and scheduling decisions may affect trace avail-
+       ability.
+   3. Attribution and scale are inversely related. Only 4 of 12 benchmarks provide step-
+       level attribution labels (TraceElephant, Who&When, TrajAudit). The largest benchmarks
+       (Who&When Pro at 12,326 traces, Agent-SafetyBench at 2,000 cases) have no attribution
+       labels. The annotation cost barrier (TraceElephant’s $12.66/trace, Who&When’s 84.3
+       human-hours) explains this inverse relationship: high-fidelity attribution at large scale
+       would exceed $150K.
+    Trace fidelity is bipartite: benchmarks either provide full execution traces (TraceElephant,
+Who&When, RootSE) or output-only evaluation (ReliabilityBench, Agent-SafetyBench, Agen-
+tHarm, OSGuard). The intermediate case — partial trace with structured metadata but without
+full step-level tool logs — is absent, despite being the most common deployment scenario.
+Failure-attribution benchmarks and safety benchmarks use entirely different evaluation proto-
+cols: attribution benchmarks measure causal agent/step identification accuracy, while safety
+benchmarks measure attack success rate or scenario coverage. No benchmark evaluates both
+dimensions simultaneously.
+
+<PARSED TEXT FOR PAGE: 23 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                       23
+
+
+
+
+Figure 4: Benchmark coverage matrix: 12 diagnostic benchmarks × 10 evaluation dimensions. The
+“Diag-infra interaction” column is entirely empty, indicating that, within our curated corpus, no bench-
+mark evaluates the cross-layer interaction between diagnostic overhead and serving performance. Only
+4 benchmarks provide step-level attribution. The largest benchmarks lack attribution labels.
+
+<PARSED TEXT FOR PAGE: 24 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                         24
+
+
+Table 3: Diagnostic benchmarks for multi-agent systems. “MAS” indicates multi-agent support. “Attri-
+bution” indicates whether the benchmark supports failure attribution (agent or step level). Scale reports
+the number of annotated failures or test scenarios.
+
+Benchmark                     Venue              Scale    MAS        Attr.     Trace fidelity Tier
+TraceElephant      ACL ’26                     220 fail    ✓      Agt+Stp Prod. traces            T1
+Who&When           ICML ’25                    184 fail    ✓      Agt+Stp Full traj               T1
+RootSE             Preprint                    102 fail    –       Step   Code+test               T1
+τ -bench           arXiv ’24                         –     –       Step   Tool calls              T1
+MultiAgentBench    ACL ’25                   600 tasks     ✓         –    Output                  T1
+GuardianAgentBench Preprint                  580 scen      ✓      5 types Tool+out                T1
+ReliabilityBench   Preprint                   1,280 ep     –         –    Output                  T1
+Agent-SafetyBench  Preprint                      2,000     –         –    Output                  T1
+AgentHarm          ICLR ’25                  440 tasks     –         –    Output                  T1
+TAMAS              ACL ’26                    300 inst     ✓         –    Adversarial             T1
+ASB                ICLR ’25                    10 scen     –         –    Tool calls              T1
+OSGuard            Preprint                     324 ex     –         –    Output                  T1
+
+
+5     Serving Infrastructure
+This section reviews 22 Tier-1 infrastructure systems that manage serving-time state for LLM-
+based workloads, with emphasis on those designed for or directly applicable to multi-agent
+scenarios. We organize the analysis around three state-sharing categories that reviewers and
+practitioners often conflate: textual context sharing (§5.1), exact KV-cache reuse (§5.2), and
+cross-model cache transfer (§5.3). Section 5.4 covers agent-specific extensions that bridge
+general-purpose serving toward multi-agent workloads.
+
+5.1    Textual Context Sharing
+Textual context sharing refers to systems that pass natural-language prompts, tool outputs, or
+conversation histories between agents or requests without sharing the underlying KV-cache
+tensors. Each recipient independently computes its own KV cache from the shared text.
+    Parrot [17] introduces semantic variables — placeholder tokens that represent data depen-
+dencies between LLM API calls in a multi-step pipeline. The runtime constructs a directed
+acyclic graph (DAG) per session with requests as nodes and semantic variables as edges (§4.2),
+enabling three optimizations. First, a PrefixHash mechanism detects sharing opportunities by
+hashing prompt prefixes bound through semantic variables. Second, an application-centric
+scheduler deduces per-request performance objectives (latency vs. throughput) from the DAG
+structure (§5.2, Algorithm 1). Third, a custom GPU kernel combines FlashAttention and Page-
+dAttention to minimize redundant memory loading for shared prefixes (§5.3). Importantly, Par-
+rot does not transfer computed KV blocks between requests; it coordinates scheduling so that
+shared prefixes are processed together, then explicitly frees the cache via FreeContext calls
+under continuous batching. The system achieves up to 11.7× latency improvement on MetaGPT
+multi-agent workloads (Figure 18a), and sustains 12× higher request rates on multi-tenant GPTs
+workloads (Figure 17). Token redundancy measurements across applications range from 3% to
+99% (Table 1), confirming that textual prefix sharing is pervasive in agentic pipelines. A prin-
+cipal limitation is that Parrot’s centralized manager may become a scalability bottleneck, and
