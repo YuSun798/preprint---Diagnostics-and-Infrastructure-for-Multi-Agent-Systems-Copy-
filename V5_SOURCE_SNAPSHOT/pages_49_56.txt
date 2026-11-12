@@ -1,0 +1,413 @@
+V5 AUTHORITATIVE PDF TEXT EXTRACTION (not native LaTeX source)
+Source: Survey_MAS_Diagnostics_Neurocomputing_v5_evidence_audit(1).pdf
+Pages: 49-56 / 56
+Formatting / image figures must be verified against the uploaded PDF.
+
+<PARSED TEXT FOR PAGE: 49 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 49
+
+
+
+      (7 November 2026) means that concurrent or subsequent work is not covered.
+   5. Single-reviewer evidence extraction. The evidence extraction was performed by the
+      author team without an independent second coder. Inter-coder reliability cannot be as-
+      sessed.
+
+9.4    Threats to Validity
+Construct validity. The evidence-loss formalization (Eq. 1) assumes that the three conditions
+(Ni , Di , Ri ) can be independently assessed. In practice, the need for evidence (Ni ) may depend
+on the outcome of reconstruction attempts (Ri ), creating a circular dependency that the static
+formalization does not capture.
+
+External validity. The surveyed systems primarily target text-based LLM agents. Multi-
+modal agents (combining vision, audio, or embodied action) may introduce state types not
+covered by the current taxonomy. The DRICE framework’s dimensions are designed to be
+extensible, but we have not validated them on non-text workloads.
+
+
+10      Conclusion
+This review has mapped 48 diagnostic methods and serving infrastructure systems, comple-
+mented by 12 evaluation benchmarks, for foundation model-based multi-agent systems, orga-
+nizing them by functional role and characterizing them along six method dimensions. Four
+main findings emerge.
+    First, the diagnostic-infrastructure interaction is conditional: evidence loss requires that
+needed diagnostic state is discarded from a shared resource before the diagnostic horizon and
+cannot be reconstructed (Eq. 1). Most current architectures avoid this scenario by storing traces
+independently of serving state, placing the majority of systems in Tier A (independent opera-
+tion). Among the T1 systems surveyed, none demonstrated a production case where KV-cache
+eviction destroyed diagnostic evidence.
+    Second, the DRICE evaluation framework reveals a systematic D–R gap: diagnostic meth-
+ods consume rich evidence but do not interact with retention policies, while infrastructure sys-
+tems implement sophisticated retention but are unaware of diagnostic value. The policy-driven
+runtime and TOPAS partially bridge this gap — the former feeds observability signals into
+eviction, the latter jointly optimizes prefix retention and scheduling under a shared capacity
+constraint — but within our curated corpus, we did not identify a system that jointly optimizes
+diagnostic retention and serving throughput.
+    Third, the retention ablation on real TraceElephant traces (220 failures, 5 task suites from
+3 MAS frameworks) reveals a subsampling paradox: heuristic attributors achieve higher accu-
+racy at 10% retention than at full retention, because subsampling removes normal events that
+cause false recovery signals. Importance-weighted sampling provides only marginal improve-
+ment over uniform random at low budgets (+0.008, within noise), suggesting the benefit derives
+from noise removal rather than from the specific importance scores. This finding characterizes
+a heuristic–retention interaction and motivates retention-aware diagnostic design, though repli-
+cation with LLM-judge attribution methods is necessary to establish generality.
+    Fourth, the diagnostic landscape is rapidly consolidating around zero-replay, single-trajectory
+methods: 10 of 12 failure-localization methods require no environment re-execution. Training-
+free signal-extraction approaches (MASPrism, 0.6B model, 2.66s/case) achieve competitive
+
+<PARSED TEXT FOR PAGE: 50 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                               50
+
+
+
+accuracy at dramatically lower cost than frontier-model methods, suggesting that dedicated
+lightweight diagnostic co-processors can run alongside serving infrastructure without meaning-
+ful resource competition.
+    The five open research directions identified — joint optimization (O1), cross-layer bench-
+marks (O2), scalability of training-free methods (O3), observability standards for serving-side
+state (O4), and safety-infrastructure coupling (O5) — provide a concrete research agenda. The
+validation protocol (Section 7.3) specifies the experimental design needed to test the shared-
+budget hypothesis: a multi-agent system with configurable eviction policy, injected failures for
+ground-truth attribution, and matched reliability and serving metrics. We hope this framework
+moves the field from isolated component optimization toward integrated diagnostic-aware sys-
+tem design.
+
+
+Acknowledgements
+We thank the reviewers for their detailed feedback.
+
+
+Declaration of Competing Interests
+The authors declare that they have no known competing financial interests or personal relation-
+ships that could have appeared to influence the work reported in this paper.
+
+
+Data and Code Availability
+The TraceElephant dataset is publicly available at https://github.com/microsoft/
+TraceElephant (CC-BY-4.0). Heuristic evaluation code, including the recovery-ablation
+conditions (C1–C3), sampling policies, and table-generation scripts, will be released at [anonymized
+repository URL upon acceptance]. Environment requirements: Python 3.10+, no GPU depen-
+dency.
+
+
+References
+ [1] Reyna Abhyankar, Zijian He, Vikranth Srivatsa, Hao Zhang, and Yiying Zhang. InferCept:
+     Efficient intercept support for augmented large language model inference. In Proceedings
+     of the 41st International Conference on Machine Learning (ICML), volume 235 of PMLR,
+     pages 81–95, 2024. arXiv:2402.01869.
+
+ [2] Adam AlSayyad, Kelvin Yuxiang Huang, and Richik Pal. AgentTrace: A structured log-
+     ging framework for agent system observability. In AAAI 2026 Workshop on LLM-based
+     Multi-Agent Systems (LaMAS), 2026. arXiv:2602.10133.
+
+ [3] Shraddha Barke, Arnav Goyal, Alind Khare, Avaljot Singh, Suman Nath, and Chetan
+     Bansal. AgentRx: Diagnosing AI agent failures from execution trajectories. In Findings
+     of the Association for Computational Linguistics: EMNLP 2026, 2026. arXiv:2602.02475.
+
+ [4] Zhuohang Bian, Feiyang Wu, Zhuoran Li, Teng Ma, and Youwei Zhuo. TokenCake: A
+     KV-cache-centric serving framework for LLM-based multi-agent applications. In Pro-
+
+<PARSED TEXT FOR PAGE: 51 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                           51
+
+
+
+      ceedings of the 20th European Conference on Computer Systems (EuroSys), 2027. doi:
+      10.1145/3842654.3848547. arXiv:2510.18586.
+ [5] Mert Cemri, Melissa Z. Pan, Shuyi Yang, Lakshya A. Agrawal, Bhavya Chopra, Rishabh
+     Tiwari, Kurt Keutzer, Aditya Parameswaran, Dan Klein, Kannan Ramchandran, Matei
+     Zaharia, Joseph E. Gonzalez, and Ion Stoica. Why do multi-agent LLM systems fail? In
+     NeurIPS 2025 Datasets and Benchmarks Track, 2025. arXiv:2503.13657. Spotlight.
+ [6] Mengzhuo Chen, Junjie Wang, Fangwen Mu, Yawen Wang, Zhe Liu, Huanxiang Feng,
+     and Qing Wang. Seeing the whole elephant: A benchmark for failure attribution in LLM-
+     based multi-agent systems. arXiv preprint arXiv:2604.22708, 2026.
+ [7] Weize Chen et al. Internet of agents: Weaving a web of heterogeneous agents for collab-
+     orative intelligence. arXiv preprint arXiv:2407.07061, 2024.
+ [8] Zhaorun Chen, Mintong Kang, and Bo Li. ShieldAgent: Shielding agents via verifiable
+     safety policy reasoning. In Proceedings of the 42nd International Conference on Machine
+     Learning (ICML), volume 267 of PMLR, pages 8313–8344, 2025. arXiv:2503.22738.
+ [9] Sahana Chennabasappa, Cyrus Nikolaidis, Daniel Song, David Molnar, Stephanie Ding,
+     Shengye Wan, Spencer Whitman, Lauren Deason, Nicholas Doucette, Abraham Montilla,
+     et al. LlamaFirewall: An open source guardrail system for building secure AI agents.
+     arXiv preprint arXiv:2505.03574, 2025.
+[10] Darshan Deshpande, Varun Gangal, Hersh Mehta, Jitin Krishnan, Anand Kannappan, and
+     Rebecca Qian. TRAIL: Trace reasoning and agentic issue localization. arXiv preprint
+     arXiv:2505.08638, 2025.
+[11] Yu Ge, Linna Xie, Zhong Li, Yu Pei, and Tian Zhang. Who is introducing the failure?
+     automatically attributing failures of multi-agent systems via spectrum analysis. arXiv
+     preprint arXiv:2509.13782, 2025.
+[12] Xu He, Di Wu, Yan Zhai, and Kun Sun. SentinelAgent: Graph-based anomaly detection
+     in multi-agent systems. arXiv preprint arXiv:2505.24201, 2025.
+[13] Sirui Hong, Mingchen Zhuge, Jonathan Chen, Xiawu Zheng, Yuheng Cheng, Ceyao
+     Zhang, Jinlin Wang, Zili Wang, Steven Ka Shing Yau, Zijuan Lin, et al. MetaGPT:
+     Meta programming for a multi-agent collaborative framework.        arXiv preprint
+     arXiv:2308.00352, 2023.
+[14] Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu,
+     Joseph E. Gonzalez, Hao Zhang, and Ion Stoica. Efficient memory management for large
+     language model serving with PagedAttention. In SOSP, 2023.
+[15] Guohao Li, Hasan Abed Al Kader Hammoud, Hani Itani, Dmitrii Khizbullin, and Bernard
+     Ghanem. CAMEL: Communicative agents for “mind” exploration of large language
+     model society. arXiv preprint arXiv:2303.17760, 2023.
+[16] Hanchen Li, Qiuyang Mang, Runyuan He, Qizheng Zhang, Huanzhi Mao, Xiaokun Chen,
+     Hangrui Zhou, Alvin Cheung, Joseph E. Gonzalez, and Ion Stoica. Continuum: Efficient
+     and robust multi-turn LLM agent scheduling with KV cache time-to-live. In ICLR 2026
+     Workshop: Lifelong Agents, 2026. arXiv:2511.02230. Also UC Berkeley Tech Report
+     EECS-2026-234.
+
+<PARSED TEXT FOR PAGE: 52 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                            52
+
+
+
+[17] Chaofan Lin, Zhenhua Han, Chengruidong Zhang, Yuqing Yang, Fan Yang, Chen Chen,
+     and Lili Qiu. Parrot: Efficient serving of LLM-based applications with semantic vari-
+     able. In Proceedings of the 18th USENIX Symposium on Operating Systems Design and
+     Implementation (OSDI), 2024. arXiv:2405.19888.
+[18] Dongrui Liu, Yu Li, Zhonghao Yang, Peng Wang, Guanxu Chen, et al. AgentDoG 1.5:
+     A lightweight and scalable alignment framework for AI agent safety. arXiv preprint
+     arXiv:2605.29801, 2026.
+[19] Yang Liu, Hongjiang Feng, Junsong Pu, and Zhuangbin Chen. MASPrism: Lightweight
+     failure attribution for multi-agent systems using prefill-stage signals. arXiv preprint
+     arXiv:2605.07509, 2026.
+[20] Yuhan Liu, Yuyang Huang, Jiayi Yao, Shaoting Feng, Zhuohan Gu, Kuntai Du, Hanchen
+     Li, Yihua Cheng, Junchen Jiang, Shan Lu, Madan Musuvathi, and Esha Choukse. Droid-
+     Speak: KV cache sharing for cross-LLM communication and multi-LLM serving. arXiv
+     preprint arXiv:2411.02820, 2024.
+[21] Weidi Luo, Shenghong Dai, Xiaogeng Liu, Suman Banerjee, Huan Sun, Muhao Chen,
+     and Chaowei Xiao. AGrail: A lifelong agent guardrail with effective and adaptive safety
+     detection. arXiv preprint arXiv:2502.11448, 2025.
+[22] Ming Ma, Jue Zhang, Fangkai Yang, Yu Kang, Qingwei Lin, Saravan Rajmohan, and
+     Dongmei Zhang. DoVer: Intervention-driven auto debugging for LLM multi-agent sys-
+     tems. arXiv preprint arXiv:2512.06749, 2025.
+[23] Akshay Manglik, Vijay S. Kalmath, Jason Qin, Apaar Shanker, Kaustubh Deshpande,
+     Yash Maurya, Veronica Chatrath, Levi Lentz, and Yuan Xue. Insights generator: Sys-
+     tematic corpus-level trace diagnostics for LLM agents. arXiv preprint arXiv:2605.21347,
+     2025.
+[24] Hongqiu Ni, Han Tian, Chi Zhang, Guopeng Li, and Haisheng Tan.            TOPAS:
+     Workflow-aware prefix-state scheduling for multi-agent LLM serving. arXiv preprint
+     arXiv:2608.25523, 2026.
+[25] OpenTelemetry    GenAI SIG.      OpenTelemetry   semantic conventions
+     for   generative   AI.      https://github.com/open-telemetry/
+     semantic-conventions-genai, 2024. Specification.
+[26] Matthew J. Page, Joanne E. McKenzie, Patrick M. Bossuyt, Isabelle Boutron, Tammy C.
+     Hoffmann, Cynthia D. Mulrow, Larissa Shamseer, Jennifer M. Tetzlaff, Elie A. Akl, Sue E.
+     Brennan, et al. The PRISMA 2020 statement: an updated guideline for reporting system-
+     atic reviews. BMJ, 372:n71, 2021. doi: 10.1136/bmj.n71.
+[27] Zaifeng Pan, Ajjkumar Patel, Zhengding Hu, Yipeng Shen, Yue Guan, Wan-Lu Li, Lianhui
+     Qin, Yida Wang, and Yufei Ding. KVFlow: Efficient prefix caching for accelerating
+     LLM-based multi-agent workflows. In Proceedings of the 39th Conference on Neural
+     Information Processing Systems (NeurIPS), 2025. arXiv:2507.07400.
+[28] Zaifeng Pan, Yipeng Shen, Zhengding Hu, Zhuang Wang, Aninda Manocha, Zheng
+     Wang, Zhongkai Yu, Yue Guan, and Yufei Ding. ScaleSim: Serving large-scale multi-
+     agent simulation with invocation distance-based memory management. arXiv preprint
+     arXiv:2601.21473, 2026.
+
+<PARSED TEXT FOR PAGE: 53 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                             53
+
+
+
+[29] Ravi Pandya, Madison Bland, Duy P. Nguyen, Changliu Liu, Jaime Fernández Fisac, and
+     Andrea Bajcsy. ReGuard: From refusal to recovery: A control-theoretic approach to
+     generative AI guardrails. arXiv preprint arXiv:2510.13727, 2025.
+
+[30] Chen Qian, Xin Cong, Cheng Yang, Weize Chen, Yusheng Su, Juyuan Xu, Zhiyuan Liu,
+     and Maosong Sun. ChatDev: Communicative agents for software development. arXiv
+     preprint arXiv:2307.07924, 2023.
+
+[31] Hezhe Qiao, Hanghang Tong, Ee-Peng Lim, Bing Liu, and Guansong Pang. VerifyMAS:
+     Hypothesis verification for failure attribution in LLM-based multi-agent systems. In Pro-
+     ceedings of the 40th Conference on Neural Information Processing Systems (NeurIPS),
+     2026. arXiv:2605.17467.
+
+[32] Ruoyu Qin, Zheming Li, Weiran He, Jialei Cui, Feng Ren, Mingxing Zhang, Yongwei
+     Wu, Weimin Zheng, and Xinran Xu. Mooncake: Trading more storage for less compu-
+     tation — a KVCache-centric architecture for serving LLM chatbot. In Proceedings of
+     the 23rd USENIX Conference on File and Storage Technologies (FAST), pages 155–170,
+     2025. arXiv:2407.00079. Erik Riedel Best Paper Award.
+
+[33] Md Nakhla Rafi, Md Ahasanuzzaman, Dong Jae Kim, Zhijie Wang, and Tse-Hsun Chen.
+     FALAT: Tracing failures in LLM agent trajectories via dependency-guided search. arXiv
+     preprint arXiv:2606.00765, 2026.
+
+[34] Ruxue Shi, Yili Wang, Mengnan Du, Qinggang Zhang, Rui Miao, Yixin Liu, and Xin
+     Wang. SAIGuard: Communication-state simulation for proactive defense of LLM multi-
+     agent systems. arXiv preprint arXiv:2606.12474, 2026.
+
+[35] Minxing Wang, Xiaofei Xie, and Yintong Huo. TrajAudit: Automated failure diagnosis
+     for agentic coding systems. arXiv preprint arXiv:2605.26563, 2026.
+
+[36] Shao Wang, Rui Ren, and Lin Gui. ForkKV: Scaling multi-LoRA agent serving via copy-
+     on-write disaggregated KV cache. arXiv preprint arXiv:2604.06370, 2026.
+
+[37] Shilong Wang, Guibin Zhang, Miao Yu, Guancheng Wan, Fanci Meng, Chongye Guo, Kun
+     Wang, and Yang Wang. G-Safeguard: A topology-guided security lens and treatment on
+     LLM-based multi-agent systems. In Proceedings of the 63rd Annual Meeting of the Asso-
+     ciation for Computational Linguistics (ACL), pages 7261–7276, 2025. arXiv:2502.11127.
+
+[38] Yawen Wang, Wenjie Wu, Junjie Wang, and Qing Wang. From flat logs to causal graphs:
+     Hierarchical failure attribution for LLM-based multi-agent systems. arXiv preprint
+     arXiv:2602.23701, 2026.
+
+[39] Yiqi Wang, Jiaqi Zhang, Zhangkai Wu, Taotao Cai, Zirui Liu, Zequn Sun, Mingkai Zheng,
+     Manqing Dong, Yu-Xuan Qiu, Xuefei Yin, and Yanming Zhu. From agent traces to trust:
+     A survey of evidence tracing and execution provenance in LLM agents. arXiv preprint
+     arXiv:2606.04990, 2026.
+
+[40] Yufei Xia, Anjun Gao, Yueyang Quan, Zhuqing Liu, and Minghong Fang. Who broke the
+     system? failure localization in LLM-based multi-agent systems. In Proceedings of the
+     Conference on Language Modeling (COLM), 2026. arXiv:2607.07989.
+
+<PARSED TEXT FOR PAGE: 54 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                            54
+
+
+
+[41] Jiayi Yao, Hanchen Li, Yuhan Liu, Siddhant Ray, Yihua Cheng, Qizheng Zhang, Kuntai
+     Du, Shan Lu, and Junchen Jiang. CacheBlend: Fast large language model serving for
+     RAG with cached knowledge fusion. In Proceedings of the 20th European Conference on
+     Computer Systems (EuroSys), 2025. arXiv:2405.16444.
+
+[42] Shunyu Yao, Karthik Narasimhan, and Yian Cao. τ -bench: A benchmark for tool-agent-
+     user interaction in real-world domains. arXiv preprint arXiv:2406.12045, 2024.
+
+[43] Hancheng Ye, Zhengqi Gao, Mingyuan Ma, Qinsi Wang, Yuzhe Fu, Ming-Yu Chung, Yue-
+     qian Lin, Zhijian Liu, Jianyi Zhang, Danyang Zhuo, and Yiran Chen. KVCOMM: Online
+     cross-context KV-cache communication for efficient LLM-based multi-agent systems. In
+     Proceedings of the 39th Conference on Neural Information Processing Systems (NeurIPS),
+     2025. arXiv:2510.12872.
+
+[44] Yichao Yuan, Mosharaf Chowdhury, and Nishil Talati. KAIROS: Stateful, context-aware
+     power-efficient agentic inference serving. arXiv preprint arXiv:2604.16682, 2026.
+
+[45] Guibin Zhang, Junhao Wang, Junjie Chen, Wangchunshu Zhou, Kun Wang, and
+     Shuicheng Yan. AgenTracer: Who is inducing failure in the LLM agentic systems? arXiv
+     preprint arXiv:2509.03312, 2025. ICLR 2026.
+
+[46] Lvmin Zhang and Maneesh Agrawala. View-oriented conversation compiler for agent
+     trace analysis. arXiv preprint arXiv:2603.29678, 2026.
+
+[47] Rui Zhang, Chaeeun Kim, and Liting Hu. A policy-driven runtime layer for agentic LLM
+     serving. arXiv preprint arXiv:2605.27744, 2026.
+
+[48] Shaokun Zhang, Ming Yin, Jieyu Zhang, Jiale Liu, Zhiguang Han, Jingyang Zhang, Beibin
+     Li, Chi Wang, Huazheng Wang, Yiran Chen, and Qingyun Wu. Which agent causes task
+     failures and when? on automated failure attribution of LLM multi-agent systems. arXiv
+     preprint arXiv:2505.00212, 2025.
+
+[49] Lianmin Zheng, Liangsheng Yin, Zhiqiang Xie, Chuyue Sun, Jeff Huang, Cody Hao Yu,
+     Shiyi Cao, Christos Kozyrakis, Ion Stoica, Joseph E. Gonzalez, Clark Barrett, and Ying
+     Sheng. SGLang: Efficient execution of structured language model programs. In Proceed-
+     ings of the 39th Conference on Neural Information Processing Systems (NeurIPS), 2024.
+     arXiv:2312.07104.
+
+[50] Yinmin Zhong, Shengyu Liu, Junda Chen, Jianbo Hu, Yibo Zhu, Xuanzhe Liu, Xin Jin,
+     and Hao Zhang. DistServe: Disaggregating prefill and decoding for goodput-optimized
+     large language model serving. In Proceedings of the 18th USENIX Symposium on Oper-
+     ating Systems Design and Implementation (OSDI), 2024. arXiv:2401.09670.
+
+[51] Chenyang Zhu, Spencer Hong, Jingyu Wu, Kushal Chawla, Charlotte Tang, Youbing Yin,
+     Nathan Wolfe, Erin Babinsky, and Daben Liu. RAFFLES: Reasoning-based attribution of
+     faults for LLM systems. arXiv preprint arXiv:2509.06822, 2025.
+
+[52] Taiyu Zhu, Yifan Wu, Weilin Jin, Ying Li, and Gang Huang. StepFinder: A temporal
+     semantic framework for failure attribution in multi-agent systems. In Proceedings of the
+     32nd ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD), 2026.
+     arXiv:2606.03467.
+
+<PARSED TEXT FOR PAGE: 55 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                    55
+
+
+
+A      System Census
+Table 13 lists all systems and benchmarks included in this review. Systems are categorized
+by function; benchmarks are listed separately. The Tier column indicates evidence depth: T1a
+(full-text with section-level citations), T1b (full-text without page-level citations), T2 (abstract-
+verified).
+Totals: 48 systems (12 failure-localization + 6 observability + 8 safety + 22 infrastructure)
+and 12 benchmarks = 60 entries with dedicated table rows. An additional 22+ systems are
+discussed at the T2 level in the text without dedicated table entries, bringing the total corpus to
+approximately 82 distinct systems plus 12 benchmarks.
+
+<PARSED TEXT FOR PAGE: 56 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                               56
+
+
+
+          Table 13: Complete census of reviewed systems and benchmarks (60 table entries).
+
+                                  #    Name                     Category         Tier
+                                  Failure Localization (12 systems)
+                                  1   FAMAS                     Failure-Loc      T1a
+                                  2   TrajAudit                 Failure-Loc      T1a
+                                  3   AgenTracer                Failure-Loc      T1b
+                                  4   MASPrism                  Failure-Loc      T1a
+                                  5   CHIEF                     Failure-Loc      T1a
+                                  6   AgentRx                   Failure-Loc      T1a
+                                  7   RAFFLES                   Failure-Loc      T1a
+                                  8   Xia et al.                Failure-Loc      T1b
+                                  9   StepFinder                Failure-Loc      T2
+                                 10   FALAT                     Failure-Loc      T2
+                                 11   DoVer                     Failure-Loc      T2
+                                 12   VerifyMAS                 Failure-Loc      T2
+                                  Observability (6 systems)
+                                 13  Agent Traces (survey)      Observability    T1a
+                                 14  OTel GenAI                 Observability    T1a
+                                 15  AgentTrace                 Observability    T1a
+                                 16  Insights Generator         Observability    T1a
+                                 17  LangSmith                  Observability    T1b
+                                 18  VCC                        Observability    T1a
+                                  Safety / Guardrails (8 systems)
+                                 19   G-Safeguard               Safety           T1a
+                                 20   ShieldAgent               Safety           T1a
+                                 21   LlamaFirewall             Safety           T1a
+                                 22   SAIGuard                  Safety           T1a
+                                 23   SentinelAgent             Safety           T1b
+                                 24   AGrail                    Safety           T1b
+                                 25   AgentDoG                  Safety           T1b
+                                 26   ReGuard                   Safety           T1b
+                                  Infrastructure (22 systems)
+                                 27    vLLM                     Infrastructure   T1a
+                                 28    SGLang                   Infrastructure   T1a
+                                 29    DistServe                Infrastructure   T1a
+                                 30    Mooncake                 Infrastructure   T1a
+                                 31    Parrot                   Infrastructure   T1a
+                                 32    InferCept                Infrastructure   T1a
+                                 33    TokenCake                Infrastructure   T1a
+                                 34    KVFlow                   Infrastructure   T1a
+                                 35    KVCOMM                   Infrastructure   T1a
+                                 36    Continuum                Infrastructure   T1a
+                                 37    TOPAS                    Infrastructure   T1a
+                                 38    CacheBlend               Infrastructure   T1a
+                                 39    ForkKV                   Infrastructure   T1a
+                                 40    TokenDance               Infrastructure   T1a
+                                 41    DroidSpeak               Infrastructure   T1a
+                                 42    KAIROS                   Infrastructure   T1a
+                                 43    Policy-driven runtime    Infrastructure   T1a
+                                 44    ScaleSim                 Infrastructure   T1a
+                                 45    Leyline                  Infrastructure   T1a
+                                 46    LRAgent                  Infrastructure   T1a
+                                 47    PolyKV                   Infrastructure   T1a
+                                 48    ConServe                 Infrastructure   T1a
+                                  Benchmarks (12)
+                                 49  TraceElephant              Benchmark        T1a
+                                 50  Who&When                   Benchmark        T1a
+                                 51  RootSE                     Benchmark        T1a
+                                 52 τ -bench                    Benchmark        T1a
+                                 53  MultiAgentBench            Benchmark        T1a
+                                 54  GuardianAgentBench         Benchmark        T1a
+                                 55  ReliabilityBench           Benchmark        T1a
+                                 56  Agent-SafetyBench          Benchmark        T1a
+                                 57  AgentHarm                  Benchmark        T1a
+                                 58  TAMAS                      Benchmark        T1a
+                                 59  ASB                        Benchmark        T1a
+                                 60  OSGuard                    Benchmark        T1a
