@@ -1,0 +1,15 @@
+name: V5 evidence checks
+on:
+  push:
+    branches: [main, neurocomputing-v5-evidence-upgrade-2026-11-12]
+  pull_request:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Validate claim matrix structure and bibliography
+        run: python3 V5_EVIDENCE/validate_matrix.py
+      - name: Audit McNemar aggregate arithmetic (no raw data supplied)
+        run: python3 V5_EVIDENCE/audit_statistics.py
