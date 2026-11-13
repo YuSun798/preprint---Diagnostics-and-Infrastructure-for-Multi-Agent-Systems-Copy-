@@ -1,0 +1,53 @@
+% Reconstructed text from V5 PDF page 10; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 10 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 10\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent finding to its source section, table, or figure; and (10) cross-layer analysis notes assessing the\par
+\noindent system’s relevance to the diagnostic-infrastructure interaction.\par
+\noindent  This structured template ensures that the comparison tables in Sections 4 and 5 report con-\par
+\noindent sistent dimensions across all systems. The template was developed iteratively: the first five\par
+\noindent systems (SGLang, ScaleSim, DistServe, Mooncake, Parrot) were extracted using a preliminary\par
+\noindent template, and the template was refined based on which dimensions proved most informative for\par
+\noindent cross-system comparison. All subsequent extractions used the refined template.\par
+\noindent  A verification step was applied to each extraction: quantitative claims in the extraction tem-\par
+\noindent plate were cross-checked against the source paper’s tables and figures (not just the text). Several\par
+\noindent discrepancies were identified and corrected: for example, a preliminary extraction attributed\par
+\noindent 66\% accuracy to FAMAS, but the source paper’s Table 2 shows 62.07\% as the best agent-level\par
+\noindent figure on handcrafted scenarios; similarly, TrajAudit’s trajectory folding was initially recorded\par
+\noindent as 86–92\% but the source paper (§VII-D) reports 94.6\%.\par
+\par\smallskip
+\noindent 3.6 Corpus Summary\par
+\noindent The 60 core table entries comprise 56 entries assessed at Tier 1 (T1a or T1b) and four at\par
+\noindent Tier 2. The core failure-localization table includes eight full-text-verified (T1) methods and\par
+\noindent four abstract-verified (T2) methods. The T2 entries — StepFinder, FALAT, DoVer, and Veri-\par
+\noindent fyMAS — are retained for landscape coverage but are not used to support fine-grained mech-\par
+\noindent anistic or quantitative cross-method comparisons unless their primary full texts are indepen-\par
+\noindent dently checked. Additional contextual works discussed in the running text are not included in\par
+\noindent this count. By category: 12 failure-localization methods (8 T1, 4 T2), 6 observability entries\par
+\noindent (all T1), 8 safety and guardrail systems (4 T1a, 4 T1b), 22 infrastructure systems (all T1), and\par
+\noindent 12 evaluation benchmarks (all T1). See Appendix A for the complete census. Additionally, we\par
+\noindent include a retention-ablation experiment on real TraceElephant traces (220 failures) to support\par
+\noindent the validation protocol proposed in Section 7.\par
+\noindent  Figure 2 illustrates the corpus assembly process.\par
+\par\smallskip
+\par\smallskip
+\noindent 4 Diagnostics\par
+\noindent This section organizes the diagnostic landscape along functional roles rather than implementa-\par
+\noindent tion categories, following the taxonomy introduced in Section 3.4. We cover failure localization\par
+\noindent (§4.1), observability and tracing (§4.2), safety intervention and guardrails (§4.3), and diagnos-\par
+\noindent tic benchmarks (§4.4). For each subsection, methods are characterized along the six method\par
+\noindent dimensions defined in Section 3.4: evidence inputs, training requirements, replay demands, at-\par
+\noindent tribution granularity, intervention timing, and runtime cost. Figure 3 provides a matrix view of\par
+\noindent the taxonomy with representative systems placed in cells.\par
+\par\smallskip
+\noindent 4.1 Failure Localization\par
+\noindent Failure localization identifies which agent, step, or action caused an observed failure. We iden-\par
+\noindent tify four methodological families among the 8 Tier-1 methods reviewed: statistical methods\par
+\noindent adapted from software fault localization, LLM-guided methods that use a language model as\par
+\noindent an investigator, RL-trained methods that learn attribution policies, and training-free signal-\par
+\noindent extraction methods that exploit model internals.\par
+\end{flushleft}

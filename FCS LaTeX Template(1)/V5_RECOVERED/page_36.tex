@@ -1,0 +1,58 @@
+% Reconstructed text from V5 PDF page 36; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 36 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 36\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 6.7 TOPAS as the Closest Existing System\par
+\noindent TOPAS [24] formulates KV-cache management as a joint optimization over prefix selection and\par
+\noindent request scheduling under a shared capacity constraint:\par
+\noindent  ∑ ∑\par
+\noindent  max tputj s.t. xk ·sizek ≤ Bt , s ∈ S (2)\par
+\noindent  x,s\par
+\noindent  j k\par
+\par\smallskip
+\noindent where Bt is the total KV-cache budget, xk indicates prefix retention, s is the scheduling assign-\par
+\noindent ment, and S is the set of feasible schedules.\par
+\noindent  This is the closest existing system to a shared diagnostic-serving budget: it demonstrates that\par
+\noindent joint optimization across caching and scheduling under a single capacity constraint is tractable\par
+\noindent and improves throughput over decoupled policies. However, TOPAS optimizes exclusively for\par
+\noindent serving throughput — Bt does not include a diagnostic-evidence retention term. Extending the\par
+\noindent objective to max α·throughput+(1−α)·diagnostic\_value would require: (a) a measurable defi-\par
+\noindent nition of diagnostic value, (b) a mechanism to estimate Ni (T ) at eviction time, and (c) empirical\par
+\noindent validation that the trade-off is worthwhile. We propose such a validation protocol in Section 7.\par
+\par\smallskip
+\noindent 6.8 Additional Bridge Candidates\par
+\noindent Beyond TOPAS, four infrastructure systems partially bridge the diagnostic-serving boundary,\par
+\noindent ranked by the directness of their bridge:\par
+\par\smallskip
+\noindent the policy-driven runtime. The policy-driven runtime [47] constructs agent-identity embed-\par
+\noindent dings and engine-event transition matrices, using learned transition probabilities for survival-\par
+\noindent based eviction. This represents an observe→act loop: observability signals (agent identity and\par
+\noindent engine events) feed into serving decisions (eviction policy). However, the observability signals\par
+\noindent are serving-oriented (predicting cache reuse) rather than diagnostic-oriented (preserving attri-\par
+\noindent bution evidence). The policy-driven runtime is the closest system to a diagnostic-serving bridge\par
+\noindent in architecture, but the farthest in intent — it uses observation to improve serving, not to protect\par
+\noindent diagnostic state.\par
+\par\smallskip
+\noindent TokenCake. TokenCake [4] feeds runtime signals (function-call events, GPU pressure snap-\par
+\noindent shots, DAG structural information) into its temporal-spatial cache scheduling. The temporal\par
+\noindent scheduler’s event-driven offload and predictive upload mechanisms demonstrate that runtime\par
+\noindent diagnostic signals can inform serving decisions with low overhead (offload decision overhead\par
+\noindent is subsumed by the function-call stall time). However, like the policy-driven runtime, the signals\par
+\noindent serve the caching objective; diagnostic trace retention is not a first-class constraint.\par
+\par\smallskip
+\noindent ConServe. ConServe replaces predictive cache management with observation-based policies:\par
+\noindent rather than estimating future access patterns from workload models, it pins KV cache at the\par
+\noindent conversation level based on observed access patterns from deployment data. This observation-\par
+\noindent replaces-prediction approach is relevant because diagnostic trace retention could similarly be\par
+\noindent driven by observed failure rates rather than predicted diagnostic value.\par
+\par\smallskip
+\noindent KAIROS. KAIROS [44] monitors per-agent context growth rate and memory pressure to\par
+\noindent make power-management decisions. Context growth acts as a serving-side observable that cor-\par
+\noindent relates with diagnostic complexity: agents with rapidly growing context are more likely to gen-\par
+\noindent erate complex execution traces that are expensive to reconstruct if evicted. However, KAIROS\par
+\noindent optimizes for power efficiency, not diagnostic retention.\par
+\end{flushleft}

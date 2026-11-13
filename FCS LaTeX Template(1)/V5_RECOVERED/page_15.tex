@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 15; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 15 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 15\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent capability distinguishes it from purely analytical methods.\par
+\noindent  VerifyMAS [31] formulates attribution as hypothesis verification using natural language in-\par
+\noindent ference (NLI). The system generates candidate failure hypotheses, then uses NLI to verify each\par
+\noindent against the execution evidence. An optional SFT fine-tuning stage adapts the NLI model to\par
+\noindent agent-specific failure patterns. The output is an agent-level attribution paired with an error-type\par
+\noindent classification. Accepted at NeurIPS 2026. AgenTracer [45] trains an 8B-parameter failure attri-\par
+\noindent bution model (Qwen3-8B) via Group Relative Policy Optimization (GRPO) with multi-granular\par
+\noindent reward signals on TracerTraj-2.5K, a dataset of approximately 2,476 annotated trajectory pairs\par
+\noindent spanning coding, math, and agentic domains. The annotation pipeline uses DeepSeek-R1 for\par
+\noindent counterfactual replay and fault injection: for each trajectory, up to T +1 replays are performed\par
+\noindent during the annotation phase (not inference) to establish ground-truth attribution (§3.2, Algo-\par
+\noindent rithm 1). At inference time, the trained model requires zero replays and zero environment\par
+\noindent access.\par
+\noindent  On the Who\&When benchmark (184 failures from 127 MAS), AgenTracer achieves 69.10\%\par
+\noindent agent-level accuracy on handcrafted scenarios with ground truth (Table 1, confirmed), outper-\par
+\noindent forming DeepSeek-R1 by 12.21 percentage points (ICLR 2026). Step-level accuracy is lower:\par
+\noindent 20.68\% on handcrafted and 42.86\% on algorithm-generated scenarios (Table 1). Training re-\par
+\noindent quires 8× H100-80GB GPUs on the verl platform (§5.1). Downstream self-correction exper-\par
+\noindent iments show +4.8\% to +14.21\% task completion improvement when AgenTracer’s attribution\par
+\noindent feeds back into the agent (§5.3, Figure 3).\par
+\noindent  Limitations include: low step-level accuracy on handcrafted scenarios (20.68\%), expensive\par
+\noindent annotation pipeline requiring frontier model replays, modest evaluation scale (approximately\par
+\noindent 127 trajectories), instability when ground truth is provided (sometimes hurts accuracy), and no\par
+\noindent evaluation on embodied, web, or scientific agent domains.\par
+\noindent  Xia et al. [40] uses LoRA-based supervised fine-tuning with a multi-perspective verification\par
+\noindent strategy: the system generates multiple candidate attributions from different viewpoints (struc-\par
+\noindent tural, temporal, semantic) and selects the one with highest cross-verification confidence. This\par
+\noindent reaches 69.05\% agent-level on algorithm-generated scenarios, competitive with AgenTracer’s\par
+\noindent RL approach. StepFinder [52] takes a different supervised approach, using BiLSTM to model\par
+\noindent temporal semantics of execution traces for step-level failure detection, achieving 29.63\% step\par
+\noindent accuracy on algorithm-generated scenarios without requiring LLM inference at attribution time.\par
+\par\smallskip
+\noindent Training-free signal extraction. MASPrism [19] extracts diagnostic signals directly from\par
+\noindent a 0.6B-parameter model’s (Qwen3-0.6B) prefill stage without any training, replays, or output-\par
+\noindent token generation. The method operates in two deterministic prefill passes (§3.2–3.3, confirmed).\par
+\noindent In the first pass (Filtering), next-token NLL scores and attention patterns identify symptomatic\par
+\noindent steps: tokens with unexpectedly high NLL indicate points where the execution deviates from\par
+\noindent the model’s expectations. The top 20–50\% of steps by NLL score (configurable per bench-\par
+\noindent mark) are retained as symptom candidates (§4.1.3). In the second pass (Diagnosis), the retained\par
+\noindent candidates are restored into context and rescored; attention weight patterns link symptoms to\par
+\noindent root-cause candidates through a ranked scoring mechanism.\par
+\noindent  The method requires zero training, zero replays, and zero output tokens — only two deter-\par
+\noindent ministic prefill passes. It processes trajectories at 2.66 seconds on average on an RTX 5090,\par
+\noindent consuming only 7,066 input tokens versus 17,748 for A2P (§5, Table 4). This yields 6.69×\par
+\noindent speed improvement over comparable approaches. On TRAIL/SWE-bench, MASPrism outper-\par
+\noindent forms Gemini-2.5-Pro by 89.50\% relative (Table 1). Model robustness testing across different\par
+\noindent backbone sizes (Table 5) confirms that the 0.6B model provides the best cost-accuracy trade-off.\par
+\noindent  Key limitations (§5.1, 5.3) include: signals are diagnostic ranking evidence rather than for-\par
+\end{flushleft}

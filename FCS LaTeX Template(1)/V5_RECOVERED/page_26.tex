@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 26; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 26 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 26\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent starvation under greedy scheduling (§8), restriction to a single memory tier (GPU only; ex-\par
+\noindent tending to CPU/disk is future work), and exact-match-only prefix lookup (no fuzzy or semantic\par
+\noindent matching).\par
+\par\smallskip
+\noindent Cost-benefit eviction. Mooncake [32] disaggregates KV cache from compute into a dis-\par
+\noindent tributed cache pool called KVCache Pool, accessed via one-sided RDMA reads that bypass\par
+\noindent the serving engine’s critical path. The architecture separates prefill nodes (which generate KV\par
+\noindent blocks) from decode nodes (which consume them), with cache blocks stored on dedicated cache\par
+\noindent nodes. Mooncake implements configurable eviction policies (LRU, LFU, or hybrid) with a cost-\par
+\noindent benefit model that weighs cache retention value against RDMA transfer bandwidth. Under a\par
+\noindent prefix-heavy workload, Mooncake achieves up to 525\% throughput improvement while main-\par
+\noindent taining latency SLAs. The system received the FAST 2025 Best Paper Award. For multi-agent\par
+\noindent scenarios, Mooncake’s disaggregated architecture decouples cache lifetime from compute life-\par
+\noindent time: a cached prefix can persist on cache nodes even after the compute node that generated it\par
+\noindent has moved to other requests. However, the eviction policies remain request-level (LRU/LFU)\par
+\noindent and do not incorporate agent identity, workflow structure, or diagnostic value.\par
+\noindent  InferCept [1] addresses a challenge specific to augmented LLM workloads: when generation\par
+\noindent is intercepted for an external tool call, should the system preserve the in-progress KV cache\par
+\noindent (wasting GPU memory while waiting) or discard it (wasting compute on later recomputation)?\par
+\noindent InferCept introduces min-waste adaptive scheduling (§4.3, Equation 5) that makes a per-request\par
+\noindent decision among three strategies: Preserve (retain in GPU memory), Swap (migrate to CPU\par
+\noindent memory), or Discard (recompute upon resumption). The scheduling algorithm sorts intercepted\par
+\noindent requests by expected GPU waste in descending order, assigns a per-iteration swap budget to\par
+\noindent the highest-waste requests, and for the remainder selects whichever of Preserve or Discard\par
+\noindent minimizes expected waste. Key quantitative results: on GPT-J-6B with a single A100, InferCept\par
+\noindent sustains 1.6× higher request rate and reduces normalized latency by 1.9–5.7× (§5); on Llama3-\par
+\noindent 70B across 4×A100, it achieves 2× higher throughput with 1.3–12× latency reduction. The\par
+\noindent full optimization stack reduces GPU waste from 27\% (discard baseline) to just 0.69\% (§5.2,\par
+\noindent Figure 3). InferCept’s duration estimation achieves 93\% of an oracle policy that knows the exact\par
+\noindent tool-call duration in advance (§4.4). For cross-layer analysis, InferCept’s three-state model is\par
+\noindent directly relevant: the Preserve/Swap/Discard decision is precisely the kind of retention trade-\par
+\noindent off our evidence-loss formalization captures. The diagnostic question is whether the intercepted\par
+\noindent state contains diagnostically valuable signals (tool-call context, intermediate reasoning) whose\par
+\noindent loss during a Discard event constitutes an Li (T ) event (ICML 2024).\par
+\noindent  Continuum [16] addresses the multi-turn agentic serving challenge: when an agent makes\par
+\noindent a tool call, should the serving system retain its KV cache (occupying GPU memory during\par
+\noindent the external call) or evict it (requiring recomputation when the agent resumes)? The system\par
+\noindent answers this with a TTL-based cost-benefit optimization (§4.1): each request’s time-to-live τ ∗\par
+\noindent is computed as the value that maximizes expected benefit, balancing the probability that the\par
+\noindent tool call completes before the TTL expires (estimated from an empirical CDF of historical tool-\par
+\noindent call durations) against the memory opportunity cost and prefill-reload cost (profiled offline per\par
+\noindent hardware/model pair). The scheduling priority is a multi-key tuple: preempted requests first,\par
+\noindent then pinned/within-TTL requests, then program-level FCFS by arrival time (§4.3). A cold-start\par
+\noindent mechanism uses three tiers of CDF estimation based on the number of collected samples (§4.2).\par
+\noindent On real SWE-agent workloads at a production deployment, Continuum achieves up to 8.18× job\par
+\noindent completion time improvement (§6.4), with 50.31\% cost reduction and 27.28\% latency reduction\par
+\noindent on average. On synthetic multi-turn benchmarks, throughput improvements range from 1.10×\par
+\noindent to 3.22× and delay reductions from 1.12× to 3.66× across A100, B200, and H100 hardware\par
+\end{flushleft}

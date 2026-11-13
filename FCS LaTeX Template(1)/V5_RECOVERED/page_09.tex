@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 9; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 9 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 9\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 3.4 Classification Taxonomy\par
+\noindent We organize the reviewed systems along two orthogonal dimensions: function and method\par
+\noindent characteristics. This separation addresses a recurring classification ambiguity in the literature,\par
+\noindent where systems are categorized by their implementation strategy rather than the runtime role\par
+\noindent they serve.\par
+\par\smallskip
+\noindent Functional categories. We identify four primary functions in the diagnostic layer and three\par
+\noindent in the infrastructure layer:\par
+\noindent Diagnostic functions:\par
+\noindent  1. Localization: Identify which agent, step, or action caused a failure.\par
+\noindent  2. Monitoring: Continuously observe execution to detect anomalies or collect traces.\par
+\noindent  3. Intervention: Actively modify execution to prevent or recover from failures.\par
+\noindent  4. Evaluation: Assess system reliability, safety, or diagnostic quality post-hoc or online.\par
+\noindent Infrastructure functions:\par
+\noindent  1. State management: Retain, evict, or transfer cached computation state across requests.\par
+\noindent  2. Scheduling: Allocate compute, memory, or I/O resources across concurrent agent work-\par
+\noindent  loads.\par
+\noindent  3. Placement: Decide where to store or process agent-specific state across memory tiers or\par
+\noindent  nodes.\par
+\par\smallskip
+\noindent Method dimensions. Within each functional category, we characterize systems along six di-\par
+\noindent mensions that affect deployment feasibility and cross-layer interactions:\par
+\noindent  1. Evidence inputs: What execution data does the method consume? (e.g., full traces, tool-\par
+\noindent  call logs, attention scores, prefill outputs)\par
+\noindent  2. Training requirements: Does the method require task-specific training, general pre-\par
+\noindent  training, or no training?\par
+\noindent  3. Replay requirements: How many environment re-executions does the method need? (0,\par
+\noindent  fixed k, or adaptive)\par
+\noindent  4. Attribution granularity: At what level does the method operate? (system, agent, step,\par
+\noindent  action, token)\par
+\noindent  5. Intervention timing: Is the method post-hoc, online, or preemptive?\par
+\noindent  6. Runtime cost: What are the computational, memory, and latency overheads?\par
+\noindent  A system may serve multiple functions (e.g., a guardrail that both monitors and intervenes)\par
+\noindent and may exhibit different cost profiles depending on its deployment mode. The comparison\par
+\noindent tables in Sections 4 and 5 record each system’s primary function and characterize it along all\par
+\noindent six dimensions where evidence is available.\par
+\par\smallskip
+\noindent 3.5 Evidence Extraction Process\par
+\noindent For each Tier-1 system, we performed a structured extraction following a fixed template with\par
+\noindent 10 dimensions: (1) full citation with arXiv ID and venue; (2) state type managed (for infras-\par
+\noindent tructure) or method category (for diagnostics); (3) eviction/retention policy mechanism or at-\par
+\noindent tribution approach; (4) runtime assumptions (model homogeneity, memory topology, multi-\par
+\noindent tenancy, workload pattern); (5) shared diagnostic-serving retention budget assessment (with\par
+\noindent explicit “confirmed absent by exhaustive reading” notation); (6) training and replay require-\par
+\noindent ments with quantified costs; (7) cost metrics with section-level evidence locations; (8) main\par
+\noindent limitations (author-stated plus reviewer-identified); (9) evidence locations table mapping each\par
+\end{flushleft}

@@ -1,0 +1,16 @@
+name: V5 recovered LaTeX compilation
+on:
+  push:
+    branches: [neurocomputing-v5-evidence-upgrade-2026-11-12]
+  pull_request:
+jobs:
+  recovery-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile PDF-recovered editable source
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: v5_recovered_editable.tex
+          working_directory: FCS LaTeX Template(1)
+          args: -xelatex -interaction=nonstopmode -halt-on-error -file-line-error

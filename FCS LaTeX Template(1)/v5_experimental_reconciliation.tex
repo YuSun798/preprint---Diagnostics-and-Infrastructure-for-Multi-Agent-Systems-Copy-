@@ -1,0 +1,120 @@
+% Provenance: user-supplied 56-page V5 PDF, Tables 7-11, 2026-11-12.
+% Transcribed results, not independently rerun. This supplementary file
+% does not replace the native V5 LaTeX author source.
+\section{V5 Experimental Results: Preservation and Reconciliation}
+\label{sec:v5_exp_preserve}
+The numerical results below are preserved from the V5 manuscript, including
+the new cache simulations, retention ablation and recovery-logic ablation.
+They remain \emph{author-reported}; a complete independent reproduction
+requires raw event logs and per-instance predictions. The simulated cache
+results come from a CPU model, not a production GPU serving engine.
+
+\subsection{Cross-layer simulation results}
+The first scenario used three agents, a 100-block cache, 50 conversations,
+seed 42 and a five-conversation warm-up. It explicitly assumes diagnostic
+content and serving cache blocks occupy a constrained shared buffer.
+\begin{table*}[ht]\centering\footnotesize
+\caption{V5 Table 7: author-reported simulated cache policies. Hit-rate
+and eviction event streams require code-level reconciliation.}
+\label{tab:v5sim1}
+\begin{tabular}{lrrrr}\toprule
+Policy & Evictions & Diag-bearing & Hit rate & Diag retained\\\midrule
+LRU & 2,688 & 58.5\% & 100\% & 67/100\\
+FIFO & 2,641 & 60.3\% & 100\% & 64/100\\
+Diag-aware & 2,658 & 58.2\% & 88.4\% & 100/100\\
+\bottomrule\end{tabular}\end{table*}
+The second scenario comprises 20 conversations, 240 requests, a
+5,000-token cache, and a separate workload; it must not be compared as
+though it used the first scenario's cache budget.
+\begin{table*}[ht]\centering\footnotesize
+\caption{V5 Table 8: author-reported CPU serving simulation.}
+\label{tab:v5sim2}
+\begin{tabular}{lrrrr}\toprule
+Policy & Prefix hit & Utilization & Mean TTFT (ms) & Evictions\\\midrule
+LRU Flat & 95.45\% & 91.1\% & 13.456 & 208\\
+RadixTree & 95.74\% & 25.6\% & 13.240 & 0\\
+\bottomrule\end{tabular}\end{table*}
+The access/hit/miss definitions must be reconciled with the reported 2,688
+evictions and 100\% hit rate; cumulative diagnostic-bearing eviction
+events must be distinguished from final retained diagnostic blocks.
+
+\subsection{Real-trace retention ablation}
+The source reports 220 annotated TraceElephant failure traces:
+Captain-Agent/GAIA (73), Captain-Agent/AssistantBench (12),
+Magentic-One/GAIA (74), Magentic-One/AssistantBench (17),
+SWE-Agent/SWE-Bench Verified (44). The policies are S1 full retention,
+S2 random sampling, S3 recency and S4 importance scoring; attribution
+uses both causal-graph and last-error heuristics.
+\begin{table*}[ht]\centering\footnotesize
+\caption{V5 Table 9: 10\% retention accuracy. S2 is mean $\pm$ SD over
+three seeds; other methods are deterministic.}
+\label{tab:v5ret10}
+\begin{tabular}{lrr}\toprule
+Policy & Causal graph & Last-error\\\midrule
+S1 Full & .459 & .432\\
+S2 Random & $.524\pm.023$ & $.523\pm.020$\\
+S3 Recency & .391 & .391\\
+S4 Importance & .532 & .500\\
+\bottomrule\end{tabular}\end{table*}
+\begin{table*}[ht]\centering\scriptsize
+\caption{V5 Table 10: causal-graph accuracy over the reported
+10--100\% retention budgets; author-reported.}
+\label{tab:v5retall}
+\begin{tabular}{lrrrr}\toprule
+Budget & S1 Full & S2 Random & S3 Recency & S4 Importance\\\midrule
+10\% & .459 & .524 & .391 & .532\\
+20\% & .459 & .479 & .423 & .555\\
+30\% & .459 & .479 & .423 & .546\\
+40\% & .459 & .479 & .445 & .514\\
+50\% & .459 & .461 & .450 & .496\\
+60\% & .459 & .450 & .459 & .491\\
+70\% & .459 & .432 & .459 & .482\\
+80\% & .459 & .451 & .464 & .473\\
+90\% & .459 & .457 & .459 & .464\\
+100\% & .459 & .459 & .459 & .459\\
+\bottomrule\end{tabular}\end{table*}
+
+The inverted curve largely reflects an attributor-specific recovery
+heuristic that suppresses earlier failures after later normal messages,
+rather than demonstrating that discarding informative observations is
+universally beneficial. Importance scoring differs by only +0.008
+from random sampling at 10\% budget (within reported noise).
+
+\subsection{Corrected interpretation of paired recovery ablation}
+\begin{table*}[ht]\centering\footnotesize
+\caption{V5 Table 11: reported accuracies retained, while the
+two-sided \emph{exact} McNemar p-value and discordant-pair direction
+are reconciled. Reported CIs require independent reproduction from
+per-case outputs.}
+\label{tab:v5recover}
+\begin{tabular}{lrrr}\toprule
+Condition & Correct & Accuracy & Exact two-sided $p$\\\midrule
+C1 Original, 100\% retention & 101/220 & .459 & --\\
+C2 No recovery logic, 100\% & 117/220 & .532 & .003719 vs C1\\
+C3 C2 + S4 at 10\% & 119/220 & .541 & .891923 vs C2\\
+\bottomrule\end{tabular}\end{table*}
+Define $b$ as new-only correct and $c$ as old-only correct:
+C1$\to$C2 must have $b=22,c=6$ (net 16);
+C2$\to$C3 must have $b=28,c=26$ (net 2).
+Those two p-values are two-sided \emph{exact} binomial McNemar values.
+If a two-sided mid-$p$ procedure were intended, the corresponding
+values are .0023157001 and .7877061897. The extra 0.9 percentage points
+from C2 to C3 are not statistically significant; the paper's paired
+confidence interval should be recalculated from raw outcome vectors.
+
+\subsection{DRICE synthesis}
+The V5 DRICE framework includes five orthogonal dimensions:
+D (diagnostic evidence and capture), R (retention trigger and diagnostic
+awareness), I (model/workload/memory assumptions), C (compute, memory,
+latency and communication cost), and E (source evidence depth).
+Claims that a system jointly optimizes diagnostic evidence and serving
+state require an explicit shared resource budget and an observed
+diagnostic-fidelity metric, not only ordinary prefix-cache hits.
+A complete evidence matrix must attach claim-level section/table/page
+locators to each DRICE cell. See the GitHub V5_EVIDENCE directory.
+
+\paragraph*{Source fidelity.} These tables preserve V5 experimental
+numbers and their interpretation. The V5_SOURCE_SNAPSHOT text files
+preserve the manuscript page-by-page; a native editable V5 LaTeX
+archive with its current graphics is still required before guaranteeing
+full Overleaf manuscript fidelity.

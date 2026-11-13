@@ -1,0 +1,380 @@
+V5 AUTHORITATIVE PDF TEXT EXTRACTION (not native LaTeX source)
+Source: Survey_MAS_Diagnostics_Neurocomputing_v5_evidence_audit(1).pdf
+Pages: 9-16 / 56
+Formatting / image figures must be verified against the uploaded PDF.
+
+<PARSED TEXT FOR PAGE: 9 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  9
+
+
+
+3.4    Classification Taxonomy
+We organize the reviewed systems along two orthogonal dimensions: function and method
+characteristics. This separation addresses a recurring classification ambiguity in the literature,
+where systems are categorized by their implementation strategy rather than the runtime role
+they serve.
+
+Functional categories. We identify four primary functions in the diagnostic layer and three
+in the infrastructure layer:
+Diagnostic functions:
+    1. Localization: Identify which agent, step, or action caused a failure.
+    2. Monitoring: Continuously observe execution to detect anomalies or collect traces.
+    3. Intervention: Actively modify execution to prevent or recover from failures.
+    4. Evaluation: Assess system reliability, safety, or diagnostic quality post-hoc or online.
+Infrastructure functions:
+    1. State management: Retain, evict, or transfer cached computation state across requests.
+    2. Scheduling: Allocate compute, memory, or I/O resources across concurrent agent work-
+       loads.
+    3. Placement: Decide where to store or process agent-specific state across memory tiers or
+       nodes.
+
+Method dimensions. Within each functional category, we characterize systems along six di-
+mensions that affect deployment feasibility and cross-layer interactions:
+   1. Evidence inputs: What execution data does the method consume? (e.g., full traces, tool-
+      call logs, attention scores, prefill outputs)
+   2. Training requirements: Does the method require task-specific training, general pre-
+      training, or no training?
+   3. Replay requirements: How many environment re-executions does the method need? (0,
+      fixed k, or adaptive)
+   4. Attribution granularity: At what level does the method operate? (system, agent, step,
+      action, token)
+   5. Intervention timing: Is the method post-hoc, online, or preemptive?
+   6. Runtime cost: What are the computational, memory, and latency overheads?
+    A system may serve multiple functions (e.g., a guardrail that both monitors and intervenes)
+and may exhibit different cost profiles depending on its deployment mode. The comparison
+tables in Sections 4 and 5 record each system’s primary function and characterize it along all
+six dimensions where evidence is available.
+
+3.5    Evidence Extraction Process
+For each Tier-1 system, we performed a structured extraction following a fixed template with
+10 dimensions: (1) full citation with arXiv ID and venue; (2) state type managed (for infras-
+tructure) or method category (for diagnostics); (3) eviction/retention policy mechanism or at-
+tribution approach; (4) runtime assumptions (model homogeneity, memory topology, multi-
+tenancy, workload pattern); (5) shared diagnostic-serving retention budget assessment (with
+explicit “confirmed absent by exhaustive reading” notation); (6) training and replay require-
+ments with quantified costs; (7) cost metrics with section-level evidence locations; (8) main
+limitations (author-stated plus reviewer-identified); (9) evidence locations table mapping each
+
+<PARSED TEXT FOR PAGE: 10 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  10
+
+
+
+finding to its source section, table, or figure; and (10) cross-layer analysis notes assessing the
+system’s relevance to the diagnostic-infrastructure interaction.
+    This structured template ensures that the comparison tables in Sections 4 and 5 report con-
+sistent dimensions across all systems. The template was developed iteratively: the first five
+systems (SGLang, ScaleSim, DistServe, Mooncake, Parrot) were extracted using a preliminary
+template, and the template was refined based on which dimensions proved most informative for
+cross-system comparison. All subsequent extractions used the refined template.
+    A verification step was applied to each extraction: quantitative claims in the extraction tem-
+plate were cross-checked against the source paper’s tables and figures (not just the text). Several
+discrepancies were identified and corrected: for example, a preliminary extraction attributed
+66% accuracy to FAMAS, but the source paper’s Table 2 shows 62.07% as the best agent-level
+figure on handcrafted scenarios; similarly, TrajAudit’s trajectory folding was initially recorded
+as 86–92% but the source paper (§VII-D) reports 94.6%.
+
+3.6    Corpus Summary
+The 60 core table entries comprise 56 entries assessed at Tier 1 (T1a or T1b) and four at
+Tier 2. The core failure-localization table includes eight full-text-verified (T1) methods and
+four abstract-verified (T2) methods. The T2 entries — StepFinder, FALAT, DoVer, and Veri-
+fyMAS — are retained for landscape coverage but are not used to support fine-grained mech-
+anistic or quantitative cross-method comparisons unless their primary full texts are indepen-
+dently checked. Additional contextual works discussed in the running text are not included in
+this count. By category: 12 failure-localization methods (8 T1, 4 T2), 6 observability entries
+(all T1), 8 safety and guardrail systems (4 T1a, 4 T1b), 22 infrastructure systems (all T1), and
+12 evaluation benchmarks (all T1). See Appendix A for the complete census. Additionally, we
+include a retention-ablation experiment on real TraceElephant traces (220 failures) to support
+the validation protocol proposed in Section 7.
+    Figure 2 illustrates the corpus assembly process.
+
+
+4     Diagnostics
+This section organizes the diagnostic landscape along functional roles rather than implementa-
+tion categories, following the taxonomy introduced in Section 3.4. We cover failure localization
+(§4.1), observability and tracing (§4.2), safety intervention and guardrails (§4.3), and diagnos-
+tic benchmarks (§4.4). For each subsection, methods are characterized along the six method
+dimensions defined in Section 3.4: evidence inputs, training requirements, replay demands, at-
+tribution granularity, intervention timing, and runtime cost. Figure 3 provides a matrix view of
+the taxonomy with representative systems placed in cells.
+
+4.1    Failure Localization
+Failure localization identifies which agent, step, or action caused an observed failure. We iden-
+tify four methodological families among the 8 Tier-1 methods reviewed: statistical methods
+adapted from software fault localization, LLM-guided methods that use a language model as
+an investigator, RL-trained methods that learn attribution policies, and training-free signal-
+extraction methods that exploit model internals.
+
+<PARSED TEXT FOR PAGE: 11 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                   11
+
+
+
+
+Figure 2: Curated corpus assembly. This is a curated landscape review, not a PRISMA-compliant
+systematic review; no database-level screening logs were preserved. Sources: five academic databases
+(IEEE Xplore, ACM DL, Scopus, Google Scholar, arXiv) plus forward and backward citation chaining
+through November 2026. Inclusion requires a described runtime diagnostic or serving mechanism for
+foundation-model agents (§3.2). Terminal corpus: 48 non-benchmark entries (systems, surveys, and
+standards) + 12 benchmarks = 60 entries (Appendix A).
+
+<PARSED TEXT FOR PAGE: 12 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 12
+
+
+
+
+Figure 3: Classification taxonomy: four diagnostic functions (rows) characterized along six method
+dimensions (columns). Representative systems are placed in each cell. Functions are not mutually
+exclusive algorithm classes; the same method may serve multiple functions. Red shading indicates
+diagnostic-layer systems.
+
+
+Statistical methods. FAMAS [11] adapts spectrum-based fault localization (SBFL) from
+software engineering to multi-agent failure attribution. The method parses failed execution
+logs into structured ⟨agent, action, state⟩ triples using an LLM (Qwen2.5-72B) for log parsing,
+then applies the Kulczynski2 suspiciousness formula with two domain-specific modifications:
+temporal decay weighting (later actions receive higher suspiciousness) and action-frequency
+normalization (§3–4).
+    The method requires k=20 environment replays per failure to build the execution spectrum
+(§5.1, confirmed). Sensitivity analysis shows monotonic accuracy improvement with replay
+count: k=5 yields 46.0 action-level correct attributions, k=10 yields 47.6, k=15 yields 50.8,
+and k=20 yields 54 (§5.4, Figure 4). The best agent-level accuracy is 62.07% on handcrafted
+multi-agent systems and 57.61% overall in the Who&When benchmark; the best action-level
+accuracy is 41.38% (handcrafted) and 29.35% (overall) (Table 2).
+    The method’s principal cost is replay time: on average 105 minutes per task (range 38–
+248 minutes), while the spectrum analysis itself completes in under one minute (§5.2). This
+makes FAMAS the most expensive T1 method by wall-clock time, but the only one with formal
+coverage guarantees from SBFL theory. The method degrades on very short trajectories (<11
+steps, where the spectrum is too sparse) and very long ones (38–65 steps, where the action space
+dilutes individual suspiciousness scores) (§6.1, Figure 6). A single benchmark (Who&When
+with 184 failure logs) limits generalizability (§6.2).
+
+LLM-guided methods. Four systems use off-the-shelf language models without task-specific
+training:
+     • CHIEF [38] constructs a three-level hierarchical causal graph G = (V, E) with sub-
+       task nodes, agent nodes characterized by OTAR attributes (Objective, Tools, Authority,
+
+<PARSED TEXT FOR PAGE: 13 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 13
+
+
+
+      Role), and three edge types connecting them (§4.1). The system backtracks through this
+      graph in reverse topological order using synthesized virtual oracles Ok = ⟨Goal, Pre-
+      conditions, Key Evidence, Acceptance Criteria⟩, then applies counterfactual attribution
+      through four progressive stages: local analysis, planning-control analysis, data-flow anal-
+      ysis, and deviation-aware analysis (§4.2–4.3). A RAG knowledge base constructed from
+      165 GAIA and 33 AssistantBench examples supports subtask decomposition.
+      Using DeepSeek-V3.2 (671B parameters, approximately 37B active via sparse MoE) as
+      its backbone, CHIEF achieves the highest reported agent-level accuracy at 77.59% on
+      handcrafted scenarios and 76.80% on algorithm-generated scenarios (Table 1). Step-level
+      accuracy is 29.31% (handcrafted) and 52.00% (algorithm-generated). The system con-
+      sumes 55,085 tokens per trajectory on handcrafted scenarios and 19,504 on algorithm-
+      generated ones (Table 2). Reported costs are presented in original units; we avoid cross-
+      paper cost ratios when workloads and measurement conditions differ. The method was
+      tested on TITAN RTX with 32GB RAM using API inference (§5). Its effectiveness de-
+      pends on graph fidelity: hallucinated edges in the causal graph propagate attribution errors
+      through the backtracking process (§7). A single-benchmark evaluation (Who&When) and
+      single-root-cause assumption (no cumulative error propagation verification) limit gener-
+      alizability.
+    • TrajAudit [35] addresses the challenge of long execution trajectories (often thousands of
+      steps in coding agents) through two preprocessing stages before LLM-based diagnosis.
+      Semantic Structure Folding (SSF) merges consecutive actions with similar semantics,
+      reducing the trajectory length while preserving the decision structure; the paper reports
+      94.6% of steps folded on average (§VII-D). Progressive Failure Reasoning (PFR) then
+      applies a multi-round narrowing strategy that progressively identifies the earliest decisive
+      error step.
+      The system was tested with five LLM backbones: Claude Sonnet 4.5 (default), Gemini
+      3.1 Pro, GPT-5.2, DeepSeek V4 Pro, and Qwen3-235B (Table VI). The best configuration
+      achieves 52.0% step-level RootSE accuracy without reference trajectories and 49.0% with
+      reference trajectories, representing +21.6 and +10.8 percentage-point gains over direct-
+      prompting baselines respectively (Table II). Token consumption averages 138K per case
+      (Table VII, §VII-C), making TrajAudit the most token-intensive single-trajectory method
+      in the survey.
+      Several limitations are notable (§IX). The dataset was filtered from 500 to 102 instances,
+      excluding ambiguous and multi-failure cases. The method is evaluated on single-agent
+      coding tasks only; 37% of MAS failures are inter-agent cooperation breakdowns, which
+      TrajAudit does not address. A strong positional bias exists: accuracy drops to 19–26%
+      when errors occur in the first 20% of steps, and 81% of mispredictions are later than the
+      true error step by an average of 14.5 steps. Ablation confirms SSF as critical (−11.4%
+      vs. −3.5% for PFR, Table VII).
+    • AgentRx [3] synthesizes behavioral constraints from toolset schemas and domain poli-
+      cies, then uses an LLM judge to evaluate each step against the generated constraints.
+      The method operates in two phases: first, constraint generation produces semantic asser-
+      tions for each step based on the available tool definitions and optional domain policy Π
+      (9 failure categories in a structured taxonomy); second, a judge protocol evaluates each
+      step against these constraints. On τ -bench [42] (airline and retail scenarios), AgentRx
+      achieves 42.7% step accuracy, with the AgentRx W&W* variant showing +23.9 percent-
+      age points over the 18.8% baseline (Table 3). Cost is $0.18 per trajectory versus $0.05 for
+      judge-only evaluation (3.6× overhead), with constraint generation consuming 81% of the
+
+<PARSED TEXT FOR PAGE: 14 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 14
+
+
+
+      total cost (§5.3). The method generalizes across four domains and three LLM backbones
+      (GPT-5, o3, DeepSeek-V3.2; Table 9) without per-domain fine-tuning. Token consump-
+      tion varies with trajectory complexity: 4,889 tokens per trajectory on τ -bench versus
+      16,484 on Magentic-One (Table 6). Limitations include potential taxonomy incomplete-
+      ness, false positives from weak validation signals, and a tendency to surface downstream
+      symptoms rather than root causes (§7). Accepted at EMNLP Findings 2026.
+    • FALAT [33] frames attribution as a dependency-guided search problem over a hierar-
+      chical trajectory representation with typed inter-step dependencies. Given a failed tra-
+      jectory τ = (s1 , . . . , sT ), FALAT constructs a dependency graph encoding causal, data-
+      flow, and control-flow relationships between steps, then searches this graph for the de-
+      cisive step using LLM-judged counterfactual reasoning (hypothetical, not re-executed).
+      The method requires no training and no replays, using off-the-shelf API models (GPT-
+      5.4-Mini, DeepSeek V3.2, MiniMax 2.5). It achieves 46.0% step-level accuracy on
+      algorithm-generated and 29.1% on hand-crafted Who&When scenarios (Table 2, §4).
+      Limitations include dependence on LLM judgment quality and window-based processing
+      that may miss long-range dependencies.
+
+Supervised methods. Two systems use task-specific supervised training rather than RL or
+LLM prompting:
+    Xia et al. [40] propose a multi-perspective verification approach with adaptive refinement
+(COLM 2026). A judge LLM generates a failure hypothesis, multiple independent evalua-
+tor LLMs verify it from different viewpoints (structural, temporal, semantic), and confidence-
+weighted voting aggregates their assessments. The evaluator feedback is then used to fine-tune
+the judge via LoRA (rank 64, α=128, dropout 0.05, 3 epochs). This iterative judge-evaluator
+loop reaches 69.05% agent-level accuracy on algorithm-generated scenarios, competitive with
+AgenTracer’s RL approach. A key efficiency advantage: the system uses only 451K tokens
+per attribution on algorithm-generated scenarios versus AgenTracer’s 16.4M tokens — a 36×
+reduction — at $0.063 versus $2.275 per case (§5).
+    StepFinder [52] takes a different supervised approach, using a BiLSTM with agent-aware
+attention and multi-scale differencing on top of Qwen3-Embedding-0.6B features (KDD 2026).
+The system is trained on LLM-prompted trajectory regeneration data (1,564 algorithm-generated
+and 2,604 hand-crafted trajectories, up to 50 epochs). At inference, StepFinder produces zero
+output tokens — it generates a step-level attribution from the learned representations without
+any LLM decoding. Inference time is 0.61s on algorithm-generated scenarios versus 2.92s
+for the best LLM baseline, running on a single NVIDIA RTX 3080 Ti (Table 6, §7). Accu-
+racy is modest at 29.63% (algorithm-generated) and 22.99% (hand-crafted), below LLM causal
+methods, but the approach demonstrates that lightweight learned attributors can operate at <1s
+latency.
+
+Intervention-based methods. DoVer [22] is unique among surveyed methods in using a “Do-
+then-Verify” paradigm: it generates failure hypotheses from logs, then validates each by replay-
+ing the execution with targeted interventions at the hypothesized failure point. Each case re-
+quires 4–12 environment re-executions with stateful checkpoints. If the intervention (replacing
+the hypothesized faulty action with a corrected one) leads to task success, the hypothesis is con-
+firmed. This makes DoVer the only method besides FAMAS that requires environment replay,
+but unlike FAMAS’s statistical approach (k=20 blind replays), DoVer’s replays are hypothesis-
+directed. The method also supports a recovery mode: once the root cause is identified, the
+corrective intervention can be applied to resume the task. This dual diagnosis-and-recovery
+
+<PARSED TEXT FOR PAGE: 15 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  15
+
+
+
+capability distinguishes it from purely analytical methods.
+    VerifyMAS [31] formulates attribution as hypothesis verification using natural language in-
+ference (NLI). The system generates candidate failure hypotheses, then uses NLI to verify each
+against the execution evidence. An optional SFT fine-tuning stage adapts the NLI model to
+agent-specific failure patterns. The output is an agent-level attribution paired with an error-type
+classification. Accepted at NeurIPS 2026. AgenTracer [45] trains an 8B-parameter failure attri-
+bution model (Qwen3-8B) via Group Relative Policy Optimization (GRPO) with multi-granular
+reward signals on TracerTraj-2.5K, a dataset of approximately 2,476 annotated trajectory pairs
+spanning coding, math, and agentic domains. The annotation pipeline uses DeepSeek-R1 for
+counterfactual replay and fault injection: for each trajectory, up to T +1 replays are performed
+during the annotation phase (not inference) to establish ground-truth attribution (§3.2, Algo-
+rithm 1). At inference time, the trained model requires zero replays and zero environment
+access.
+    On the Who&When benchmark (184 failures from 127 MAS), AgenTracer achieves 69.10%
+agent-level accuracy on handcrafted scenarios with ground truth (Table 1, confirmed), outper-
+forming DeepSeek-R1 by 12.21 percentage points (ICLR 2026). Step-level accuracy is lower:
+20.68% on handcrafted and 42.86% on algorithm-generated scenarios (Table 1). Training re-
+quires 8× H100-80GB GPUs on the verl platform (§5.1). Downstream self-correction exper-
+iments show +4.8% to +14.21% task completion improvement when AgenTracer’s attribution
+feeds back into the agent (§5.3, Figure 3).
+    Limitations include: low step-level accuracy on handcrafted scenarios (20.68%), expensive
+annotation pipeline requiring frontier model replays, modest evaluation scale (approximately
+127 trajectories), instability when ground truth is provided (sometimes hurts accuracy), and no
+evaluation on embodied, web, or scientific agent domains.
+    Xia et al. [40] uses LoRA-based supervised fine-tuning with a multi-perspective verification
+strategy: the system generates multiple candidate attributions from different viewpoints (struc-
+tural, temporal, semantic) and selects the one with highest cross-verification confidence. This
+reaches 69.05% agent-level on algorithm-generated scenarios, competitive with AgenTracer’s
+RL approach. StepFinder [52] takes a different supervised approach, using BiLSTM to model
+temporal semantics of execution traces for step-level failure detection, achieving 29.63% step
+accuracy on algorithm-generated scenarios without requiring LLM inference at attribution time.
+
+Training-free signal extraction. MASPrism [19] extracts diagnostic signals directly from
+a 0.6B-parameter model’s (Qwen3-0.6B) prefill stage without any training, replays, or output-
+token generation. The method operates in two deterministic prefill passes (§3.2–3.3, confirmed).
+In the first pass (Filtering), next-token NLL scores and attention patterns identify symptomatic
+steps: tokens with unexpectedly high NLL indicate points where the execution deviates from
+the model’s expectations. The top 20–50% of steps by NLL score (configurable per bench-
+mark) are retained as symptom candidates (§4.1.3). In the second pass (Diagnosis), the retained
+candidates are restored into context and rescored; attention weight patterns link symptoms to
+root-cause candidates through a ranked scoring mechanism.
+    The method requires zero training, zero replays, and zero output tokens — only two deter-
+ministic prefill passes. It processes trajectories at 2.66 seconds on average on an RTX 5090,
+consuming only 7,066 input tokens versus 17,748 for A2P (§5, Table 4). This yields 6.69×
+speed improvement over comparable approaches. On TRAIL/SWE-bench, MASPrism outper-
+forms Gemini-2.5-Pro by 89.50% relative (Table 1). Model robustness testing across different
+backbone sizes (Table 5) confirms that the 0.6B model provides the best cost-accuracy trade-off.
+    Key limitations (§5.1, 5.3) include: signals are diagnostic ranking evidence rather than for-
+
+<PARSED TEXT FOR PAGE: 16 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                   16
+
+
+
+mal causal estimators; the method requires open-weight SLMs (closed APIs are incompatible
+with prefill-stage signal extraction); only failed traces are evaluated, with false-positive control
+on mixed-success runs left as future work; the symptom ratio must be manually configured per
+benchmark; and on short traces (the AG subset of Who&When), explicit reasoning methods
+such as A2P outperform MASPrism (43.65% vs. 36.51%, Table 1). Without the filtering stage,
+the method encounters out-of-memory failures on 73 of 117 GAIA traces (Table 3).
+
+Additional LLM-guided methods. Beyond the four systems detailed above, the LLM-guided
+family has expanded rapidly. RAFFLES [51] applies iterative reasoning chains to progressively
+narrow the failure location, achieving 50.79% step-level accuracy on algorithm-generated sce-
+narios in the Who&When benchmark (EACL 2026). VerifyMAS [31] formulates attribution as
+hypothesis verification using natural language inference (NLI), optionally fine-tuned via SFT,
+producing agent-level attribution paired with error-type classification.
+    At the abstract-verified tier, additional systems reveal design directions: CausalFlow applies
+causal responsibility scores to agent trajectories via step-level counterfactual intervention. CAR
+(Causal Agent Replay) combines structural causal models with five do-operations and Shapley
+credit-splitting for multi-agent attribution. DCFA (EMNLP 2026) introduces a training-free
+dual-view approach: a global causal dependency graph combined with local counterfactual rea-
+soning, achieving +8.27% step accuracy over the state of the art. HPFA (COLM 2026) uses
+hypergraph-based paired failure attribution with SFT + RL training. EDGE (EMNLP 2026)
+constructs multi-error dependency graphs, addressing the challenging case of multiple simul-
+taneous failures. DeFA achieves the highest accuracy on both Who&When and Who&When
+Pro’s text subset through protocol + semantic dependency propagation. EMFA establishes a
+new state of the art on step-level Who&When attribution by modeling cascading + persistent
+error propagation loops.
+    These systems illustrate the field’s rapid progression from single-failure linear analysis to-
+ward multi-fault, graph-structured attribution. Three additional architectural directions are visi-
+ble: SDBL (AAAI 2026) proposes scoping the failure before localization — defining the failure
+boundary first, then identifying the root cause within that boundary. DuoTrace separates detec-
+tion from attribution, using a first pass to identify whether a failure occurred and a second pass
+to attribute where it originated. REFLECT (ICML 2026 Workshop) bridges diagnosis to inter-
+vention by generating repair actions from attributed failures — the only system in our survey
+that closes the loop from attribution to recovery in a single framework. Together, these 23 addi-
+tional systems (all abstract-verified) suggest that the failure-localization landscape is maturing
+from isolated tools toward integrated pipelines with standardized interfaces.
+
+Benchmarks and evaluation. TRAIL [10] provides the first OTel-format benchmark for trace
+debugging: 1,987 spans across 148 traces from GAIA (multi-agent) and SWE-Bench Lite
+(single-agent) systems, with structured error categorization. The best model (Gemini 2.5 Pro)
+achieves only ∼11% joint accuracy, revealing that current LLMs struggle with long structured
+traces. Token consumption is substantial: GAIA traces average 263–314K input tokens, while
+SWE-Bench traces average 617–728K, with a pronounced anti-correlation between trace length
+and accuracy (Pearson r = −0.29 to −0.38, §5.1.3). The annotation protocol required $12.66
+per trace and 30–40 minutes of expert time, illustrating the cost of ground-truth creation for
+diagnostic evaluation.
+    RAFFLES [51] achieves 50.79% step-level accuracy on algorithm-generated scenarios through
+iterative reasoning (K=2 rounds) at $0.12 per short log and $0.31 per long log using Claude
+Sonnet — 21–41× cheaper than a junior engineer (§5.1, Appendix D). Parallelized latency is

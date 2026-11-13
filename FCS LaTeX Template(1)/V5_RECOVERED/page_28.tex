@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 28; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 28 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 28\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  TokenCake [4] implements temporal-spatial dual scheduling for multi-agent KV cache man-\par
+\noindent agement, coordinating two schedulers that operate on complementary dimensions. The tempo-\par
+\noindent ral scheduler is event-driven: triggered by function-call start events from the frontend API, it\par
+\noindent proactively offloads stalled agents’ KV caches to CPU when three conditions are met simulta-\par
+\noindent neously: the predicted stall exceeds the round-trip transfer time, a waiting request can use the\par
+\noindent freed blocks, and GPU pressure exceeds 60\% (§4). A composite soft score integrating GPU\par
+\noindent pressure, block-fit quality, and upload safety margin governs offload priority, with critical-path\par
+\noindent agents penalized to avoid offloading bottleneck agents. Predictive upload begins restoring KV\par
+\noindent cache before the predicted function-call completion using dynamic EWMA forecasting (Equa-\par
+\noindent tion 1).\par
+\noindent  The spatial scheduler dynamically partitions GPU memory into a shared pool (all agents)\par
+\noindent and a reserved pool (critical agents only), with watermark-driven adjustment: when GPU us-\par
+\noindent age exceeds 75\%, the reserved ratio ρ increases by 0.05; when below 40\%, it decreases by\par
+\noindent 0.05 (clamped to [0.05, 0.30]). A hybrid priority metric (Equations 5–6) combines structural\par
+\noindent importance (DAG depth and degree), synchronization pressure (straggler boost at join points),\par
+\noindent temporal aging, recomputation cost, and graph context.\par
+\noindent  The system achieves up to 47.06\% end-to-end latency reduction vs. vLLM in memory-\par
+\noindent constrained settings (gpu\_mem\_utilization=0.5, §7.2, Figure 9) and a 16.9 percentage-point\par
+\noindent GPU utilization improvement (85.7–87.0\% vs. 69.9–74.1\% for vLLM). Round-trip KV migra-\par
+\noindent tion takes 15.8–79.8 ms compared to 593–2,300 ms for recomputation (26.8–37.5× speedup,\par
+\noindent §7.6, Figure 17). A non-monotonic sensitivity result is notable: intermediate prediction noise\par
+\noindent (scale 0.25) causes an 8.3\% performance regression because mistimed uploads pass feasibility\par
+\noindent checks but still cause harmful migrations (§7.5). This two-dimensional scheduling represents\par
+\noindent the most granular eviction policy among surveyed systems (EuroSys 2027).\par
+\noindent  CacheBlend [41] addresses the RAG serving scenario: pre-computed KV caches exist for\par
+\noindent knowledge chunks, but naively concatenating chunks produces attention errors because each\par
+\noindent chunk was computed in isolation without cross-chunk attention. CacheBlend selectively re-\par
+\noindent computes a subset of “critical” tokens at each layer — those whose KV representations differ\par
+\noindent most between isolated and concatenated contexts — while reusing the remaining cached val-\par
+\noindent ues. This selective recomputation achieves 2.2–3.3× TTFT reduction and 2.8–5× throughput\par
+\noindent improvement versus full recomputation, with no quality degradation on open-source LLMs (Eu-\par
+\noindent roSys 2025).\par
+\noindent  TokenDance enables collective KV cache sharing across synchronized multi-agent rounds.\par
+\noindent Rather than storing independent KV caches per agent, it maintains a single master copy plus\par
+\noindent block-sparse diffs per agent — a diff-aware storage scheme. When agents share similar contexts\par
+\noindent (common in round-based simulations where agents observe the same environment), the shared\par
+\noindent blocks are stored once regardless of agent count. This achieves 2.7× more concurrent agents\par
+\noindent versus vLLM with prefix caching, 17.5× per-agent KV storage reduction, and 1.9× prefill\par
+\noindent speedup. Diff compression ratios of 11–17× are reported on GenerativeAgents and AgentSoci-\par
+\noindent ety benchmarks. The approach is tailored to the All-Gather communication pattern and requires\par
+\noindent a central scheduler; arbitrary agent topologies are not supported.\par
+\noindent  ForkKV [36] targets the multi-LoRA agent serving scenario, where multiple agents share the\par
+\noindent same base model but differ in their LoRA adapters. It splits KV cache into a shared base com-\par
+\noindent ponent (from the pretrained model) and lightweight agent-specific residuals (LoRA-induced\par
+\noindent divergences), indexed by a DualRadixTree. The copy-on-write deduplication exploits LoRA’s\par
+\noindent low-rank structure: since LoRA adapters modify only a small subspace of the attention com-\par
+\noindent putation, most KV cache entries are identical across adapters. ForkKV achieves up to 3.0×\par
+\noindent throughput versus state-of-the-art multi-LoRA serving with negligible quality impact. Built on\par
+\end{flushleft}

@@ -1,0 +1,17 @@
+name: LaTeX compilation smoke test
+on:
+  push:
+    branches: [neurocomputing-v5-evidence-upgrade-2026-11-12]
+  pull_request:
+jobs:
+  latex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Compile current GitHub TeX sources
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: template.tex
+          working_directory: FCS LaTeX Template(1)
+          args: -pdf -interaction=nonstopmode -halt-on-error -file-line-error

@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 40; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 40 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 40\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Dependent variables.\par
+\noindent  1. Attribution error rate: incorrect attributions/total attribution samples. Measures diag-\par
+\noindent  nostic accuracy independent of timing; the denominator is attribution queries, not time.\par
+\noindent  2. False-alarm proportion: false alerts during fault-free execution/total observed fault-free runs.\par
+\noindent  This proportion-based definition avoids the denominator ambiguity of a time-based rate.\par
+\noindent  Alternatively, report as false alarms per 1,000 agent-hours = false\_alerts/agent-hours ×\par
+\noindent  1,000 when continuous monitoring is evaluated.\par
+\noindent  3. Detection delay: tdetection − tfault\_injection . Measures how quickly a diagnostic system iden-\par
+\noindent  tifies an injected fault after it occurs.\par
+\noindent  4. Detection lead time: tfault\_manifestation − talarm , defined only when talarm < tfault\_manifestation .\par
+\noindent  Applies only when the diagnostic system provides genuine advance warning before the\par
+\noindent  fault manifests as a task-level failure.\par
+\noindent  5. Task success rate: fraction of tasks completed successfully, measuring whether diagnos-\par
+\noindent  tic overhead degrades serving.\par
+\noindent  6. Recovery rate: fraction of detected failures where the system successfully recovers (via\par
+\noindent  replay, intervention, or fallback).\par
+\noindent  7. Throughput: requests per second, measuring serving performance under the diagnostic-\par
+\noindent  aware eviction policy.\par
+\par\smallskip
+\noindent Baselines.\par
+\noindent  1. No diagnostic retention: pure serving-optimized eviction (LRU/LFU); diagnostic meth-\par
+\noindent  ods operate on independently stored traces only.\par
+\noindent  2. Full diagnostic retention: all execution state is retained indefinitely; unlimited memory\par
+\noindent  (full-retention baseline for attribution quality).\par
+\noindent  3. Random retention: a fraction of state is randomly selected for retention (controls for the\par
+\noindent  effect of memory allocation vs. intelligent selection).\par
+\par\smallskip
+\noindent Timing assumptions. The diagnostic horizon T should be set to at least the longest observed\par
+\noindent multi-agent workflow completion time in the target benchmark. For typical multi-agent cod-\par
+\noindent ing tasks (TraceElephant), this is 10–30 minutes; for production workflows, T may extend to\par
+\noindent hours. The protocol should test multiple values of T to characterize how the evidence-loss event\par
+\noindent probability Li (T ) changes with horizon length.\par
+\par\smallskip
+\noindent Retention ablation on real traces. We evaluate on 220 failure traces from TraceElephant [6]\par
+\noindent (ACL 2026), spanning 5 task suites from 3 multi-agent frameworks: Captain-Agent on GAIA\par
+\noindent (73 traces) and AssistantBench (12), Magentic-One on GAIA (74) and AssistantBench (17),\par
+\noindent and SWE-Agent on SWE-Bench Verified (44). Each trace includes step-level execution records\par
+\noindent and human-annotated mistake attribution (agent and step).\par
+\noindent  We tested four retention strategies across 10 budget levels (10–100\% in 10\% increments),\par
+\noindent using two attribution methods:\par
+\noindent  • Full retention (S1): keep all trace events (full-retention baseline).\par
+\noindent  • Random sampling (S2): uniform random event selection at each budget level (3 seeds;\par
+\noindent  mean ± SD reported).\par
+\noindent  • Recency (S3): keep the most recent events (deterministic).\par
+\noindent  • Importance-based (S4): score-based selection prioritizing error-indicative events (deter-\par
+\noindent  ministic).\par
+\noindent  Attribution methods were: (a) a causal-graph heuristic that traces backward through re-\par
+\noindent tained events, identifying the earliest unrecovered error as the root cause (falls back to last-error\par
+\end{flushleft}

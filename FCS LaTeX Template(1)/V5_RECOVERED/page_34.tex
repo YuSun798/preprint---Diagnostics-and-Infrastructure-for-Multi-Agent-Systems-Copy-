@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 34; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 34 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 34\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  diagnostic attention scores in GPU memory — evicting the KV cache forces reprefill but\par
+\noindent  the attention scores for attribution can be recomputed from the prompt.\par
+\noindent  3. Tier C — Evidence loss risk. The diagnostic layer depends on state that is co-managed\par
+\noindent  by the serving layer, and reconstruction is infeasible (¬Ri ). This occurs when: (a) tool-\par
+\noindent  call responses are cached in KV metadata rather than an independent trace store; (b) teleme-\par
+\noindent  try sampling is budget-coupled with serving throughput; or (c) the environment is non-\par
+\noindent  deterministic and no replay mechanism exists. Among surveyed systems, only two can-\par
+\noindent  didates approach this tier: the policy-driven runtime (which feeds observability signals\par
+\noindent  into eviction but does not formally protect diagnostic state) and TOPAS (which jointly\par
+\noindent  optimizes prefix retention and scheduling under a shared capacity constraint Bt but does\par
+\noindent  not incorporate diagnostic value into the objective).\par
+\par\smallskip
+\noindent 6.5 Counterexamples: When the Conflict Does Not Arise\par
+\noindent The three-tier classification in Section 6.4 predicts specific cases where cross-layer conflict\par
+\noindent should not arise. We verify these predictions against the surveyed systems:\par
+\par\smallskip
+\noindent Independent trace stores. All T1 failure-localization methods store their input evidence in-\par
+\noindent dependently of the serving KV cache. FAMAS operates on re-executable runs stored in a log\par
+\noindent database. TrajAudit, CHIEF, AgentRx, and MASPrism operate on trajectory logs that are per-\par
+\noindent sisted before the KV cache is populated for the next request. Even AgenTracer’s RL-trained\par
+\noindent model operates on stored trajectory data, not on live KV state. This architectural pattern —\par
+\noindent trace persistence before KV allocation — is the primary reason the cross-layer conflict is rare:\par
+\noindent the diagnostic layer’s input is already decoupled from the serving layer’s managed state.\par
+\par\smallskip
+\noindent Deterministic recomputation. The distinction between evidence loss and delayed access\par
+\noindent (Section 6.2) is empirically relevant. When SGLang evicts a KV prefix, the tokens remain\par
+\noindent in the prompt text, and the KV tensors can be recomputed deterministically. This is a Tier B\par
+\noindent interaction: the serving system incurs a recomputation cost, but no diagnostic information is\par
+\noindent lost because the diagnostic layer operates on the prompt and output text, not the KV tensors.\par
+\noindent The same logic applies to Mooncake’s disaggregated architecture: KV blocks transferred via\par
+\noindent RDMA are recomputable from the prompt, so evicting a transferred block incurs latency but\par
+\noindent not evidence loss.\par
+\par\smallskip
+\noindent Non-KV state types. Model weights and adapters are versioned and persistent: evicting a\par
+\noindent LoRA adapter from GPU memory does not destroy the adapter (it remains on disk). ScaleSim\par
+\noindent explicitly manages adapter state alongside KV cache, but adapter eviction is a latency event\par
+\noindent (requiring reload), not a data-loss event. Random seeds, when recorded in trace metadata, are\par
+\noindent trivially reconstructable. The only state type with genuine evidence-loss risk is unrepeatable\par
+\noindent environment observations — tool-call responses from external APIs, stochastic environment\par
+\noindent states, and real-time sensor data — and these are typically stored in the trace, not in the KV\par
+\noindent cache.\par
+\par\smallskip
+\noindent 6.6 Illustrative Cross-Layer Simulation\par
+\noindent To illustrate the cross-layer interaction concretely, we simulated a 3-agent pipeline with a 100-\par
+\noindent block KV cache serving 50 conversations (simulated CPU workload). Each agent generates\par
+\end{flushleft}

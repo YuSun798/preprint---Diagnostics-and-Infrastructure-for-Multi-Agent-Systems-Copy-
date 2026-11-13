@@ -1,0 +1,432 @@
+V5 AUTHORITATIVE PDF TEXT EXTRACTION (not native LaTeX source)
+Source: Survey_MAS_Diagnostics_Neurocomputing_v5_evidence_audit(1).pdf
+Pages: 25-32 / 56
+Formatting / image figures must be verified against the uploaded PDF.
+
+<PARSED TEXT FOR PAGE: 25 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                    25
+
+
+
+dynamic control flow (conditional branches, native function calls) must still execute client-side
+(§6, OSDI 2024).
+     DistServe [50] disaggregates prefill and decoding into separate GPU pools connected via
+pull-based RDMA, allowing each phase to be independently parallelized and scaled. For a 66B-
+parameter model with 512-token requests, each request’s KV cache is approximately 1.13 GB
+(§3.3), making transfer cost a first-class design concern. The key architectural insight is that pre-
+fill (compute-bound) and decoding (memory-bandwidth-bound) have complementary resource
+profiles, so co-locating them on the same GPU pool wastes resources in both directions. By
+disaggregating, DistServe achieves 2× goodput improvement on Llama-70B under SLA con-
+straints (§5). However, the KV transfer mechanism is intra-request (prefill-to-decode handoff
+within a single user’s generation), not inter-agent sharing. No eviction policy is described; KV
+state is consumed and released per-request (OSDI 2024). For multi-agent scenarios, DistServe’s
+disaggregation could be composed with inter-request prefix sharing (as SGLang or Mooncake
+provide), but no such composition has been evaluated.
+
+5.2    Exact KV-Cache Reuse
+Exact KV-cache reuse retains computed attention tensors across requests that share identical
+token prefixes, avoiding redundant prefill computation. This is the dominant category among
+surveyed systems.
+
+Foundation: PagedAttention. vLLM [14] introduced PagedAttention, managing KV cache
+in non-contiguous fixed-size blocks with a page table. It uses all-or-nothing eviction when
+GPU memory is exhausted, preempting entire sequences rather than individual blocks. This
+establishes the baseline architecture that most subsequent systems extend.
+
+Prefix-tree indexing. SGLang [49] organizes cached KV prefixes in a radix tree with LRU
+leaf-first eviction and reference counting. Each node maintains a reference counter; a node is
+evictable only when its counter reaches zero (§3). Evicting leaves first enables reuse of common
+ancestors until those ancestors themselves become leaves. A key design decision is the dynamic
+shared pool: there is no fixed cache budget — “we do not preallocate a fixed-size memory
+pool as a cache; instead, we let the cached tokens and the currently running requests share the
+same memory pool” (§3). When enough waiting requests exist, the system evicts all cached
+tokens in favor of a larger batch size, prioritizing throughput over cache hit rate. Cache-aware
+scheduling sorts requests by matched prefix length; Theorem 3.1 proves this achieves optimal
+cache hit rate equivalent to DFS order on the radix tree. On Chatbot Arena workloads, SGLang
+achieves 52.4% cache hit rate on LLaVA-NeXT-34B and 74.1% on Vicuna-33B, with 1.7×
+TTFT reduction (§5.5). Across benchmarks, it delivers up to 6.4× throughput improvement
+and 3.7× latency reduction over baselines including Guidance v0.1.8 and vLLM v0.2.5 (§5).
+The overhead of RadixAttention itself is under 0.3% of total inference time (§5).
+    For our cross-layer analysis, two properties of SGLang are noteworthy. First, the radix
+tree stores only KV tensors — no adapter weights, LoRA parameters, or diagnostic state are
+managed (§3). The system is single-model per instance, with no multi-adapter or multi-tenant
+cache partitioning. Second, the “evict all cached tokens” pressure response is the most aggres-
+sive eviction policy among surveyed systems: when memory pressure is high enough, the entire
+diagnostic-irrelevant cache is cleared. This design is optimal for request-level throughput but
+would need modification to protect diagnostically valuable prefixes. Stated limitations include
+
+<PARSED TEXT FOR PAGE: 26 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                26
+
+
+
+starvation under greedy scheduling (§8), restriction to a single memory tier (GPU only; ex-
+tending to CPU/disk is future work), and exact-match-only prefix lookup (no fuzzy or semantic
+matching).
+
+Cost-benefit eviction. Mooncake [32] disaggregates KV cache from compute into a dis-
+tributed cache pool called KVCache Pool, accessed via one-sided RDMA reads that bypass
+the serving engine’s critical path. The architecture separates prefill nodes (which generate KV
+blocks) from decode nodes (which consume them), with cache blocks stored on dedicated cache
+nodes. Mooncake implements configurable eviction policies (LRU, LFU, or hybrid) with a cost-
+benefit model that weighs cache retention value against RDMA transfer bandwidth. Under a
+prefix-heavy workload, Mooncake achieves up to 525% throughput improvement while main-
+taining latency SLAs. The system received the FAST 2025 Best Paper Award. For multi-agent
+scenarios, Mooncake’s disaggregated architecture decouples cache lifetime from compute life-
+time: a cached prefix can persist on cache nodes even after the compute node that generated it
+has moved to other requests. However, the eviction policies remain request-level (LRU/LFU)
+and do not incorporate agent identity, workflow structure, or diagnostic value.
+    InferCept [1] addresses a challenge specific to augmented LLM workloads: when generation
+is intercepted for an external tool call, should the system preserve the in-progress KV cache
+(wasting GPU memory while waiting) or discard it (wasting compute on later recomputation)?
+InferCept introduces min-waste adaptive scheduling (§4.3, Equation 5) that makes a per-request
+decision among three strategies: Preserve (retain in GPU memory), Swap (migrate to CPU
+memory), or Discard (recompute upon resumption). The scheduling algorithm sorts intercepted
+requests by expected GPU waste in descending order, assigns a per-iteration swap budget to
+the highest-waste requests, and for the remainder selects whichever of Preserve or Discard
+minimizes expected waste. Key quantitative results: on GPT-J-6B with a single A100, InferCept
+sustains 1.6× higher request rate and reduces normalized latency by 1.9–5.7× (§5); on Llama3-
+70B across 4×A100, it achieves 2× higher throughput with 1.3–12× latency reduction. The
+full optimization stack reduces GPU waste from 27% (discard baseline) to just 0.69% (§5.2,
+Figure 3). InferCept’s duration estimation achieves 93% of an oracle policy that knows the exact
+tool-call duration in advance (§4.4). For cross-layer analysis, InferCept’s three-state model is
+directly relevant: the Preserve/Swap/Discard decision is precisely the kind of retention trade-
+off our evidence-loss formalization captures. The diagnostic question is whether the intercepted
+state contains diagnostically valuable signals (tool-call context, intermediate reasoning) whose
+loss during a Discard event constitutes an Li (T ) event (ICML 2024).
+    Continuum [16] addresses the multi-turn agentic serving challenge: when an agent makes
+a tool call, should the serving system retain its KV cache (occupying GPU memory during
+the external call) or evict it (requiring recomputation when the agent resumes)? The system
+answers this with a TTL-based cost-benefit optimization (§4.1): each request’s time-to-live τ ∗
+is computed as the value that maximizes expected benefit, balancing the probability that the
+tool call completes before the TTL expires (estimated from an empirical CDF of historical tool-
+call durations) against the memory opportunity cost and prefill-reload cost (profiled offline per
+hardware/model pair). The scheduling priority is a multi-key tuple: preempted requests first,
+then pinned/within-TTL requests, then program-level FCFS by arrival time (§4.3). A cold-start
+mechanism uses three tiers of CDF estimation based on the number of collected samples (§4.2).
+On real SWE-agent workloads at a production deployment, Continuum achieves up to 8.18× job
+completion time improvement (§6.4), with 50.31% cost reduction and 27.28% latency reduction
+on average. On synthetic multi-turn benchmarks, throughput improvements range from 1.10×
+to 3.22× and delay reductions from 1.12× to 3.66× across A100, B200, and H100 hardware
+
+<PARSED TEXT FOR PAGE: 27 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  27
+
+
+
+(Table 3, §6.2). The system includes deadlock prevention: when scheduling fails due to space
+contention, it iteratively unpins entries with the latest program arrival time (§5.2). Presented as
+a workshop poster at ICLR 2026.
+
+Workflow-aware caching. KVFlow [27] introduces workflow-aware prefix caching through
+the Agent Step Graph abstraction (§3.1): a DAG where nodes represent agent invocations and
+edges represent dependency relations, each node carrying a steps-to-execution value computed
+via recursive aggregation (max(predecessors)+1 for synchronization barriers, min(predecessors)+
+1 for conditional branches). Eviction operates at the cache-tree node level rather than per-agent:
+all varying suffixes receive the highest eviction priority (evicted first), while fixed-prompt nodes
+inherit the steps-to-execution value of their nearest agent descendant. Shared prefix nodes re-
+ceive the minimum (most retainable) priority among their children. Under concurrent work-
+flows, conflicts at shared nodes are resolved by choosing the lowest priority (§3.1).
+     The system implements fully overlapped prefetching: background threads proactively load
+KV tensors from CPU to GPU for agents predicted to execute next, exploiting PCIe full-
+duplex. For branch points, all possible next agents are conservatively prefetched within a
+budget limit. Four cache node states (in GPU memory, backed up in CPU, loading, offload-
+ing) enable a status-aware scheduler that skips requests whose caches are still loading (§3.2).
+On single-workflow benchmarks with Llama-3.1-8B on A10G, KVFlow achieves up to 2.91×
+speedup over SGLang (GPU-only) and 1.83× over SGLang with hierarchical caching (§4.1).
+On the realistic PEER simulation, gains are more modest: 1.08–1.12× (§4.2). A key limi-
+tation is that workflow structure must be known upfront (declared as a DAG or captured via
+SGLang’s program structure), and gains diminish with shorter fixed prompts or longer outputs
+(NeurIPS 2025).
+
+Communication-efficient sharing. KVCOMM [43] addresses inter-agent communication band-
+width by compressing KV cache transfers via an anchor pool mechanism. The system main-
+tains a fixed-size pool (V =20 by default) of representative KV pairs, using hybrid LFU+FIFO
+eviction when the pool reaches capacity (§3.3). New items enter the pool only if they fail a
+shareability criterion based on entropy thresholds (Equation 5); items that are shareable reuse
+existing anchors. Transmitted blocks are differentially encoded against the nearest anchor via
+positional de-rotation and re-rotation (requiring RoPE-based attention, §3.1). All agents must
+share identical model weights; different-weight same-architecture scenarios are “pending fur-
+ther exploration” (§6.1). On the ChatDev workload with 5 agents on a single H100, KVCOMM
+reduces TTFT by up to 3.6× while maintaining output quality (NeurIPS 2025).
+
+Deduplication. ForkKV [36] applies copy-on-write (CoW) principles to KV cache man-
+agement: a shared base cache stores common prefix state, and each agent maintains only
+the residual delta from its divergence point. TokenDance reduces communication overhead
+through block-sparse differencing and deduplication of redundant KV segments across concur-
+rent agents.
+
+Additional exact KV-reuse systems. CacheBlend [41] introduces tiered storage for multi-
+source KV cache reuse: cached KV blocks are stored across GPU, CPU, and disk tiers, with
+a cost-benefit model determining which tier to use based on expected access frequency and
+transfer latency (EuroSys 2025).
+
+<PARSED TEXT FOR PAGE: 28 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 28
+
+
+
+    TokenCake [4] implements temporal-spatial dual scheduling for multi-agent KV cache man-
+agement, coordinating two schedulers that operate on complementary dimensions. The tempo-
+ral scheduler is event-driven: triggered by function-call start events from the frontend API, it
+proactively offloads stalled agents’ KV caches to CPU when three conditions are met simulta-
+neously: the predicted stall exceeds the round-trip transfer time, a waiting request can use the
+freed blocks, and GPU pressure exceeds 60% (§4). A composite soft score integrating GPU
+pressure, block-fit quality, and upload safety margin governs offload priority, with critical-path
+agents penalized to avoid offloading bottleneck agents. Predictive upload begins restoring KV
+cache before the predicted function-call completion using dynamic EWMA forecasting (Equa-
+tion 1).
+    The spatial scheduler dynamically partitions GPU memory into a shared pool (all agents)
+and a reserved pool (critical agents only), with watermark-driven adjustment: when GPU us-
+age exceeds 75%, the reserved ratio ρ increases by 0.05; when below 40%, it decreases by
+0.05 (clamped to [0.05, 0.30]). A hybrid priority metric (Equations 5–6) combines structural
+importance (DAG depth and degree), synchronization pressure (straggler boost at join points),
+temporal aging, recomputation cost, and graph context.
+    The system achieves up to 47.06% end-to-end latency reduction vs. vLLM in memory-
+constrained settings (gpu_mem_utilization=0.5, §7.2, Figure 9) and a 16.9 percentage-point
+GPU utilization improvement (85.7–87.0% vs. 69.9–74.1% for vLLM). Round-trip KV migra-
+tion takes 15.8–79.8 ms compared to 593–2,300 ms for recomputation (26.8–37.5× speedup,
+§7.6, Figure 17). A non-monotonic sensitivity result is notable: intermediate prediction noise
+(scale 0.25) causes an 8.3% performance regression because mistimed uploads pass feasibility
+checks but still cause harmful migrations (§7.5). This two-dimensional scheduling represents
+the most granular eviction policy among surveyed systems (EuroSys 2027).
+    CacheBlend [41] addresses the RAG serving scenario: pre-computed KV caches exist for
+knowledge chunks, but naively concatenating chunks produces attention errors because each
+chunk was computed in isolation without cross-chunk attention. CacheBlend selectively re-
+computes a subset of “critical” tokens at each layer — those whose KV representations differ
+most between isolated and concatenated contexts — while reusing the remaining cached val-
+ues. This selective recomputation achieves 2.2–3.3× TTFT reduction and 2.8–5× throughput
+improvement versus full recomputation, with no quality degradation on open-source LLMs (Eu-
+roSys 2025).
+    TokenDance enables collective KV cache sharing across synchronized multi-agent rounds.
+Rather than storing independent KV caches per agent, it maintains a single master copy plus
+block-sparse diffs per agent — a diff-aware storage scheme. When agents share similar contexts
+(common in round-based simulations where agents observe the same environment), the shared
+blocks are stored once regardless of agent count. This achieves 2.7× more concurrent agents
+versus vLLM with prefix caching, 17.5× per-agent KV storage reduction, and 1.9× prefill
+speedup. Diff compression ratios of 11–17× are reported on GenerativeAgents and AgentSoci-
+ety benchmarks. The approach is tailored to the All-Gather communication pattern and requires
+a central scheduler; arbitrary agent topologies are not supported.
+    ForkKV [36] targets the multi-LoRA agent serving scenario, where multiple agents share the
+same base model but differ in their LoRA adapters. It splits KV cache into a shared base com-
+ponent (from the pretrained model) and lightweight agent-specific residuals (LoRA-induced
+divergences), indexed by a DualRadixTree. The copy-on-write deduplication exploits LoRA’s
+low-rank structure: since LoRA adapters modify only a small subspace of the attention com-
+putation, most KV cache entries are identical across adapters. ForkKV achieves up to 3.0×
+throughput versus state-of-the-art multi-LoRA serving with negligible quality impact. Built on
+
+<PARSED TEXT FOR PAGE: 29 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 29
+
+
+
+SGLang.
+    Leyline introduces declarative directive splicing for KV cache management: agents can
+specify retention directives as a 4-tuple declaring edits and mode (in-place splice or prefix-
+trimmed re-prefill for “semantic forgetting”). The architecture-agnostic interface routes each di-
+rective to a per-architecture kernel with closed-form RoPE-rotation correction, bridging external
+policy-level decisions with internal serving-system execution. Results show +11.2 percentage-
+point replay cache-hit rate, up to 241 ms latency reduction, and +14.3 percentage-point agentic
+solve rate on debug-gym. Leyline fills a specific gap where “kernel-level eviction methods make
+their own decisions and cannot accept policy directives from outside the kernel” — enabling
+agents to express retention preferences that current serving systems cannot accommodate.
+    PolyKV implements a shared asymmetrically-compressed KV cache pool for multi-agent
+inference. A single shared pool uses write-once, read-many semantics: keys are quantized
+to int8, values are compressed to 3-bit via TurboQuant MSE (FWHT rotation + Lloyd-Max
+quantization). Multiple HuggingFace DynamicCache objects read from the shared pool simul-
+taneously. This achieves a stable 2.91× compression ratio with 97.7% KV memory reduction
+for 15 concurrent agents at 4K context, at only +0.57% perplexity degradation and BERTScore
+F1 of 0.928. Limitations include evaluation on only 2 model architectures, maximum 15 agents
+tested, and a fixed lossy compression ratio.
+    ConServe replaces prediction with observation for agentic serving scheduling. Rather than
+estimating future tool-call durations (Continuum) or future prefix reuse (KVFlow), ConServe
+uses only two directly observable metrics — per-decoder KV occupancy and first-turn input
+length — to make conversation-level scheduling decisions. KV cache is transferred to the de-
+code node once and pinned for the entire remaining conversation tail. This observation-based
+approach achieves 51.08% p95 TTFET reduction and +7.51% energy improvement on homoge-
+neous GPUs (+22.75% on heterogeneous hardware). The design philosophy — that observation
+is more robust than prediction for agentic workloads with inherently unpredictable tool-call pat-
+terns — offers a counterpoint to the prediction-based approaches of KVFlow and Continuum.
+    KAIROS [44] introduces context-growth-aware power management for multi-agent serving.
+The system monitors per-agent context growth rate and GPU memory pressure, adjusting GPU
+frequency and concurrency to balance power consumption against SLO compliance. When
+memory headroom is sufficient, agents receive full-frequency service; when context growth
+threatens to push the system into a cache-thrashing regime, KAIROS lowers GPU frequency
+to reduce power without sacrificing throughput (since the workload becomes memory-bound).
+This achieves an average 27% power reduction (up to 39.8%) while meeting latency SLOs.
+KAIROS is the only infrastructure system that explicitly manages the power dimension, and its
+control loop implicitly bridges monitoring state (context size, agent progress, memory pressure)
+with serving decisions (frequency, concurrency, placement).
+    LRAgent decomposes KV cache into a shared base component (computed from pretrained
+weights) and adapter-dependent low-rank residuals, enabling efficient cache sharing across
+multi-LoRA agents. A custom Flash-LoRA-Attention kernel reconstructs full attention outputs
+without materializing the full-dimensional adapter-specific KV cache. This achieves throughput
+and TTFT approaching the fully-shared caching upper bound while maintaining accuracy near
+the non-shared (independent per-adapter) baseline. The approach requires a “shared-A” multi-
+LoRA architecture where all adapters share the same LoRA-A matrix, and its custom kernel
+limits portability to new architectures (ICML 2026).
+
+<PARSED TEXT FOR PAGE: 30 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                30
+
+
+
+5.3    Cross-Model Cache Transfer
+Cross-model cache transfer attempts to reuse KV-cache tensors computed by one model vari-
+ant for inference on another, avoiding full recomputation when agents use different models or
+adapter configurations.
+    DroidSpeak [20] enables KV cache sharing between different fine-tuned variants of the same
+base architecture. When transferring context from one LLM to another, DroidSpeak identifies
+which transformer layers require fresh computation (layers where the KV representations di-
+verge most between the two models) and which can reuse the donor model’s KV cache. This
+selective layer-wise recomputation achieves up to 4× throughput improvement and 3.1× faster
+prefill (TTFT reduction) with negligible quality loss on F1, Rouge-L, and code similarity met-
+rics. The key requirement is architectural compatibility: the donor and recipient models must
+share the same transformer architecture (different fine-tuned variants are acceptable, but cross-
+architecture sharing is not supported). The system is implemented in vLLM (UChicago + Mi-
+crosoft). For multi-agent scenarios, DroidSpeak enables agents using different LoRA-adapted
+models to share cached context without full recomputation — a capability that could signifi-
+cantly reduce serving costs in heterogeneous agent deployments.
+    LRAgent (ICML 2026) manages KV cache for multi-adapter scenarios by separating a
+shared base cache from per-adapter low-rank residuals, enabling cache reuse across requests
+that share the same base model but differ in their LoRA adapters.
+
+5.4    Agent-Specific Extensions
+Several systems extend general-purpose KV-cache management with agent-aware policies:
+
+Agent-identity-aware scheduling. ScaleSim [28] manages heterogeneous per-agent state —
+KV caches, LoRA adapters, auxiliary draft models for speculative decoding, and action his-
+tories — using invocation-distance-based memory management. It is the only surveyed sys-
+tem that manages non-KV agent state (adapters and auxiliary models) alongside KV cache
+within a unified eviction framework. The core abstraction is invocation distance (§3.2): “a
+unified abstraction that estimates the relative order in which agents will issue future LLM re-
+quests.” Three categories of distance estimation are defined: independent simulation (inferred
+from action duration), interaction-involved (D = min(Daction , Dinteraction ), where Dinteraction =
+Physical Distance/Velocity), and predefined activation paths (hop count from information source
+via BFS).
+    The eviction policy is future reuse-aware: “instead of relying on recency-based policies
+such as LRU, ScaleSim prioritizes eviction based on invocation distance” (§3.3). Agents with
+larger distances are evicted first. A proactive prefetch mechanism restores offloaded agents be-
+fore their activation, running in parallel with inference since LLM inference does not involve
+CPU–GPU PCIe transfer. For shared memory objects (overlapping KV prefixes), the eviction
+distance is set to the minimum across all referencing agents (Appendix A). A preemption fall-
+back handles unexpected early activations by interrupting ongoing tasks.
+    The system achieves up to 1.74× speedup over SGLang on information-diffusion simula-
+tions, 1.73× on AgentSociety (independent agents), and 1.31× on Generative Agents (interaction-
+involved), tested with Qwen2.5-7B on a single NVIDIA H100 at 20% active agent rate (§4.2,
+Figure 8). TTFT is consistently reduced by 48–68% compared to hierarchical caching base-
+lines. The speedup is bounded by the decode phase proportion of total time (§4.3). A key
+limitation is that the application must provide invocation distance estimates through a unified
+
+<PARSED TEXT FOR PAGE: 31 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                   31
+
+
+
+interface (§3.3, Appendix A Table 1); the system cannot infer distances from opaque request
+streams.
+    The policy-driven runtime [47] constructs agent-identity embeddings and engine-event tran-
+sition matrices to learn agent-specific cache residency predictions. Its survival-based eviction
+policy uses learned transition probabilities rather than recency or frequency heuristics, repre-
+senting the closest existing system to a diagnostic-serving bridge: it feeds observability signals
+(agent identity + engine events) into serving decisions.
+
+Context-growth-aware management. KAIROS [44] monitors per-agent context growth rate
+and memory pressure to make power-management decisions: agents with rapidly growing con-
+text receive priority compute allocation, while idle agents with stable context may have their
+state swapped to lower-power memory tiers.
+
+Joint optimization. TOPAS [24] is the closest surveyed system to a formalized shared budget
+between caching and workload objectives. It jointly optimizes prefix selection (which prefixes
+to retain) and request scheduling (which requests to serve) under a shared KV-cache capacity
+constraint Bt . However, TOPAS optimizes for serving throughput alone — the shared budget
+does not incorporate diagnostic evidence retention as a competing objective.
+
+Design trade-offs. Tables 4 and 5 present the detailed comparison. Three key distinctions
+emerge that prior reviews have not clearly separated:
+  1. Textual vs. KV sharing. Textual context sharing (Parrot, DistServe) incurs recomputa-
+     tion cost but avoids cache coherence issues. Exact KV reuse (SGLang, Mooncake) elim-
+     inates recomputation but requires compatible tokenizers and model architectures. Cross-
+     model transfer (DroidSpeak) enables the broadest reuse but introduces approximation
+     error at non-reused layers.
+  2. Single-model vs. multi-agent. Most systems (SGLang, vLLM, Mooncake, InferCept)
+     manage a single model instance with shared cache. Agent-specific systems (ScaleSim,
+     KVFlow, the policy-driven runtime) introduce per-agent state tracking that enables dif-
+     ferentiated eviction policies but increases metadata overhead.
+  3. Reactive vs. predictive eviction. LRU/LFU eviction (SGLang, Mooncake) reacts to
+     memory pressure. Workflow-aware (KVFlow) and survival-based (the policy-driven run-
+     time) policies predict future reuse, potentially retaining diagnostically valuable state longer,
+     but require workload characterization that may not generalize.
+
+
+6     Conditional Cross-Layer Retention Trade-offs
+The diagnostic methods reviewed in Section 4 consume execution evidence; the serving systems
+in Section 5 manage objects that may be expensive to keep available. A natural question is
+whether these two layers compete for the same resources. This section formalizes the conditions
+under which serving-state reclamation actually harms diagnostic capability, and shows that the
+relationship is conditional rather than universal.
+
+6.1    Distinguishing Computational and Execution State
+A KV cache is a computational acceleration structure: it stores precomputed attention tensors
+so that subsequent tokens can be generated without reprocessing the prompt. Removing a KV
+
+<PARSED TEXT FOR PAGE: 32 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                   32
+
+
+Table 4: Infrastructure serving systems (Part 1): general-purpose and prefix-caching systems. “Agt”
+indicates agent-aware eviction.
+
+              System           State             Eviction           Agt        Venue
+              vLLM             KV blocks         All-or-nothing      –         SOSP ’23
+              SGLang           KV prefix tree    LRU leaf-first      –         NeurIPS ’24
+              DistServe        KV tensors        Pull-based          –         OSDI ’24
+              Mooncake         KV disagg.        LRU/LFU config      –         FAST ’25
+              Parrot           Semantic vars     Explicit free       –         OSDI ’24
+              InferCept        KV blocks         Min-waste adpt      –         ICML ’24
+              CacheBlend       Per-chunk KV      Tiered storage      –         EuroSys ’25
+              Continuum        KV prefix         TTL cost-benefit    –         ICLR ’26 WS
+              TOPAS            KV prefix+sched   Joint optim.        –         arXiv ’26
+              Leyline          KV positional     Directive splice    –         arXiv ’26
+              ConServe         KV conversation   Conv.-level pin     –         arXiv ’26
+
+        Table 5: Infrastructure serving systems (Part 2): agent-aware and cross-model systems.
+
+             System            State             Eviction                Agt     Venue
+             TokenCake         KV blocks         Temporal+spatial        ✓       EuroSys ’27
+             KVFlow            KV prefix         Workflow aware          ✓       NeurIPS ’25
+             KVCOMM            KV compressed     Anchor LFU+FIFO         ✓       NeurIPS ’25
+             ForkKV            KV CoW            Deduplication           ✓       arXiv ’26
+             TokenDance        KV block-sparse   Sparse diff             ✓       arXiv ’26
+             KAIROS            Per-agent ctx     Ctx-growth aware        ✓       arXiv ’26
+             Pol.-driven rt.   Agent+events      Survival-learned        ✓       arXiv ’26
+             ScaleSim          KV+adapt+draft    Invoc.-distance         ✓       arXiv ’26
+             DroidSpeak        Per-layer KV      Selective recomp        –       arXiv ’24
+             LRAgent           KV base+LoRA      Shared base             ✓       ICML ’26
+             PolyKV            Shared compr.     Asymm. compress         –       arXiv ’26
+
+
+cache induces a new prefill pass but does not destroy information — the prompt text remains
+available, and the same KV tensors can be recomputed deterministically.
+    A diagnostic trace is an execution record: it captures what happened during a particular run,
+including tool responses, stochastic environment observations, causal orderings, and interme-
+diate model outputs. Removing a trace may be irreplaceable if the underlying tool response
+was non-deterministic, the external environment has changed, or the causal ordering was never
+logged.
+    This distinction is fundamental: removing a KV cache does not delete a diagnostic trace
+unless the trace is co-located with the cache and no independent copy exists. The two objects
+are stored in different subsystems, consumed by different layers, and retained under different
+policies. Their resource budgets can overlap but need not.
+
+6.2    When Is the Conflict Real?
+For a serving-side state object i and a diagnostic horizon T , define three events:
+    • Ni (T ): a later diagnosis needs information uniquely carried by object i.
+    • Di (T ): object i’s relevant information is discarded before the diagnostic horizon.

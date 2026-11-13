@@ -1,0 +1,56 @@
+% Reconstructed text from V5 PDF page 21; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 21 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 21\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent management — particularly KV cache eviction policies — can affect safety system effective-\par
+\noindent ness when it removes state that safety monitors depend on. We formalize this interaction in\par
+\noindent Section 6.\par
+\par\smallskip
+\noindent 4.4 Benchmarks\par
+\noindent Progress in diagnostics depends on benchmarks that vary in failure coverage, trace fidelity, and\par
+\noindent evaluation scope. Table 3 summarizes 12 Tier-1 benchmarks.\par
+\par\smallskip
+\noindent Failure-attribution benchmarks. TraceElephant [6] provides the highest trace fidelity among\par
+\noindent surveyed benchmarks: 220 annotated agent failures across three production systems (Captain-\par
+\noindent Agent, Magentic-One, SWE-Agent) and three task sources (GAIA, AssistantBench, SWE-\par
+\noindent Bench Verified), with 380 total execution traces (§3.1, Table 1). Each trace is a structured JSON\par
+\noindent with two layers: trace metadata (task ID, system architecture, agent configuration) and step-\par
+\noindent level records (agent ID, input context, output content, tool logs with tool name/inputs/outputs/status)\par
+\noindent (§3.3). Annotation was performed by three human annotators with at least one year of MAS de-\par
+\noindent bugging experience in a three-round protocol (independent → joint consensus → cross-review),\par
+\noindent achieving Krippendorff’s α of 0.72 at the agent level and 0.64 at the step level (§3.4).\par
+\noindent  The central quantitative finding is the impact of trace completeness on attribution accuracy.\par
+\noindent Under the same All-at-Once attribution protocol, complete traces raise agent-level accuracy\par
+\noindent from 51\% (output-only logs matching Who\&When’s observability) to 62.2\% (+11.2 percent-\par
+\noindent age points, a 22\% relative gain) (ACL 2026, §4.3, Table 3). At the step level, the gain is more\par
+\noindent pronounced: 16\% to 28.1\% (+12.1pp, 76\% relative), confirming that step-level attribution is\par
+\noindent substantially more sensitive to missing trace information. Dynamic replay-based attribution\par
+\noindent adds a further 10\% step improvement (Table 2). Environment-interacting agents account for\par
+\noindent over 50\% of failure attributions, with orchestrators responsible for 18–29\% (§4.2.2, Figure 4).\par
+\noindent Average LLM invocations per trace range from 20.5 (Captain-Agent) to 29.3 (Magentic-One)\par
+\noindent (§4.2.3). The benchmark is available under CC BY 4.0 with a reproducible execution environ-\par
+\noindent ment.\par
+\noindent  Who\&When [48] provides 184 failures from 127 multi-agent systems as the first dedicated\par
+\noindent failure-attribution benchmark (ICML 2025). The benchmark uses algorithm-generated (via\par
+\noindent CaptainAgent) and hand-crafted (via Magentic-One) MAS configurations with up to 5 agents\par
+\noindent each, producing log lengths of 5–130 steps (§3.1). Attribution is defined through a “decisive\par
+\noindent error” concept (Definitions 2.1, 2.2): the earliest agent action whose correction would change\par
+\noindent the task outcome from failure to success. Three annotators with AI-agent expertise performed\par
+\noindent an 84.3 human-hour annotation protocol (§3.3), with 15–30\% of instances marked as uncertain.\par
+\noindent Best reported accuracy is 53.5\% at the agent level and only 14.2\% at the step level; step-level\par
+\noindent accuracy degrades to approximately 0\% on trajectories exceeding 93 steps (§4.4, Figure 4). The\par
+\noindent hybrid attribution method costs 149,177 tokens per instance (Table 3), making it one of the most\par
+\noindent expensive evaluation protocols.\par
+\noindent  Domain-specific alternatives include RootSE (introduced alongside TrajAudit [35], 102\par
+\noindent coding failures with step-level annotations from 35 repositories across Python, Go, and JavaScript;\par
+\noindent average 51.7 steps per trajectory) and τ -bench (airline and retail customer-service scenarios\par
+\noindent used in AgentRx evaluation). The Who\&When Pro benchmark (NeurIPS 2026) extends the\par
+\noindent original with 12,326 traces across 26 benchmarks.\par
+\par\smallskip
+\noindent Reliability and safety benchmarks. ReliabilityBench (1,280 episodes) evaluates pass@1\par
+\noindent overestimation by 20–40\% [a], identifying a systematic optimism bias in current evaluation:\par
+\end{flushleft}

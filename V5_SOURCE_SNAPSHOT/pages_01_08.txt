@@ -1,0 +1,419 @@
+V5 AUTHORITATIVE PDF TEXT EXTRACTION (not native LaTeX source)
+Source: Survey_MAS_Diagnostics_Neurocomputing_v5_evidence_audit(1).pdf
+Pages: 1-8 / 56
+Formatting / image figures must be verified against the uploaded PDF.
+
+<PARSED TEXT FOR PAGE: 1 / 56>
+
+Diagnostics and Serving Infrastructure for Foundation
+      Model-Based Multi-Agent Systems: An
+              Evidence-Aware Review
+         Yu Suna,∗ , Zuodong Xiangb , Yike Zhangc , Xinyu Guand , Pengcheng Xue ,
+                        Yizirui Fangc , Zhenhua Huangf , Hailu Xug
+         a School of Engineering and Applied Science, University of Pennsylvania, Philadelphia, PA, USA
+
+         b Department of Electrical and Computer Engineering, University of California, Davis, CA, USA
+
+               c Department of Computer Science, Johns Hopkins University, Baltimore, MD, USA
+
+                          d University of Glasgow, Glasgow, Scotland, United Kingdom
+
+                  e Department of Computer Science, University of California, Irvine, CA, USA
+
+                f School of Computer Science, South China Normal University, Guangzhou, China
+
+ g Department of Computer Engineering and Computer Science, California State University, Long Beach, CA, USA
+
+                        ∗ Corresponding author. Email: yu.sun@alumni.upenn.edu
+
+
+
+
+                                              Abstract
+         Foundation model-based multi-agent systems (MAS) introduce reliability requirements
+     that span execution tracing, failure attribution, safety intervention, and serving-time re-
+     source management. Existing reviews typically analyze these functions separately. This
+     evidence-aware critical review maps 60 representative diagnostic methods, serving sys-
+     tems, and evaluation benchmarks along explicit axes: required evidence inputs, replay and
+     training demands, attribution granularity, intervention timing, state compatibility, work-
+     load assumptions, and runtime cost. We distinguish functional roles from implementation
+     strategies. A central question is when serving-state reclamation impairs later diagnosis.
+     We show that evicting a KV cache is not equivalent to deleting a diagnostic trace: inter-
+     ference arises only when evidence or a non-reconstructable execution dependency shares
+     a constrained resource, is actually discarded, and is needed within the diagnostic hori-
+     zon. We therefore formulate a conditional retention trade-off as a testable design hypoth-
+     esis rather than an established universal conflict. We propose DRICE (Diagnostics evi-
+     dence, Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth),
+     a structured evaluation framework for cross-layer comparison. Finally, we outline an in-
+     strumented, replay-capable evaluation protocol with matched reliability and serving met-
+     rics, and report retention-ablation results on real multi-agent failure traces. The resulting
+     synthesis highlights verifiable architectural interfaces and open questions without ranking
+     non-comparable systems or claiming that a joint optimization has already been empirically
+     demonstrated.
+
+Keywords: Multi-agent systems, Foundation models, Failure localization, Observability, LLM
+serving, KV-cache management
+
+
+
+                                                  1
+
+<PARSED TEXT FOR PAGE: 2 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                      2
+
+
+
+1     Introduction
+Foundation model-based multi-agent systems (MAS), in which multiple Large Language Model
+(LLM) agents collaborate to solve complex tasks, are increasingly moving from demonstrations
+toward deployed workflows. As systems such as MetaGPT [13], CAMEL [15], ChatDev [30],
+and Internet of Agents [7] operate within shared environments, reliability and efficiency de-
+pend on operational layers that are less mature than orchestration itself. As these systems be-
+come architecturally sophisticated, reliability and efficiency depend on operational layers that
+lag behind the orchestration layer: the diagnostics layer, which supports failure localization,
+observability, and safety intervention; and the infrastructure layer, which manages memory,
+scheduling, and resources for multi-agent workloads.
+    Recent multi-agent applications span collaborative coding, scientific discovery, financial
+analysis, and social simulation. Within these applications, failure patterns are qualitatively
+different from single-agent errors: MAST [5] identifies 14 recurring failure modes in MAS,
+motivating runtime diagnostics rather than evaluation only at the final task output. When a
+multi-agent workflow fails, the central question is not just what failed but which agent caused
+the failure, at which step, and whether the serving infrastructure’s resource management deci-
+sions contributed to or masked the failure. Recent preprints illustrate adjacent model-level prob-
+lems that may arise in agent-enabled workloads: finite-beam reachability and continuous-query
+generation in generative recommendation, attribution-based forgetting in LoRA adaptation, and
+reading and reconciling temporal evidence in time-series forecasting. These are contextual ex-
+amples rather than multi-agent diagnostic or serving systems, and are not included in our core
+system tables.
+
+1.1    Scope and Positioning
+Existing surveys largely treat diagnostics and infrastructure separately. General agent surveys
+cover architectural patterns and collaboration mechanisms; AgentOps addresses telemetry and
+operational practice; offline agent evaluation benchmarks focus on task quality; single-model
+serving surveys address latency and throughput optimization; and MAS collaboration/failure
+surveys examine interaction patterns and failure modes. In our curated corpus, we review 48
+entries across four categories (12 failure-localization, 6 observability, 8 safety, 22 infrastructure)
+and 12 evaluation benchmarks (60 table entries; Appendix A). The resulting literature exposes
+complementary pieces of the runtime stack, but the relationship between the state required for
+diagnosis and the state managed by serving policies remains under-analyzed.
+    This review examines the interface between these two selected runtime functions. The title
+does not imply exhaustive treatment of orchestration, storage, networking, security operations,
+or all layers of a production stack. Our analytical contribution is a state-dependency and cost
+framework, not a claim that the reviewed mechanisms themselves are new. Table 1 contrasts
+our scope against five adjacent review areas, specifying the conceptual dimension this review
+adds to each.
+    Three broad system properties recur across the literature reviewed here: (1) distributed
+execution across multiple agents, which creates traces spanning agent boundaries; (2) inter-
+agent communication, which allows failures to propagate through communication channels;
+and (3) inter-agent memory sharing, where prompts, tools, and cached state may be reused
+across the system. Section 5 derives serving-side implications from these properties, high-
+lighting sparse activation, invocation distance, and inter-agent memory sharing as the workload
+characteristics that directly affect memory placement, scheduling, and cache policy.
+
+<PARSED TEXT FOR PAGE: 3 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                                                     3
+
+
+Table 1: Conceptual differences from adjacent reviews. The entries describe emphases rather than binary
+claims of exclusive coverage. Our contribution is a comparison of evidence requirements and state-
+lifetime dependencies across diagnosis and serving, not a claim to invent the component techniques.
+
+         Review area        Unit of analysis              Principal concern            Dimension added here
+         MAS orchestration Agent roles, workflow          Coordination, framework      Serving-state lifetimes and diagnostic
+                           graph                          design                       dependencies
+         AgentOps          Telemetry,      operational    Monitoring, trace collec-    Evidence preservation vs. reclamation
+                           practice                       tion                         cost
+         Agent evaluation  Benchmark tasks, scores        Offline task quality         Replayability, granularity, online timing
+         LLM-serving       Requests, KV blocks,           Latency, throughput          Agent-level future calls and restoration
+                           workers
+         MAS collaboration Inter-agent interactions      Failure, collaboration pat-   Shared evidence, explicit retention con-
+                                                         terns                         ditions
+         This review        Diagnostic         evidence, Conditional cross-layer       Evidence inputs, training, replay, tim-
+                            serving state                dependencies                  ing, cost, recoverability
+
+
+
+1.2    The Diagnostic-Infrastructure Gap
+The gap between diagnostic and infrastructure research is both conceptual and practical. Con-
+ceptually, diagnostic methods are designed under an implicit assumption that execution traces
+are always available — stored in a log database, replay buffer, or trace store that is independent
+of the serving engine’s memory management. Infrastructure systems, conversely, optimize for
+throughput and latency without considering whether their eviction decisions affect downstream
+diagnostic capability. Neither community has systematically characterized the conditions under
+which these assumptions interact.
+    Practically, this gap manifests in three ways. First, among the 12 evaluation benchmarks
+in our curated corpus, we did not identify one that evaluates how diagnostic overhead affects
+serving throughput or how eviction policies affect attribution accuracy. Second, within the
+serving-infrastructure studies examined at full-text depth, we did not identify a reported sys-
+tem that jointly optimizes diagnostic retention and serving throughput under a single measured
+resource budget — the closest system (TOPAS) optimizes serving throughput alone. Third,
+the observability standards that could bridge the gap (OpenTelemetry GenAI conventions) lack
+serving-side attributes: there are no standardized attributes for KV cache residency, eviction
+events, or memory pressure.
+    This review addresses the gap by mapping both layers along shared dimensions (evidence
+inputs, training, replay, granularity, timing, cost), formalizing the conditions for cross-layer
+conflict (Section 6), and proposing a structured evaluation framework (DRICE, Section 8) and
+validation protocol (Section 7.3) that make the shared-budget hypothesis testable.
+    This is a curated critical review rather than a systematic review. The inclusion boundary,
+evidence-selection rules, and verification tiers are described in Section 3. Quantitative claims
+used for comparison come from full-text sources; abstract-level results are marked [a] and are
+not used to compute cross-system deltas or rankings.
+
+Why gap identification is a contribution. Identifying that a widely assumed conflict is con-
+ditional (not universal) changes the design space for joint diagnostic-infrastructure systems. If
+the conflict were universal, practitioners would need to build shared-budget managers for every
+deployment. Because the conflict requires three specific conditions (Eq. 1), practitioners should
+instead instrument for the specific conditions under which interference occurs. The simulated
+KV-eviction experiment (Section 6.6) illustrates that, in a simplified CPU-based cache model,
+naive policy augmentation produces a negative trade-off; live GPU-serving validation remains
+future work. The retention ablation (Section 7.3) reveals a further non-obvious interaction on
+
+<PARSED TEXT FOR PAGE: 4 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                      4
+
+
+
+
+Figure 1: Bounded review scope. The diagnostics layer (top, blue) and infrastructure layer (bottom,
+green) manage different state objects. Dashed arrows indicate conditional cross-layer dependencies:
+diagnostic evidence loss requires all three conditions (shared constrained resource, evidence actually
+discarded, needed within the diagnostic horizon). Most traces are stored out-of-band and survive KV
+cache eviction.
+
+
+real traces: heuristic attributors can improve under subsampling, and a controlled recovery-
+ablation confirms the mechanism (Section 7.3). Together, these findings provide actionable
+design guidance that the existing literature — which either ignores the cross-layer interaction
+or assumes a universal conflict — does not.
+    Our contributions are:
+   1. A multi-axis diagnostic comparison (C1). We separate function (localization, monitor-
+       ing, intervention, evaluation) from methods’ evidence inputs, replay demands, training
+       requirements, attribution granularity, intervention timing, and runtime cost. These di-
+       mensions may overlap and are not mutually exclusive method families. We review 12
+       failure-localization methods (8 T1), 6 observability systems, and 8 safety/guardrail sys-
+       tems.
+   2. A workload-conditioned serving analysis (C2). We distinguish textual context sharing,
+       exact KV-cache reuse, and cross-model cache transfer, and characterize the compatibility,
+       recomputation, and placement assumptions that delimit each optimization across 22 Tier-
+       1 infrastructure systems.
+   3. A conditional cross-layer hypothesis (C3). We formalize when state reclamation can
+       actually harm diagnosis as an evidence-loss event Li (T ) = Ni (T ) ∧ Di (T ) ∧ ¬Ri (T ),
+       document the conditions under which this occurs, and identify TOPAS as the closest
+       existing system to a shared diagnostic-serving budget.
+   4. A structured evaluation framework (C4). We propose DRICE (Diagnostics evidence,
+       Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth) to
+       organize cross-layer comparison tables and highlight the D–R gap between diagnostic
+       and infrastructure systems.
+   5. A concrete validation protocol (C5). We specify online signals, baselines, timing as-
+
+<PARSED TEXT FOR PAGE: 5 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  5
+
+
+
+       sumptions, and metrics (false-alarm rate, detection lead time, task success, recovery rate)
+       for testing the shared-budget hypothesis, and report retention-ablation results on real
+       TraceElephant traces (220 failures across 5 task suites from 3 MAS frameworks).
+    The remainder of this paper is organized as follows. Section 3 describes our review method-
+ology, including the PRISMA-inspired search strategy, inclusion criteria, and evidence coding.
+Section 4 reviews the diagnostic layer organized by function. Section 5 analyzes the infras-
+tructure layer with emphasis on state-sharing distinctions. Section 6 formalizes the cross-layer
+retention trade-off. Section 7 proposes research directions and the validation protocol. Sec-
+tion 8 introduces the DRICE framework. Section 9 discusses limitations and threats to validity.
+Section 10 concludes.
+
+
+2     Background
+This section establishes the technical context for the diagnostic and infrastructure layers re-
+viewed in subsequent sections. We describe the architecture of foundation model-based multi-
+agent systems (§2.1), the workload characteristics that distinguish multi-agent serving from
+single-model inference (§2.2), and the runtime layers we focus on (§2.3).
+
+2.1    Foundation Model-Based Multi-Agent Systems
+A foundation model-based agent operates in a perception–reasoning–action loop, using an LLM
+to process observations and execute actions such as tool invocations, code execution, and inter-
+agent communication. The underlying model workloads can also be multimodal: recent sys-
+tems combine visual, audio, and clinical or platform metadata for domain-specific prediction
+and governance. A multi-agent system (MAS) comprises multiple such agents, as exempli-
+fied by MetaGPT, CAMEL, ChatDev, and Internet of Agents (IoA), operating within a shared
+environment or communicating to accomplish collective objectives.
+    Recent multi-agent applications also span reinforcement-learning-enhanced collaborative
+reasoning and multimodal misinformation detection. MAST [5] identifies 14 recurring fail-
+ure patterns in such systems, motivating runtime diagnostics rather than evaluation only at the
+final task output. The rapid expansion of MAS into production deployments introduces op-
+erational demands that simple orchestration frameworks do not address: when an agent fails
+mid-workflow, which agent caused the failure? When a serving system evicts cached state,
+does this affect later diagnostic capability? When a safety guardrail intercepts an action, does
+the interception itself create a new failure mode?
+    Three broad system properties recur across the literature: (1) distributed execution across
+multiple agents, which creates execution traces spanning agent boundaries and introduces co-
+ordination overhead; (2) inter-agent communication, which creates channels through which
+failures can propagate (FAMAS’s spectrum analysis and TraceElephant’s trace collection both
+exploit these channels for attribution); and (3) inter-agent memory sharing, where prompts,
+tools, and cached state may be reused across the system, creating shared state dependencies that
+affect both serving efficiency and diagnostic evidence availability.
+
+2.2    Multi-Agent Workload Characteristics
+Multi-agent workloads differ from single-model serving in three ways that directly affect mem-
+ory placement, scheduling, and cache policy:
+
+<PARSED TEXT FOR PAGE: 6 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                6
+
+
+
+Sparse activation. Only a fraction of agents invoke the LLM at any moment: a 1,000-agent
+simulation may have fewer than 10 actively generating tokens. Under such workloads, keeping
+all agent state on the fastest memory tier can waste scarce accelerator memory. ScaleSim’s
+invocation-distance metric quantifies the temporal gap before an agent’s next call, enabling
+memory-tier demotion for inactive agents.
+
+Invocation distance. Many workloads have structured activation patterns such as sequential
+queues, event-driven messaging, and dependency graphs. The temporal gap before an agent’s
+next call, termed invocation distance, can be estimated from application semantics in structured
+workloads but is not generally visible to request-level schedulers. This motivates workflow-
+aware caching approaches such as KVFlow, which predicts steps-to-execution for each cached
+prefix.
+
+Inter-agent memory sharing. Agents may share context such as system prompts, environ-
+ment descriptions, and tool schemas. General serving systems already reuse such prefixes:
+SGLang’s RadixAttention and vLLM’s automatic prefix caching both exploit shared token se-
+quences. The additional opportunity in agentic systems is to use application-level structure
+(dependency graphs, message queues, or execution order) to guide cache retention decisions
+beyond request-level recency or frequency heuristics.
+    The relative importance of these properties varies by application domain. Simulation work-
+loads (ScaleSim’s target) exhibit strong sparse activation with predictable invocation patterns.
+Coding agent workflows (Continuum’s target) have long tool-call pauses with uncertain du-
+rations. Multi-model deployments (DroidSpeak’s target) add cross-architecture cache transfer
+challenges. The infrastructure systems reviewed in Section 5 address different subsets of these
+workload properties, and the optimal KV-cache management strategy depends on which prop-
+erties dominate in a given deployment.
+
+2.3    Runtime Layers
+We focus on two runtime layers that are less mature than orchestration:
+
+Diagnostics layer. This layer supports failure localization (identifying which agent or step
+caused a failure), observability and tracing (continuously capturing execution evidence), and
+safety intervention (actively monitoring and preventing harmful actions). The diagnostic layer
+consumes execution state — traces, tool outputs, intermediate reasoning — to produce reliabil-
+ity outcomes: attribution reports, anomaly alerts, and safety blocks. The surveyed methods vary
+dramatically in their resource requirements: FAMAS requires 20 environment replays averag-
+ing 105 minutes per task, while MASPrism requires only two deterministic prefill passes at 2.66
+seconds on a 0.6B model. This three-orders-of-magnitude cost range has direct implications for
+cross-layer design: methods at the high end of the cost spectrum may compete with serving
+resources, while methods at the low end operate well within available headroom.
+
+Infrastructure layer. This layer manages serving-time resources: KV-cache memory, com-
+pute scheduling, adapter placement, and power management for multi-agent workloads. The
+infrastructure layer consumes serving state — KV blocks, adapters, request metadata — and
+optimizes for throughput, latency, and resource utilization. Among the 22 Tier-1 infrastructure
+
+<PARSED TEXT FOR PAGE: 7 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 7
+
+
+
+systems surveyed, eviction mechanisms range from simple LRU (SGLang) to learned survival-
+based predictions (the policy-driven runtime), with 8 systems incorporating agent-level meta-
+data into their management decisions. The key distinction is between reactive eviction (trig-
+gered by memory pressure) and predictive eviction (triggered by estimated future reuse), with
+the latter providing more opportunity for diagnostic-aware retention.
+    The distinctive question for this review is which state dependencies cross the diagnos-
+tic/serving boundary, and which apparent similarities between the two layers do not constitute
+resource competition. This question is formalized in Section 6.
+
+
+3     Review Methodology
+We assembled a curated critical-review corpus through iterative database exploration, back-
+ward/forward citation chaining, and eligibility-based selection. Because database-specific search
+logs and screening decisions were not retained, we do not report a PRISMA-style numerical
+flow or claim systematic completeness. The PRISMA 2020 guidelines [26] informed the re-
+porting structure only. Figure 2 summarizes the sources, inclusion criteria, and final corpus
+composition. We describe our search strategy, selection criteria, evidence-coding scheme, and
+the classification taxonomy below.
+
+3.1    Search Strategy
+We conducted iterative searches across five academic databases: IEEE Xplore, ACM Digital
+Library, Scopus, Google Scholar, and arXiv. The initial search window spanned January 2024
+through March 2026, followed by a targeted citation-chaining update through August 2026, and
+a final update pass through November 2026 capturing systems announced at NeurIPS 2025,
+ICML 2026, ACL 2026, EMNLP 2026, OSDI 2024, FAST 2025, and EuroSys 2025/2027. Be-
+cause foundation-model multi-agent runtime research is rapidly evolving, we included preprints
+alongside peer-reviewed publications when the described system contained reproducible imple-
+mentation details. We prioritize work from 2024–2026 because foundation-model multi-agent
+runtime research is unusually recent, while retaining older serving papers when they define
+mechanisms directly reused by agentic systems.
+    We constructed Boolean search queries combining terms from two domains:
+     • Diagnostics: (“multi-agent” OR “LLM agent” OR “foundation model agent”) AND
+       (“failure localization” OR “fault attribution” OR “debugging” OR “observability” OR
+       “tracing” OR “guardrail” OR “safety intervention” OR “runtime monitoring”)
+     • Infrastructure: (“multi-agent” OR “LLM serving” OR “agent serving”) AND (“KV
+       cache” OR “memory management” OR “scheduling” OR “state sharing” OR “cache evic-
+       tion” OR “prefix caching” OR “context reuse”)
+    Cross-domain queries additionally combined diagnostic and infrastructure terms to capture
+systems at the intersection (e.g., “KV cache eviction” AND “diagnostic evidence”). To make the
+review more reproducible without overstating exhaustiveness, candidate papers were collected
+iteratively from primary systems papers, adjacent surveys, major peer-reviewed venues, and
+forward/backward citation tracing. Queries were adapted per database syntax. A paper enters
+the core system tables only when its runtime role can be identified from the source and mapped
+to one of the functions above. Because the corpus was not generated by a preregistered database
+protocol with fixed search strings and PRISMA-style screening, the reported counts should be
+interpreted as a curated landscape rather than an exhaustive census.
+
+<PARSED TEXT FOR PAGE: 8 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                    8
+
+
+
+Citation chaining. After the initial query-based search, we performed forward citation tracing
+(finding papers that cite a seed paper) and backward citation tracing (examining references
+within each selected paper). This process identified 34 additional failure-localization systems
+not captured by the initial queries, primarily because they use domain-specific terminology
+(“root cause analysis,” “trajectory debugging,” “error attribution”) that does not always co-
+occur with “multi-agent” in titles or abstracts. We also traced infrastructure systems through
+the KV-cache-management citation network starting from vLLM and SGLang, identifying 16
+additional systems that address multi-agent workload patterns.
+
+3.2    Inclusion and Exclusion Criteria
+Inclusion criteria. A paper enters the core system tables when it satisfies at least one of the
+following:
+   1. It describes a runtime diagnostic operation for foundation-model agents: failure localiza-
+      tion, observability or tracing, safety intervention, or diagnostic benchmarking.
+   2. It describes a serving-time resource management mechanism (memory, scheduling, cache,
+      or power) reused by or designed for agentic workloads.
+   3. It provides a baseline or architectural prerequisite directly reused by multi-agent diagnos-
+      tic or serving systems.
+
+Exclusion criteria. We exclude: (a) orchestration-only frameworks without runtime diagnos-
+tic or serving mechanisms (e.g., workflow graph definitions); (b) single-model inference op-
+timization without multi-agent or agentic extensions; (c) offline-only evaluation methods that
+do not address runtime behavior; (d) long-term memory architectures without serving-time re-
+source management; and (e) general agent surveys that do not provide system-level implemen-
+tation details for diagnosis or serving.
+
+Selection cutoff. The reference list was frozen for editorial inspection on 7 November 2026.
+This is a revision cutoff, not a systematically reconstructed search date: the original exploratory
+collection did not preserve database-by-database queries, retrieval timestamps, or screening
+exclusions. We therefore describe the corpus as a curated landscape rather than claiming
+PRISMA-style systematic completeness.
+
+3.3    Evidence Coding
+Each included system is assigned an evidence tier that reflects the depth of our verification:
+    • Tier 1a (T1a): Full-text reading with section-level evidence extraction. Quantitative
+      claims, method details, cost metrics, and limitations are traced to specific sections, tables,
+      or figures in the source paper. All systems in the core comparison tables are at least T1.
+    • Tier 1b (T1b): Full-text reading but without page-level citation (e.g., the evidence was
+      extracted from the complete paper but specific section numbers were not recorded).
+    • Tier 2 (T2): Abstract-level verification. The system’s existence, claimed function, and
+      headline results are confirmed, but detailed method mechanics and cost breakdowns are
+      not independently verified.
+    Abstract-only evidence is marked [a] in the text and is not used to compute cross-system
+deltas or rankings. A source-level evidence-audit checklist accompanies the supplementary
+material.
