@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 45; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 45 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 45\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 8.3 Applying DRICE to Cross-Layer Scenarios\par
+\noindent Beyond the per-system assessment in Table 12, DRICE identifies three actionable cross-layer\par
+\noindent scenarios:\par
+\par\smallskip
+\noindent Scenario 1: Diagnostic-unaware eviction (majority case). Systems like SGLang and Moon-\par
+\noindent cake score high on R (sophisticated retention policies) and I (well-characterized infrastructure\par
+\noindent assumptions) but have null D scores. A deployment pairing SGLang with CHIEF for failure\par
+\noindent attribution would have no mechanism to protect CHIEF’s trace inputs from eviction. DRICE\par
+\noindent makes this gap explicit: the D–R disconnect means the diagnostic and infrastructure layers\par
+\noindent operate independently (Tier A in the overlap classification).\par
+\par\smallskip
+\noindent Scenario 2: Observability-informed eviction (emerging). The policy-driven runtime scores\par
+\noindent partially on both D and R: it consumes observability signals (agent identity, engine events)\par
+\noindent and uses them to predict cache residency. This is not yet diagnostic-aware in the sense of\par
+\noindent protecting evidence for later attribution, but the architecture demonstrates that the D–R bridge\par
+\noindent is technically feasible. DRICE’s C dimension reveals that the metadata overhead is the binding\par
+\noindent constraint: agent-identity embeddings and transition matrices consume memory proportional to\par
+\noindent the number of distinct agents.\par
+\par\smallskip
+\noindent Scenario 3: Joint budget optimization (hypothetical). TOPAS scores high on R (joint\par
+\noindent prefix-scheduling optimization under shared Bt ) but null on D. Extending TOPAS to score on\par
+\noindent D would require adding a diagnostic-value term to the objective: max α · throughput + (1−α) ·\par
+\noindent diag\_value. DRICE’s E dimension prescribes what evidence would be needed to validate such\par
+\noindent an extension: the retention ablation protocol (Section 7.3) provides one path, but the framework\par
+\noindent also requires throughput measurements under the modified policy, which no existing study pro-\par
+\noindent vides.\par
+\par\smallskip
+\noindent 8.4 DRICE as a Practitioner Checklist\par
+\noindent To illustrate how DRICE translates to actionable deployment decisions, we walk through two\par
+\noindent contrasting configurations:\par
+\par\smallskip
+\noindent Case 1: SGLang with independent trace store. D: full OTel-style spans captured out-of-\par
+\noindent band (step-level attribution available). R: traces stored in an independent log database, not in\par
+\noindent GPU memory. I: RadixTree prefix cache with LRU leaf-first eviction. C: negligible diagnostic\par
+\noindent overhead (tracing is asynchronous and does not contend with serving memory). E: T1a evidence\par
+\noindent depth for SGLang’s eviction mechanics. Decision: no diagnostic-serving conflict exists because\par
+\noindent R is decoupled from I. The retention policy for diagnostic traces is unconstrained by serving-\par
+\noindent side memory pressure. This is the Tier A (independent operation) configuration that the majority\par
+\noindent of surveyed deployments use.\par
+\par\smallskip
+\noindent Case 2: Hypothetical co-located system (TOPAS-like). D: diagnostic signals embedded in\par
+\noindent KV cache block metadata (tool-call markers, error flags). R: shared GPU memory pool —\par
+\noindent evicting a KV block destroys the embedded diagnostic content. I: PagedAttention with LRU\par
+\noindent eviction under memory pressure. C: the illustrative simulation (§6.6) shows an 11.6 pp cache\par
+\noindent hit-rate cost for complete diagnostic block retention. E: agent-level attribution only (step-level\par
+\noindent requires additional trace infrastructure). Decision: joint optimization is needed. Either accept\par
+\end{flushleft}

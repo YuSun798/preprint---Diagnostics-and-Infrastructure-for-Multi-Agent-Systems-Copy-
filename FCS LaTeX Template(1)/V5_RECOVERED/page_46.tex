@@ -1,0 +1,52 @@
+% Reconstructed text from V5 PDF page 46; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 46 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 46\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent the serving cost, implement selective retention that protects only high-value diagnostic blocks,\par
+\noindent or redesign the trace storage to decouple D from I (converting to Case 1).\par
+\par\smallskip
+\noindent 8.5 Relationship to ALEMC\par
+\noindent The DRICE framework is complementary to ALEMC (Accuracy, Latency, Energy, Memory,\par
+\noindent Carbon) proposed for on-device RAG evaluation. Where ALEMC focuses on single-system\par
+\noindent performance metrics with explicit sustainability dimensions, DRICE focuses on cross-system\par
+\noindent characterization — what each system assumes about, produces for, and depends on from adja-\par
+\noindent cent layers. The two frameworks can be composed: ALEMC dimensions apply within each\par
+\noindent DRICE component (e.g., the C dimension’s compute cost can be further decomposed into\par
+\noindent ALEMC’s latency and energy metrics). A system’s DRICE profile identifies which layers it\par
+\noindent spans; ALEMC quantifies how well it performs within each layer.\par
+\par\smallskip
+\noindent 8.6 Limitations of DRICE\par
+\noindent DRICE is a characterization framework, not a ranking system. It does not produce a single score\par
+\noindent because the dimensions are incommensurable: a high D score (rich evidence consumption) is\par
+\noindent not inherently better than a high R score (sophisticated retention) — the relative importance\par
+\noindent depends on the deployment context. The framework assumes that each dimension can be inde-\par
+\noindent pendently assessed, which may not hold when dimensions interact (e.g., a higher R score may\par
+\noindent increase C costs). We present DRICE as a structured vocabulary for cross-layer comparison,\par
+\noindent not as a quantitative evaluation methodology.\par
+\noindent  Several extensions could strengthen the framework. First, the E dimension (evidence depth)\par
+\noindent currently uses our three-tier coding scheme; a more granular scale that captures the distinc-\par
+\noindent tion between verified numbers and verified mechanisms would improve comparative precision.\par
+\noindent Second, the C dimension aggregates four cost components; future work could weight these\par
+\noindent components by their binding-constraint relevance in specific deployment scenarios. Third, the\par
+\noindent framework does not capture temporal dynamics: a system’s DRICE profile may change as\par
+\noindent workload patterns shift, memory pressure varies, or the diagnostic horizon extends. A dynamic\par
+\noindent DRICE assessment that tracks profile changes over time would better capture the reality of\par
+\noindent production deployments.\par
+\noindent  The framework’s primary value lies in making implicit assumptions explicit. When a re-\par
+\noindent searcher proposes a new diagnostic method, DRICE asks: what infrastructure assumptions does\par
+\noindent it make (I)? When an infrastructure researcher designs a new eviction policy, DRICE asks: does\par
+\noindent it consider diagnostic value (D)? This structured questioning is more actionable than a generic\par
+\noindent call for “cross-layer optimization.”\par
+\par\smallskip
+\par\smallskip
+\noindent 9 Discussion\par
+\noindent 9.1 Key Patterns\par
+\noindent Five patterns recur across the diagnostic and infrastructure layers:\par
+\par\smallskip
+\noindent The replay-accuracy trade-off is disappearing. Among the 12 failure-localization methods,\par
+\noindent only two require environment replays (FAMAS, k=20; DoVer, 4–12 per case). The remaining\par
+\end{flushleft}

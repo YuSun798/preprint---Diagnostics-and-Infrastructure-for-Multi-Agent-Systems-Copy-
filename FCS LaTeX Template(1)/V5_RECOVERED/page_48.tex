@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 48; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 48 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 48\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent The subsampling paradox reveals heuristic limitations. The retention ablation results (Sec-\par
+\noindent tion 7.3) demonstrate that heuristic attributors can improve when given less data — a finding\par
+\noindent that challenges the intuition that more evidence is always better for diagnosis. The mechanism\par
+\noindent is specific: the causal-graph heuristic marks an error as “recovered” if the same agent later pro-\par
+\noindent duces a normal event, causing it to skip the true root cause on full traces where normal post-error\par
+\noindent events are abundant. Subsampling strips these misleading normal events, making the decisive\par
+\noindent error visible. This finding has two implications for cross-layer design: first, retention policies\par
+\noindent that prioritize recency (keeping the most recent events) perform worst at low budgets because\par
+\noindent they systematically discard early root causes. Second, the optimal retention strategy depends\par
+\noindent on the attribution method — a finding that argues against one-size-fits-all retention policies and\par
+\noindent for the retention-aware diagnostic design advocated in our validation protocol.\par
+\par\smallskip
+\noindent 9.2 Implications for System Design\par
+\noindent The patterns above suggest three concrete architectural recommendations:\par
+\noindent  1. Decouple diagnostic storage from serving memory. Since 10 of 12 failure-localization\par
+\noindent  methods operate on logged traces rather than live serving state, the simplest way to avoid\par
+\noindent  Tier C evidence-loss events is to ensure traces are written to a durable store before the\par
+\noindent  corresponding KV cache is eligible for eviction. This is already the default architecture\par
+\noindent  in most surveyed systems, which is why the cross-layer conflict is rare in practice.\par
+\noindent  2. Expose serving-side events to diagnostic consumers. The observability gap (no OTel\par
+\noindent  attributes for KV cache residency, eviction events, or memory pressure) prevents diag-\par
+\noindent  nostic systems from detecting when their evidence might be at risk. Extending the OTel\par
+\noindent  GenAI conventions with serving-side attributes would enable diagnostic systems to re-\par
+\noindent  quest trace retention proactively when they detect that a future attribution may be needed.\par
+\noindent  3. Design retention policies with attribution method awareness. The subsampling para-\par
+\noindent  dox shows that the same retention strategy can help one attribution method and hurt an-\par
+\noindent  other. Future serving systems that incorporate diagnostic retention should parameterize\par
+\noindent  the retention policy on the expected attribution method, or provide a general-purpose\par
+\noindent  noise-filtering retention strategy that benefits multiple methods.\par
+\par\smallskip
+\noindent 9.3 Limitations\par
+\noindent This review has several limitations:\par
+\noindent  1. Curated, not systematic. The corpus was assembled through iterative exploration and\par
+\noindent  citation chaining rather than a pre-registered protocol with reproducible database queries.\par
+\noindent  The reported counts are a curated landscape, not an exhaustive census.\par
+\noindent  2. Evidence depth variation. Of the 60 entries, 56 received full-text verification (T1a or\par
+\noindent  T1b), comprising 44 systems and all 12 benchmarks; the remaining 4 entries are discussed\par
+\noindent  at the T2 text-mention level. Cross-system comparisons involving T2 systems should be\par
+\noindent  interpreted with this asymmetry in mind.\par
+\noindent  3. Retention ablation scope. The retention-ablation experiment uses real TraceElephant\par
+\noindent  traces (220 failures, 5 task suites from 3 MAS frameworks) but tests only two heuristic at-\par
+\noindent  tribution methods. LLM-judge approaches (CHIEF, TrajAudit, AgentRx) were not tested\par
+\noindent  and may not exhibit the subsampling paradox, since they do not rely on the recovery-\par
+\noindent  detection heuristic that drives the effect. Step-level attribution was not tested.\par
+\noindent  4. Rapidly evolving landscape. Multi-agent runtime research is moving faster than review\par
+\noindent  cycles. Several systems in the corpus are preprints without peer review. The search cutoff\par
+\end{flushleft}

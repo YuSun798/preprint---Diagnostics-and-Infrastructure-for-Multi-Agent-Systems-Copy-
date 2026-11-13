@@ -1,0 +1,40 @@
+% Reconstructed text from V5 PDF page 12; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 12 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 12\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Figure 3: Classification taxonomy: four diagnostic functions (rows) characterized along six method\par
+\noindent dimensions (columns). Representative systems are placed in each cell. Functions are not mutually\par
+\noindent exclusive algorithm classes; the same method may serve multiple functions. Red shading indicates\par
+\noindent diagnostic-layer systems.\par
+\par\smallskip
+\par\smallskip
+\noindent Statistical methods. FAMAS [11] adapts spectrum-based fault localization (SBFL) from\par
+\noindent software engineering to multi-agent failure attribution. The method parses failed execution\par
+\noindent logs into structured ⟨agent, action, state⟩ triples using an LLM (Qwen2.5-72B) for log parsing,\par
+\noindent then applies the Kulczynski2 suspiciousness formula with two domain-specific modifications:\par
+\noindent temporal decay weighting (later actions receive higher suspiciousness) and action-frequency\par
+\noindent normalization (§3–4).\par
+\noindent  The method requires k=20 environment replays per failure to build the execution spectrum\par
+\noindent (§5.1, confirmed). Sensitivity analysis shows monotonic accuracy improvement with replay\par
+\noindent count: k=5 yields 46.0 action-level correct attributions, k=10 yields 47.6, k=15 yields 50.8,\par
+\noindent and k=20 yields 54 (§5.4, Figure 4). The best agent-level accuracy is 62.07\% on handcrafted\par
+\noindent multi-agent systems and 57.61\% overall in the Who\&When benchmark; the best action-level\par
+\noindent accuracy is 41.38\% (handcrafted) and 29.35\% (overall) (Table 2).\par
+\noindent  The method’s principal cost is replay time: on average 105 minutes per task (range 38–\par
+\noindent 248 minutes), while the spectrum analysis itself completes in under one minute (§5.2). This\par
+\noindent makes FAMAS the most expensive T1 method by wall-clock time, but the only one with formal\par
+\noindent coverage guarantees from SBFL theory. The method degrades on very short trajectories (<11\par
+\noindent steps, where the spectrum is too sparse) and very long ones (38–65 steps, where the action space\par
+\noindent dilutes individual suspiciousness scores) (§6.1, Figure 6). A single benchmark (Who\&When\par
+\noindent with 184 failure logs) limits generalizability (§6.2).\par
+\par\smallskip
+\noindent LLM-guided methods. Four systems use off-the-shelf language models without task-specific\par
+\noindent training:\par
+\noindent  • CHIEF [38] constructs a three-level hierarchical causal graph G = (V, E) with sub-\par
+\noindent  task nodes, agent nodes characterized by OTAR attributes (Objective, Tools, Authority,\par
+\end{flushleft}

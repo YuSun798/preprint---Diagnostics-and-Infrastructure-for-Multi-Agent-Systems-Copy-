@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 25; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 25 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 25\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent dynamic control flow (conditional branches, native function calls) must still execute client-side\par
+\noindent (§6, OSDI 2024).\par
+\noindent  DistServe [50] disaggregates prefill and decoding into separate GPU pools connected via\par
+\noindent pull-based RDMA, allowing each phase to be independently parallelized and scaled. For a 66B-\par
+\noindent parameter model with 512-token requests, each request’s KV cache is approximately 1.13 GB\par
+\noindent (§3.3), making transfer cost a first-class design concern. The key architectural insight is that pre-\par
+\noindent fill (compute-bound) and decoding (memory-bandwidth-bound) have complementary resource\par
+\noindent profiles, so co-locating them on the same GPU pool wastes resources in both directions. By\par
+\noindent disaggregating, DistServe achieves 2× goodput improvement on Llama-70B under SLA con-\par
+\noindent straints (§5). However, the KV transfer mechanism is intra-request (prefill-to-decode handoff\par
+\noindent within a single user’s generation), not inter-agent sharing. No eviction policy is described; KV\par
+\noindent state is consumed and released per-request (OSDI 2024). For multi-agent scenarios, DistServe’s\par
+\noindent disaggregation could be composed with inter-request prefix sharing (as SGLang or Mooncake\par
+\noindent provide), but no such composition has been evaluated.\par
+\par\smallskip
+\noindent 5.2 Exact KV-Cache Reuse\par
+\noindent Exact KV-cache reuse retains computed attention tensors across requests that share identical\par
+\noindent token prefixes, avoiding redundant prefill computation. This is the dominant category among\par
+\noindent surveyed systems.\par
+\par\smallskip
+\noindent Foundation: PagedAttention. vLLM [14] introduced PagedAttention, managing KV cache\par
+\noindent in non-contiguous fixed-size blocks with a page table. It uses all-or-nothing eviction when\par
+\noindent GPU memory is exhausted, preempting entire sequences rather than individual blocks. This\par
+\noindent establishes the baseline architecture that most subsequent systems extend.\par
+\par\smallskip
+\noindent Prefix-tree indexing. SGLang [49] organizes cached KV prefixes in a radix tree with LRU\par
+\noindent leaf-first eviction and reference counting. Each node maintains a reference counter; a node is\par
+\noindent evictable only when its counter reaches zero (§3). Evicting leaves first enables reuse of common\par
+\noindent ancestors until those ancestors themselves become leaves. A key design decision is the dynamic\par
+\noindent shared pool: there is no fixed cache budget — “we do not preallocate a fixed-size memory\par
+\noindent pool as a cache; instead, we let the cached tokens and the currently running requests share the\par
+\noindent same memory pool” (§3). When enough waiting requests exist, the system evicts all cached\par
+\noindent tokens in favor of a larger batch size, prioritizing throughput over cache hit rate. Cache-aware\par
+\noindent scheduling sorts requests by matched prefix length; Theorem 3.1 proves this achieves optimal\par
+\noindent cache hit rate equivalent to DFS order on the radix tree. On Chatbot Arena workloads, SGLang\par
+\noindent achieves 52.4\% cache hit rate on LLaVA-NeXT-34B and 74.1\% on Vicuna-33B, with 1.7×\par
+\noindent TTFT reduction (§5.5). Across benchmarks, it delivers up to 6.4× throughput improvement\par
+\noindent and 3.7× latency reduction over baselines including Guidance v0.1.8 and vLLM v0.2.5 (§5).\par
+\noindent The overhead of RadixAttention itself is under 0.3\% of total inference time (§5).\par
+\noindent  For our cross-layer analysis, two properties of SGLang are noteworthy. First, the radix\par
+\noindent tree stores only KV tensors — no adapter weights, LoRA parameters, or diagnostic state are\par
+\noindent managed (§3). The system is single-model per instance, with no multi-adapter or multi-tenant\par
+\noindent cache partitioning. Second, the “evict all cached tokens” pressure response is the most aggres-\par
+\noindent sive eviction policy among surveyed systems: when memory pressure is high enough, the entire\par
+\noindent diagnostic-irrelevant cache is cleared. This design is optimal for request-level throughput but\par
+\noindent would need modification to protect diagnostically valuable prefixes. Stated limitations include\par
+\end{flushleft}

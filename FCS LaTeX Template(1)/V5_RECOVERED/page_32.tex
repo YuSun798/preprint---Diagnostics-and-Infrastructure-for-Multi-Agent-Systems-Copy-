@@ -1,0 +1,56 @@
+% Reconstructed text from V5 PDF page 32; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 32 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 32\par
+\par\smallskip
+\par\smallskip
+\noindent Table 4: Infrastructure serving systems (Part 1): general-purpose and prefix-caching systems. “Agt”\par
+\noindent indicates agent-aware eviction.\par
+\par\smallskip
+\noindent  System State Eviction Agt Venue\par
+\noindent  vLLM KV blocks All-or-nothing – SOSP ’23\par
+\noindent  SGLang KV prefix tree LRU leaf-first – NeurIPS ’24\par
+\noindent  DistServe KV tensors Pull-based – OSDI ’24\par
+\noindent  Mooncake KV disagg. LRU/LFU config – FAST ’25\par
+\noindent  Parrot Semantic vars Explicit free – OSDI ’24\par
+\noindent  InferCept KV blocks Min-waste adpt – ICML ’24\par
+\noindent  CacheBlend Per-chunk KV Tiered storage – EuroSys ’25\par
+\noindent  Continuum KV prefix TTL cost-benefit – ICLR ’26 WS\par
+\noindent  TOPAS KV prefix+sched Joint optim. – arXiv ’26\par
+\noindent  Leyline KV positional Directive splice – arXiv ’26\par
+\noindent  ConServe KV conversation Conv.-level pin – arXiv ’26\par
+\par\smallskip
+\noindent  Table 5: Infrastructure serving systems (Part 2): agent-aware and cross-model systems.\par
+\par\smallskip
+\noindent  System State Eviction Agt Venue\par
+\noindent  TokenCake KV blocks Temporal+spatial ✓ EuroSys ’27\par
+\noindent  KVFlow KV prefix Workflow aware ✓ NeurIPS ’25\par
+\noindent  KVCOMM KV compressed Anchor LFU+FIFO ✓ NeurIPS ’25\par
+\noindent  ForkKV KV CoW Deduplication ✓ arXiv ’26\par
+\noindent  TokenDance KV block-sparse Sparse diff ✓ arXiv ’26\par
+\noindent  KAIROS Per-agent ctx Ctx-growth aware ✓ arXiv ’26\par
+\noindent  Pol.-driven rt. Agent+events Survival-learned ✓ arXiv ’26\par
+\noindent  ScaleSim KV+adapt+draft Invoc.-distance ✓ arXiv ’26\par
+\noindent  DroidSpeak Per-layer KV Selective recomp – arXiv ’24\par
+\noindent  LRAgent KV base+LoRA Shared base ✓ ICML ’26\par
+\noindent  PolyKV Shared compr. Asymm. compress – arXiv ’26\par
+\par\smallskip
+\par\smallskip
+\noindent cache induces a new prefill pass but does not destroy information — the prompt text remains\par
+\noindent available, and the same KV tensors can be recomputed deterministically.\par
+\noindent  A diagnostic trace is an execution record: it captures what happened during a particular run,\par
+\noindent including tool responses, stochastic environment observations, causal orderings, and interme-\par
+\noindent diate model outputs. Removing a trace may be irreplaceable if the underlying tool response\par
+\noindent was non-deterministic, the external environment has changed, or the causal ordering was never\par
+\noindent logged.\par
+\noindent  This distinction is fundamental: removing a KV cache does not delete a diagnostic trace\par
+\noindent unless the trace is co-located with the cache and no independent copy exists. The two objects\par
+\noindent are stored in different subsystems, consumed by different layers, and retained under different\par
+\noindent policies. Their resource budgets can overlap but need not.\par
+\par\smallskip
+\noindent 6.2 When Is the Conflict Real?\par
+\noindent For a serving-side state object i and a diagnostic horizon T , define three events:\par
+\noindent  • Ni (T ): a later diagnosis needs information uniquely carried by object i.\par
+\noindent  • Di (T ): object i’s relevant information is discarded before the diagnostic horizon.\par
+\end{flushleft}

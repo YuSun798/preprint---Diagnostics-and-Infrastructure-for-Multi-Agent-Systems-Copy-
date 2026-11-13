@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 42; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 42 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 42\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent gap varies across retention strategies and budgets (Table 10). S4 and S3 have zero seed variance\par
+\noindent (deterministic strategies); only S2 has genuine uncertainty bars.\par
+\par\smallskip
+\noindent Recovery-ablation: confirmed mechanism. A controlled follow-up experiment isolated the\par
+\noindent recovery-detection heuristic as the mechanism behind the inverted slope. The original causal-\par
+\noindent graph heuristic marks an error as “recovered” when the failure-causing agent subsequently pro-\par
+\noindent duces any non-error event, suppressing it from the attribution. We tested three conditions (Ta-\par
+\noindent ble 11):\par
+\par\smallskip
+\noindent Table 11: Recovery-ablation results on 220 TraceElephant traces (n = 220; deterministic for C2/C3).\par
+\noindent McNemar’s test for paired nominal data.\par
+\par\smallskip
+\noindent  Condition Accuracy McNemar p 95\% CI\par
+\noindent  C1 Original heuristic, 100\% retention 0.459 (101/220) — —\par
+\noindent  C2 No-recovery logic, 100\% retention 0.532 (117/220) 0.004 vs C1 [+2.73, +11.82] pp\par
+\noindent  C3 No-recovery + S4 importance, 10\% 0.541 (119/220) 0.892 vs C2 crosses zero\par
+\noindent  McNemar exact test with mid-p correction. C1→C2 discordant pairs: b=6 (C2 correct, C1 wrong), c=22 (C1\par
+\noindent  correct, C2 wrong). C2→C3: b=26, c=28. CI expressed as C2−C1 (improvement direction, in percentage\par
+\noindent  points).\par
+\par\smallskip
+\noindent  Correcting the recovery heuristic accounts for most of the apparent subsampling benefit:\par
+\noindent C2 recovers +7.3 percentage points over C1 (McNemar p = 0.004), matching the accuracy of\par
+\noindent importance-based subsampling at 10\% budget under the original heuristic (C2 ≈ S4@10\% =\par
+\noindent 0.532). Two independent paths — (a) fixing the heuristic directly, (b) subsampling away the\par
+\noindent events the flawed logic depends on — converge to the same accuracy. This confirms that the\par
+\noindent inverted slope in Table 10 was driven by the recovery-detection artifact, not by a genuine benefit\par
+\noindent of less data.\par
+\noindent  The residual 0.9-percentage-point improvement under importance sampling (C3 vs. C2) is\par
+\noindent not statistically significant (p = 0.892) and should not be interpreted as robust without replica-\par
+\noindent tion with other attributors. The improvement is not uniform across suites: GAIA suites show\par
+\noindent the largest gains (+9.5 pp) while SWE-Agent slightly regresses under C2 (−2.3 pp), suggesting\par
+\noindent the recovery logic interacts differently with framework-specific trace structures.\par
+\par\smallskip
+\noindent Implications. This finding characterizes a specific heuristic–retention interaction with a con-\par
+\noindent firmed and statistically tested mechanism. Different attribution methods (e.g., LLM-judge ap-\par
+\noindent proaches such as CHIEF or TrajAudit) would likely produce different strategy rankings and\par
+\noindent may not exhibit the inverted slope, since they do not rely on the “recovered error” heuristic.\par
+\noindent The practical takeaway is that retention policy design must account for the attribution method’s\par
+\noindent assumptions: a retention strategy that improves one attributor may be neutral or harmful for\par
+\noindent another. Replication with step-level attribution and LLM-judge methods remains necessary to\par
+\noindent establish generality.\par
+\par\smallskip
+\par\smallskip
+\noindent 8 DRICE Evaluation Framework\par
+\noindent Existing comparison tables in multi-agent diagnostics and serving reviews typically list systems\par
+\noindent by method category and report headline accuracy or throughput numbers. This makes cross-\par
+\noindent layer comparison difficult: a diagnostic method with 70\% attribution accuracy and zero replay\par
+\noindent cost is not directly comparable to an infrastructure system with 3× throughput gain and 74\%\par
+\end{flushleft}

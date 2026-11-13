@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 38; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 38 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 38\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent retention while the effect on LLM-judge methods is unknown; (b) an estimation of the prob-\par
+\noindent ability Ni (T ) at eviction time, which requires predicting whether a failure will occur within\par
+\noindent the diagnostic horizon — a fundamentally harder problem than predicting prefix reuse; and\par
+\noindent (c) empirical validation on realistic workloads where diagnostic queries may be rare compared\par
+\noindent to serving requests.\par
+\noindent  The architectural pathway is clearer than the algorithmic one. The policy-driven runtime [47]\par
+\noindent already constructs agent-identity embeddings and engine-event transition matrices; adding a\par
+\noindent diagnostic-value signal to these features would extend the survival-based eviction policy to\par
+\noindent consider both serving reuse and diagnostic retention. Continuum’s TTL-based framework [16]\par
+\noindent provides another natural extension point: diagnostic-critical state could receive longer TTL\par
+\noindent values, implementing a cost-benefit retention policy that weighs serving throughput against di-\par
+\noindent agnostic value.\par
+\par\smallskip
+\noindent O2: Cross-layer benchmarks. The benchmark gap identified in Section 4.4 is particularly\par
+\noindent acute for cross-layer evaluation. A cross-layer benchmark would need four components that\par
+\noindent currently exist in isolation: (a) a realistic multi-agent workload generator (TraceElephant [6]\par
+\noindent provides 220 failures from production systems but no serving-side workload); (b) a config-\par
+\noindent urable serving backend with tunable eviction policy and memory pressure; (c) injected failures\par
+\noindent at known locations for ground-truth attribution; and (d) matched diagnostic and serving metrics\par
+\noindent measured simultaneously. The closest existing infrastructure is the TRAIL benchmark [10],\par
+\noindent which uses OTel-format traces architecturally compatible with serving-side telemetry. Extend-\par
+\noindent ing TRAIL to include serving-side OTel spans (cache hit/miss events, eviction decisions) would\par
+\noindent create the first cross-layer dataset. However, TRAIL’s low baseline accuracy (∼11\%) suggests\par
+\noindent that cross-layer evaluation may be premature until single-layer attribution reaches higher accu-\par
+\noindent racy.\par
+\par\smallskip
+\noindent O3: Scalability of training-free methods. MASPrism’s [19] 0.6B-parameter signal-extraction\par
+\noindent approach achieves competitive accuracy at dramatically lower cost than frontier-model methods\par
+\noindent (2.66s vs. 105 min for FAMAS). Whether this paradigm scales to longer trajectories, multi-\par
+\noindent agent coordination failures (37\% of MAS failures per TrajAudit §IX), and heterogeneous ar-\par
+\noindent chitectures remains open. The approach relies on the assumption that prefill-stage NLL and at-\par
+\noindent tention signals carry diagnostic information — an assumption that may weaken for distributed\par
+\noindent coordination failures. A promising direction is combining lightweight signal extraction with\par
+\noindent targeted LLM reasoning: use MASPrism-style filtering to identify candidate failure regions\par
+\noindent cheaply, then deploy CHIEF-style hierarchical analysis only on the narrowed candidate set.\par
+\par\smallskip
+\noindent O4: Observability standards for multi-agent state. The OpenTelemetry GenAI conven-\par
+\noindent tions [25] cover LLM inference spans but lack serving-side attributes: cache residency, eviction\par
+\noindent events, memory pressure, adapter loading. The proposed agentic extensions (Issue \#35) remain\par
+\noindent at Todo status. Extending the standard would enable three capabilities: (a) diagnostic sys-\par
+\noindent tems detecting when evidence is at eviction risk; (b) cross-layer benchmarks using standardized\par
+\noindent telemetry; and (c) automated DRICE I-dimension assessment. The implementation challenge\par
+\noindent is frequency: serving events occur per-token while diagnostic events occur per-failure, so ag-\par
+\noindent gregate attributes (cache utilization, eviction rate) are more practical than per-token instrumen-\par
+\noindent tation.\par
+\par\smallskip
+\noindent O5: Safety-infrastructure coupling. Three safety systems (SentinelAgent, AGrail, Agent-\par
+\noindent DoG) consume diagnostic traces as input. If the serving layer evicts state these safety monitors\par
+\end{flushleft}

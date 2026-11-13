@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 37; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 37 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 37\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Key insight: observation without protection. All four bridge candidates share a common\par
+\noindent pattern: they use diagnostic-adjacent signals (agent identity, execution events, context patterns)\par
+\noindent to improve serving decisions, but none uses serving-side state management to protect diag-\par
+\noindent nostic evidence. The bridge is unidirectional: diagnostics→serving, not serving→diagnostics.\par
+\noindent Building the reverse direction — serving-side retention that considers diagnostic value — is the\par
+\noindent central open question addressed in Section 7.\par
+\par\smallskip
+\noindent 6.9 Counterexamples: When Eviction Does Not Harm Diagnosis\par
+\noindent To sharpen the conditional nature of the cross-layer relationship, we enumerate cases where\par
+\noindent KV-cache eviction explicitly does not create an evidence-loss event:\par
+\noindent  1. Independent trace storage. When diagnostic traces are stored in a log database or ob-\par
+\noindent  ject store separate from GPU memory, KV-cache eviction has no effect on diagnostic\par
+\noindent  availability. This is the default architecture for 16 of 22 infrastructure systems and all T1\par
+\noindent  failure-localization methods.\par
+\noindent  2. Deterministic environments. When tool responses are deterministic (same input always\par
+\noindent  produces same output) and the input is logged, any lost KV state can be recomputed from\par
+\noindent  the prompt text. The recomputation cost is a Tier B effect (increased latency), not a Tier C\par
+\noindent  effect (information loss).\par
+\noindent  3. Post-hoc attribution. 10 of 12 failure-localization methods operate on completed tra-\par
+\noindent  jectories after the task has finished. By the time attribution runs, the KV cache for that\par
+\noindent  task has typically already been evicted. These methods read from logs, not from GPU\par
+\noindent  memory.\par
+\noindent  4. Prefix-sharing under exact match. SGLang’s radix tree and Mooncake’s distributed\par
+\noindent  pool serve the same text to multiple requesters without any diagnostic state being embed-\par
+\noindent  ded in the cached prefix. Evicting a shared prefix forces recomputation for future requests\par
+\noindent  but does not destroy any agent-specific diagnostic information.\par
+\noindent  These counterexamples explain why the cross-layer conflict is empirically uncommon de-\par
+\noindent spite the theoretical possibility: current systems are architected to avoid it.\par
+\par\smallskip
+\par\smallskip
+\noindent 7 Research Directions and Validation Protocol\par
+\noindent This section identifies five open research directions that emerge from the cross-layer analy-\par
+\noindent sis, and specifies a concrete validation protocol for the most actionable one: testing whether a\par
+\noindent shared diagnostic-serving budget can improve end-to-end system reliability without unaccept-\par
+\noindent able throughput loss.\par
+\par\smallskip
+\noindent 7.1 Open Directions\par
+\noindent O1: Joint diagnostic-serving optimization. Within the studies examined at full-text depth\par
+\noindent in our curated corpus, we did not identify a system that jointly optimizes diagnostic evidence\par
+\noindent retention and serving throughput under a shared budget. TOPAS demonstrates that joint prefix-\par
+\noindent scheduling optimization under a capacity constraint is tractable, but its objective function does\par
+\noindent not include diagnostic value. Extending TOPAS-style formulations to incorporate a diagnostic-\par
+\noindent retention term requires three capabilities that no system in our corpus provides: (a) a measur-\par
+\noindent able proxy for diagnostic value at eviction time — the retention ablation results (Section 7.3)\par
+\noindent show that this depends on the attribution method, since heuristic methods benefit from selective\par
+\end{flushleft}

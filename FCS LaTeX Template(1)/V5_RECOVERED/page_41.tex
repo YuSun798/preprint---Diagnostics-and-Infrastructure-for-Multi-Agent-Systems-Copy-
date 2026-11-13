@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 41; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 41 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 41\par
+\par\smallskip
+\par\smallskip
+\noindent Table 9: Retention ablation at 10\% budget on 220 TraceElephant traces (5 task suites, 3 MAS frame-\par
+\noindent works). S2 shows mean ± SD across 3 seeds; S1, S3, S4 are deterministic. Higher is better.\par
+\par\smallskip
+\noindent  Strategy Causal Last-Error\par
+\noindent  S1 Full retention 0.459 0.432\par
+\noindent  S2 Random 0.524 ± 0.023 0.523 ± 0.020\par
+\noindent  S3 Recency 0.391 0.391\par
+\noindent  S4 Importance 0.532 0.500\par
+\par\smallskip
+\noindent Table 10: Causal-graph attribution accuracy across all retention budgets (220 TraceElephant traces). S1\par
+\noindent is constant by definition. S2 shows seed mean. The inverted slope (accuracy decreasing toward 100\%) is\par
+\noindent visible for S2 and S4.\par
+\par\smallskip
+\noindent  Budget S1 Full S2 Random S3 Recency S4 Importance\par
+\noindent  10\% 0.459 0.524 0.391 0.532\par
+\noindent  20\% 0.459 0.479 0.423 0.555\par
+\noindent  30\% 0.459 0.479 0.423 0.546\par
+\noindent  40\% 0.459 0.479 0.445 0.514\par
+\noindent  50\% 0.459 0.461 0.450 0.496\par
+\noindent  60\% 0.459 0.450 0.459 0.491\par
+\noindent  70\% 0.459 0.432 0.459 0.482\par
+\noindent  80\% 0.459 0.451 0.464 0.473\par
+\noindent  90\% 0.459 0.457 0.459 0.464\par
+\noindent  100\% 0.459 0.459 0.459 0.459\par
+\par\smallskip
+\par\smallskip
+\noindent agent if all errors appear recovered); and (b) a last-error heuristic baseline that attributes to the\par
+\noindent agent of the last error event in the retained window.\par
+\noindent  The results show three patterns:\par
+\noindent  1. Subsampling paradoxically improves heuristic accuracy. At 10\% retention budget,\par
+\noindent  both random sampling (S2, 0.524) and importance-weighted sampling (S4, 0.532) exceed\par
+\noindent  full-retention accuracy (S1, 0.459) under the causal-graph heuristic. The full budget curve\par
+\noindent  (Table 10) shows accuracy decreasing as budget approaches 100\%, revealing a limitation\par
+\noindent  of heuristic attributors rather than a universal benefit of less data.\par
+\noindent  2. The mechanism: noise removal exposes the true root cause. The causal-graph heuris-\par
+\noindent  tic marks an error as “recovered” if the same agent later produces a normal event. On\par
+\noindent  full traces, the mistake agent typically continues producing normal events after its error,\par
+\noindent  causing the heuristic to skip the true root cause. Subsampling strips these post-error nor-\par
+\noindent  mal events, making the decisive error visible. Importance-weighted sampling amplifies\par
+\noindent  this effect by systematically concentrating error events.\par
+\noindent  3. Importance scoring adds only marginal value over random at low budgets. At 10\%\par
+\noindent  budget, the S4–S2 gap is +0.008, within noise. At intermediate budgets (20–40\%), S4\par
+\noindent  shows a more consistent advantage (Table 10). This suggests the primary benefit at ex-\par
+\noindent  treme subsampling derives from noise removal rather than from the specific importance\par
+\noindent  scores. Recency-based retention (S3, 0.391 at 10\%) is worst at low budgets because fail-\par
+\noindent  ures whose root cause occurs early in the trace are systematically missed.\par
+\noindent  Table 9 reports the verified results at 10\% retention budget. Table 10 shows the full causal-\par
+\noindent method curve across all 10 budget levels.\par
+\noindent  At full retention, the causal method outperforms last-error by 2.7 pp (0.459 vs. 0.432). This\par
+\end{flushleft}
