@@ -1,0 +1,15 @@
+name: V5 root Overleaf compilation check
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  latex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile V5 recovered main.tex with XeLaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          args: -xelatex -interaction=nonstopmode -halt-on-error -file-line-error
