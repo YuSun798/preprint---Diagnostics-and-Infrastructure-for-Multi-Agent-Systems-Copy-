@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 17; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 17 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 17\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 15.6s for short and 29.2s for long trajectories (Table 11). The system is entirely simulation-free:\par
+\noindent it operates on the static execution log without replays, using an iterative memory H that stores\par
+\noindent prior evaluator rationales and confidence scores across reasoning rounds.\par
+\par\smallskip
+\noindent Emerging patterns. Three trends are visible across the failure-localization systems surveyed.\par
+\noindent First, zero-replay methods dominate: 10 of 12 methods operate on a single trajectory with-\par
+\noindent out environment re-execution. This reduces the infrastructure burden from multi-minute re-\par
+\noindent plays to single-pass inference and makes failure localization compatible with production work-\par
+\noindent loads where replay may be infeasible (non-deterministic environments, stateful APIs, cost con-\par
+\noindent straints).\par
+\noindent  Second, multi-granular attribution is becoming standard: AgenTracer, CHIEF, and Who\&When\par
+\noindent Pro all support simultaneous agent-level and step-level attribution, recognizing that different de-\par
+\noindent bugging workflows require different granularities.\par
+\noindent  Third, small models are competitive: MASPrism’s 0.6B model achieves accuracy compa-\par
+\noindent rable to frontier models at 6.69× lower latency. This suggests that diagnostic signal extraction\par
+\noindent does not require the same model capacity as task execution, opening the door to dedicated\par
+\noindent lightweight diagnostic co-processors that run alongside the serving infrastructure.\par
+\par\smallskip
+\noindent Design trade-offs. Table 2 presents the multi-axis comparison. Three trade-off axes emerge:\par
+\noindent  1. Replay cost vs. statistical coverage. FAMAS and DoVer are the only methods among\par
+\noindent  the surveyed T1 systems that require environment replays (FAMAS: k=20 blind replays\par
+\noindent  for spectrum analysis; DoVer: 4–12 hypothesis-directed re-executions). All other T1\par
+\noindent  methods operate on a single trajectory without re-execution.\par
+\noindent  2. Model size vs. cost. MASPrism uses a 0.6B model at 2.66s/case; CHIEF uses a 671B\par
+\noindent  model at 55K tokens/case. The accuracy gap (MASPrism varies by benchmark; CHIEF\par
+\noindent  at 77.59\% agent-level) does not scale linearly with model size.\par
+\noindent  3. Agent-level vs. step-level accuracy. Across all methods, step-level accuracy is substan-\par
+\noindent  tially lower than agent-level accuracy. The best step-level result is 52.0\% (TrajAudit\par
+\noindent  RootSE and CHIEF on algorithm-generated scenarios), suggesting that fine-grained attri-\par
+\noindent  bution remains an open challenge.\par
+\par\smallskip
+\noindent 4.2 Observability and Tracing\par
+\noindent Observability systems continuously capture execution evidence during agent operation, pro-\par
+\noindent viding the raw data that localization and safety methods consume. We identify three levels of\par
+\noindent maturity: conceptual taxonomies that define what should be traced, protocol-level standards\par
+\noindent that specify how traces are encoded, and tooling that implements the capture pipeline.\par
+\par\smallskip
+\noindent Conceptual taxonomies. The Agent Traces survey [39] proposes a six-dimensional prove-\par
+\noindent nance taxonomy that structures the observability design space. The six dimensions are: (1) trace\par
+\noindent sources (instructions/inputs, reasoning, retrieval, tool use, MCP boundaries, memory, environ-\par
+\noindent ment, multi-agent communication); (2) evidence and execution units (content-bearing artifacts\par
+\noindent vs. occurrences with actor and timestamp); (3) provenance relations (nine relations in four fam-\par
+\noindent ilies: semantic support, content derivation, causal dependence, and procedural dependence);\par
+\noindent (4) tracing granularity and timing (run, step, tool-call, parameter, claim, and token/span lev-\par
+\noindent els; pre-execution, runtime, post-hoc, continuous); (5) representation forms (structured logs,\par
+\noindent execution graphs, evidence graphs, provenance graphs, runtime state); and (6) trust functions\par
+\end{flushleft}

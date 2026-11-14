@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 24; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 24 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 24\par
+\par\smallskip
+\par\smallskip
+\noindent Table 3: Diagnostic benchmarks for multi-agent systems. “MAS” indicates multi-agent support. “Attri-\par
+\noindent bution” indicates whether the benchmark supports failure attribution (agent or step level). Scale reports\par
+\noindent the number of annotated failures or test scenarios.\par
+\par\smallskip
+\noindent Benchmark Venue Scale MAS Attr. Trace fidelity Tier\par
+\noindent TraceElephant ACL ’26 220 fail ✓ Agt+Stp Prod. traces T1\par
+\noindent Who\&When ICML ’25 184 fail ✓ Agt+Stp Full traj T1\par
+\noindent RootSE Preprint 102 fail – Step Code+test T1\par
+\noindent τ -bench arXiv ’24 – – Step Tool calls T1\par
+\noindent MultiAgentBench ACL ’25 600 tasks ✓ – Output T1\par
+\noindent GuardianAgentBench Preprint 580 scen ✓ 5 types Tool+out T1\par
+\noindent ReliabilityBench Preprint 1,280 ep – – Output T1\par
+\noindent Agent-SafetyBench Preprint 2,000 – – Output T1\par
+\noindent AgentHarm ICLR ’25 440 tasks – – Output T1\par
+\noindent TAMAS ACL ’26 300 inst ✓ – Adversarial T1\par
+\noindent ASB ICLR ’25 10 scen – – Tool calls T1\par
+\noindent OSGuard Preprint 324 ex – – Output T1\par
+\par\smallskip
+\par\smallskip
+\noindent 5 Serving Infrastructure\par
+\noindent This section reviews 22 Tier-1 infrastructure systems that manage serving-time state for LLM-\par
+\noindent based workloads, with emphasis on those designed for or directly applicable to multi-agent\par
+\noindent scenarios. We organize the analysis around three state-sharing categories that reviewers and\par
+\noindent practitioners often conflate: textual context sharing (§5.1), exact KV-cache reuse (§5.2), and\par
+\noindent cross-model cache transfer (§5.3). Section 5.4 covers agent-specific extensions that bridge\par
+\noindent general-purpose serving toward multi-agent workloads.\par
+\par\smallskip
+\noindent 5.1 Textual Context Sharing\par
+\noindent Textual context sharing refers to systems that pass natural-language prompts, tool outputs, or\par
+\noindent conversation histories between agents or requests without sharing the underlying KV-cache\par
+\noindent tensors. Each recipient independently computes its own KV cache from the shared text.\par
+\noindent  Parrot [17] introduces semantic variables — placeholder tokens that represent data depen-\par
+\noindent dencies between LLM API calls in a multi-step pipeline. The runtime constructs a directed\par
+\noindent acyclic graph (DAG) per session with requests as nodes and semantic variables as edges (§4.2),\par
+\noindent enabling three optimizations. First, a PrefixHash mechanism detects sharing opportunities by\par
+\noindent hashing prompt prefixes bound through semantic variables. Second, an application-centric\par
+\noindent scheduler deduces per-request performance objectives (latency vs. throughput) from the DAG\par
+\noindent structure (§5.2, Algorithm 1). Third, a custom GPU kernel combines FlashAttention and Page-\par
+\noindent dAttention to minimize redundant memory loading for shared prefixes (§5.3). Importantly, Par-\par
+\noindent rot does not transfer computed KV blocks between requests; it coordinates scheduling so that\par
+\noindent shared prefixes are processed together, then explicitly frees the cache via FreeContext calls\par
+\noindent under continuous batching. The system achieves up to 11.7× latency improvement on MetaGPT\par
+\noindent multi-agent workloads (Figure 18a), and sustains 12× higher request rates on multi-tenant GPTs\par
+\noindent workloads (Figure 17). Token redundancy measurements across applications range from 3\% to\par
+\noindent 99\% (Table 1), confirming that textual prefix sharing is pervasive in agentic pipelines. A prin-\par
+\noindent cipal limitation is that Parrot’s centralized manager may become a scalability bottleneck, and\par
+\end{flushleft}

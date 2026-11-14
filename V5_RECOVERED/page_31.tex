@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 31; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 31 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 31\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent interface (§3.3, Appendix A Table 1); the system cannot infer distances from opaque request\par
+\noindent streams.\par
+\noindent  The policy-driven runtime [47] constructs agent-identity embeddings and engine-event tran-\par
+\noindent sition matrices to learn agent-specific cache residency predictions. Its survival-based eviction\par
+\noindent policy uses learned transition probabilities rather than recency or frequency heuristics, repre-\par
+\noindent senting the closest existing system to a diagnostic-serving bridge: it feeds observability signals\par
+\noindent (agent identity + engine events) into serving decisions.\par
+\par\smallskip
+\noindent Context-growth-aware management. KAIROS [44] monitors per-agent context growth rate\par
+\noindent and memory pressure to make power-management decisions: agents with rapidly growing con-\par
+\noindent text receive priority compute allocation, while idle agents with stable context may have their\par
+\noindent state swapped to lower-power memory tiers.\par
+\par\smallskip
+\noindent Joint optimization. TOPAS [24] is the closest surveyed system to a formalized shared budget\par
+\noindent between caching and workload objectives. It jointly optimizes prefix selection (which prefixes\par
+\noindent to retain) and request scheduling (which requests to serve) under a shared KV-cache capacity\par
+\noindent constraint Bt . However, TOPAS optimizes for serving throughput alone — the shared budget\par
+\noindent does not incorporate diagnostic evidence retention as a competing objective.\par
+\par\smallskip
+\noindent Design trade-offs. Tables 4 and 5 present the detailed comparison. Three key distinctions\par
+\noindent emerge that prior reviews have not clearly separated:\par
+\noindent  1. Textual vs. KV sharing. Textual context sharing (Parrot, DistServe) incurs recomputa-\par
+\noindent  tion cost but avoids cache coherence issues. Exact KV reuse (SGLang, Mooncake) elim-\par
+\noindent  inates recomputation but requires compatible tokenizers and model architectures. Cross-\par
+\noindent  model transfer (DroidSpeak) enables the broadest reuse but introduces approximation\par
+\noindent  error at non-reused layers.\par
+\noindent  2. Single-model vs. multi-agent. Most systems (SGLang, vLLM, Mooncake, InferCept)\par
+\noindent  manage a single model instance with shared cache. Agent-specific systems (ScaleSim,\par
+\noindent  KVFlow, the policy-driven runtime) introduce per-agent state tracking that enables dif-\par
+\noindent  ferentiated eviction policies but increases metadata overhead.\par
+\noindent  3. Reactive vs. predictive eviction. LRU/LFU eviction (SGLang, Mooncake) reacts to\par
+\noindent  memory pressure. Workflow-aware (KVFlow) and survival-based (the policy-driven run-\par
+\noindent  time) policies predict future reuse, potentially retaining diagnostically valuable state longer,\par
+\noindent  but require workload characterization that may not generalize.\par
+\par\smallskip
+\par\smallskip
+\noindent 6 Conditional Cross-Layer Retention Trade-offs\par
+\noindent The diagnostic methods reviewed in Section 4 consume execution evidence; the serving systems\par
+\noindent in Section 5 manage objects that may be expensive to keep available. A natural question is\par
+\noindent whether these two layers compete for the same resources. This section formalizes the conditions\par
+\noindent under which serving-state reclamation actually harms diagnostic capability, and shows that the\par
+\noindent relationship is conditional rather than universal.\par
+\par\smallskip
+\noindent 6.1 Distinguishing Computational and Execution State\par
+\noindent A KV cache is a computational acceleration structure: it stores precomputed attention tensors\par
+\noindent so that subsequent tokens can be generated without reprocessing the prompt. Removing a KV\par
+\end{flushleft}

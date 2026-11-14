@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 14; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 14 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 14\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  total cost (§5.3). The method generalizes across four domains and three LLM backbones\par
+\noindent  (GPT-5, o3, DeepSeek-V3.2; Table 9) without per-domain fine-tuning. Token consump-\par
+\noindent  tion varies with trajectory complexity: 4,889 tokens per trajectory on τ -bench versus\par
+\noindent  16,484 on Magentic-One (Table 6). Limitations include potential taxonomy incomplete-\par
+\noindent  ness, false positives from weak validation signals, and a tendency to surface downstream\par
+\noindent  symptoms rather than root causes (§7). Accepted at EMNLP Findings 2026.\par
+\noindent  • FALAT [33] frames attribution as a dependency-guided search problem over a hierar-\par
+\noindent  chical trajectory representation with typed inter-step dependencies. Given a failed tra-\par
+\noindent  jectory τ = (s1 , . . . , sT ), FALAT constructs a dependency graph encoding causal, data-\par
+\noindent  flow, and control-flow relationships between steps, then searches this graph for the de-\par
+\noindent  cisive step using LLM-judged counterfactual reasoning (hypothetical, not re-executed).\par
+\noindent  The method requires no training and no replays, using off-the-shelf API models (GPT-\par
+\noindent  5.4-Mini, DeepSeek V3.2, MiniMax 2.5). It achieves 46.0\% step-level accuracy on\par
+\noindent  algorithm-generated and 29.1\% on hand-crafted Who\&When scenarios (Table 2, §4).\par
+\noindent  Limitations include dependence on LLM judgment quality and window-based processing\par
+\noindent  that may miss long-range dependencies.\par
+\par\smallskip
+\noindent Supervised methods. Two systems use task-specific supervised training rather than RL or\par
+\noindent LLM prompting:\par
+\noindent  Xia et al. [40] propose a multi-perspective verification approach with adaptive refinement\par
+\noindent (COLM 2026). A judge LLM generates a failure hypothesis, multiple independent evalua-\par
+\noindent tor LLMs verify it from different viewpoints (structural, temporal, semantic), and confidence-\par
+\noindent weighted voting aggregates their assessments. The evaluator feedback is then used to fine-tune\par
+\noindent the judge via LoRA (rank 64, α=128, dropout 0.05, 3 epochs). This iterative judge-evaluator\par
+\noindent loop reaches 69.05\% agent-level accuracy on algorithm-generated scenarios, competitive with\par
+\noindent AgenTracer’s RL approach. A key efficiency advantage: the system uses only 451K tokens\par
+\noindent per attribution on algorithm-generated scenarios versus AgenTracer’s 16.4M tokens — a 36×\par
+\noindent reduction — at \$0.063 versus \$2.275 per case (§5).\par
+\noindent  StepFinder [52] takes a different supervised approach, using a BiLSTM with agent-aware\par
+\noindent attention and multi-scale differencing on top of Qwen3-Embedding-0.6B features (KDD 2026).\par
+\noindent The system is trained on LLM-prompted trajectory regeneration data (1,564 algorithm-generated\par
+\noindent and 2,604 hand-crafted trajectories, up to 50 epochs). At inference, StepFinder produces zero\par
+\noindent output tokens — it generates a step-level attribution from the learned representations without\par
+\noindent any LLM decoding. Inference time is 0.61s on algorithm-generated scenarios versus 2.92s\par
+\noindent for the best LLM baseline, running on a single NVIDIA RTX 3080 Ti (Table 6, §7). Accu-\par
+\noindent racy is modest at 29.63\% (algorithm-generated) and 22.99\% (hand-crafted), below LLM causal\par
+\noindent methods, but the approach demonstrates that lightweight learned attributors can operate at <1s\par
+\noindent latency.\par
+\par\smallskip
+\noindent Intervention-based methods. DoVer [22] is unique among surveyed methods in using a “Do-\par
+\noindent then-Verify” paradigm: it generates failure hypotheses from logs, then validates each by replay-\par
+\noindent ing the execution with targeted interventions at the hypothesized failure point. Each case re-\par
+\noindent quires 4–12 environment re-executions with stateful checkpoints. If the intervention (replacing\par
+\noindent the hypothesized faulty action with a corrected one) leads to task success, the hypothesis is con-\par
+\noindent firmed. This makes DoVer the only method besides FAMAS that requires environment replay,\par
+\noindent but unlike FAMAS’s statistical approach (k=20 blind replays), DoVer’s replays are hypothesis-\par
+\noindent directed. The method also supports a recovery mode: once the root cause is identified, the\par
+\noindent corrective intervention can be applied to resume the task. This dual diagnosis-and-recovery\par
+\end{flushleft}

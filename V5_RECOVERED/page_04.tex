@@ -1,0 +1,41 @@
+% Reconstructed text from V5 PDF page 4; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 4 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 4\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Figure 1: Bounded review scope. The diagnostics layer (top, blue) and infrastructure layer (bottom,\par
+\noindent green) manage different state objects. Dashed arrows indicate conditional cross-layer dependencies:\par
+\noindent diagnostic evidence loss requires all three conditions (shared constrained resource, evidence actually\par
+\noindent discarded, needed within the diagnostic horizon). Most traces are stored out-of-band and survive KV\par
+\noindent cache eviction.\par
+\par\smallskip
+\par\smallskip
+\noindent real traces: heuristic attributors can improve under subsampling, and a controlled recovery-\par
+\noindent ablation confirms the mechanism (Section 7.3). Together, these findings provide actionable\par
+\noindent design guidance that the existing literature — which either ignores the cross-layer interaction\par
+\noindent or assumes a universal conflict — does not.\par
+\noindent  Our contributions are:\par
+\noindent  1. A multi-axis diagnostic comparison (C1). We separate function (localization, monitor-\par
+\noindent  ing, intervention, evaluation) from methods’ evidence inputs, replay demands, training\par
+\noindent  requirements, attribution granularity, intervention timing, and runtime cost. These di-\par
+\noindent  mensions may overlap and are not mutually exclusive method families. We review 12\par
+\noindent  failure-localization methods (8 T1), 6 observability systems, and 8 safety/guardrail sys-\par
+\noindent  tems.\par
+\noindent  2. A workload-conditioned serving analysis (C2). We distinguish textual context sharing,\par
+\noindent  exact KV-cache reuse, and cross-model cache transfer, and characterize the compatibility,\par
+\noindent  recomputation, and placement assumptions that delimit each optimization across 22 Tier-\par
+\noindent  1 infrastructure systems.\par
+\noindent  3. A conditional cross-layer hypothesis (C3). We formalize when state reclamation can\par
+\noindent  actually harm diagnosis as an evidence-loss event Li (T ) = Ni (T ) ∧ Di (T ) ∧ ¬Ri (T ),\par
+\noindent  document the conditions under which this occurs, and identify TOPAS as the closest\par
+\noindent  existing system to a shared diagnostic-serving budget.\par
+\noindent  4. A structured evaluation framework (C4). We propose DRICE (Diagnostics evidence,\par
+\noindent  Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth) to\par
+\noindent  organize cross-layer comparison tables and highlight the D–R gap between diagnostic\par
+\noindent  and infrastructure systems.\par
+\noindent  5. A concrete validation protocol (C5). We specify online signals, baselines, timing as-\par
+\end{flushleft}

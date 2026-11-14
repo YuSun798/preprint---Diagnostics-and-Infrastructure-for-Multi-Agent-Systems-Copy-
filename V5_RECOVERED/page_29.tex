@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 29; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 29 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 29\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent SGLang.\par
+\noindent  Leyline introduces declarative directive splicing for KV cache management: agents can\par
+\noindent specify retention directives as a 4-tuple declaring edits and mode (in-place splice or prefix-\par
+\noindent trimmed re-prefill for “semantic forgetting”). The architecture-agnostic interface routes each di-\par
+\noindent rective to a per-architecture kernel with closed-form RoPE-rotation correction, bridging external\par
+\noindent policy-level decisions with internal serving-system execution. Results show +11.2 percentage-\par
+\noindent point replay cache-hit rate, up to 241 ms latency reduction, and +14.3 percentage-point agentic\par
+\noindent solve rate on debug-gym. Leyline fills a specific gap where “kernel-level eviction methods make\par
+\noindent their own decisions and cannot accept policy directives from outside the kernel” — enabling\par
+\noindent agents to express retention preferences that current serving systems cannot accommodate.\par
+\noindent  PolyKV implements a shared asymmetrically-compressed KV cache pool for multi-agent\par
+\noindent inference. A single shared pool uses write-once, read-many semantics: keys are quantized\par
+\noindent to int8, values are compressed to 3-bit via TurboQuant MSE (FWHT rotation + Lloyd-Max\par
+\noindent quantization). Multiple HuggingFace DynamicCache objects read from the shared pool simul-\par
+\noindent taneously. This achieves a stable 2.91× compression ratio with 97.7\% KV memory reduction\par
+\noindent for 15 concurrent agents at 4K context, at only +0.57\% perplexity degradation and BERTScore\par
+\noindent F1 of 0.928. Limitations include evaluation on only 2 model architectures, maximum 15 agents\par
+\noindent tested, and a fixed lossy compression ratio.\par
+\noindent  ConServe replaces prediction with observation for agentic serving scheduling. Rather than\par
+\noindent estimating future tool-call durations (Continuum) or future prefix reuse (KVFlow), ConServe\par
+\noindent uses only two directly observable metrics — per-decoder KV occupancy and first-turn input\par
+\noindent length — to make conversation-level scheduling decisions. KV cache is transferred to the de-\par
+\noindent code node once and pinned for the entire remaining conversation tail. This observation-based\par
+\noindent approach achieves 51.08\% p95 TTFET reduction and +7.51\% energy improvement on homoge-\par
+\noindent neous GPUs (+22.75\% on heterogeneous hardware). The design philosophy — that observation\par
+\noindent is more robust than prediction for agentic workloads with inherently unpredictable tool-call pat-\par
+\noindent terns — offers a counterpoint to the prediction-based approaches of KVFlow and Continuum.\par
+\noindent  KAIROS [44] introduces context-growth-aware power management for multi-agent serving.\par
+\noindent The system monitors per-agent context growth rate and GPU memory pressure, adjusting GPU\par
+\noindent frequency and concurrency to balance power consumption against SLO compliance. When\par
+\noindent memory headroom is sufficient, agents receive full-frequency service; when context growth\par
+\noindent threatens to push the system into a cache-thrashing regime, KAIROS lowers GPU frequency\par
+\noindent to reduce power without sacrificing throughput (since the workload becomes memory-bound).\par
+\noindent This achieves an average 27\% power reduction (up to 39.8\%) while meeting latency SLOs.\par
+\noindent KAIROS is the only infrastructure system that explicitly manages the power dimension, and its\par
+\noindent control loop implicitly bridges monitoring state (context size, agent progress, memory pressure)\par
+\noindent with serving decisions (frequency, concurrency, placement).\par
+\noindent  LRAgent decomposes KV cache into a shared base component (computed from pretrained\par
+\noindent weights) and adapter-dependent low-rank residuals, enabling efficient cache sharing across\par
+\noindent multi-LoRA agents. A custom Flash-LoRA-Attention kernel reconstructs full attention outputs\par
+\noindent without materializing the full-dimensional adapter-specific KV cache. This achieves throughput\par
+\noindent and TTFT approaching the fully-shared caching upper bound while maintaining accuracy near\par
+\noindent the non-shared (independent per-adapter) baseline. The approach requires a “shared-A” multi-\par
+\noindent LoRA architecture where all adapters share the same LoRA-A matrix, and its custom kernel\par
+\noindent limits portability to new architectures (ICML 2026).\par
+\end{flushleft}

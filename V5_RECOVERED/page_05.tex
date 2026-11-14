@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 5; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 5 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 5\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  sumptions, and metrics (false-alarm rate, detection lead time, task success, recovery rate)\par
+\noindent  for testing the shared-budget hypothesis, and report retention-ablation results on real\par
+\noindent  TraceElephant traces (220 failures across 5 task suites from 3 MAS frameworks).\par
+\noindent  The remainder of this paper is organized as follows. Section 3 describes our review method-\par
+\noindent ology, including the PRISMA-inspired search strategy, inclusion criteria, and evidence coding.\par
+\noindent Section 4 reviews the diagnostic layer organized by function. Section 5 analyzes the infras-\par
+\noindent tructure layer with emphasis on state-sharing distinctions. Section 6 formalizes the cross-layer\par
+\noindent retention trade-off. Section 7 proposes research directions and the validation protocol. Sec-\par
+\noindent tion 8 introduces the DRICE framework. Section 9 discusses limitations and threats to validity.\par
+\noindent Section 10 concludes.\par
+\par\smallskip
+\par\smallskip
+\noindent 2 Background\par
+\noindent This section establishes the technical context for the diagnostic and infrastructure layers re-\par
+\noindent viewed in subsequent sections. We describe the architecture of foundation model-based multi-\par
+\noindent agent systems (§2.1), the workload characteristics that distinguish multi-agent serving from\par
+\noindent single-model inference (§2.2), and the runtime layers we focus on (§2.3).\par
+\par\smallskip
+\noindent 2.1 Foundation Model-Based Multi-Agent Systems\par
+\noindent A foundation model-based agent operates in a perception–reasoning–action loop, using an LLM\par
+\noindent to process observations and execute actions such as tool invocations, code execution, and inter-\par
+\noindent agent communication. The underlying model workloads can also be multimodal: recent sys-\par
+\noindent tems combine visual, audio, and clinical or platform metadata for domain-specific prediction\par
+\noindent and governance. A multi-agent system (MAS) comprises multiple such agents, as exempli-\par
+\noindent fied by MetaGPT, CAMEL, ChatDev, and Internet of Agents (IoA), operating within a shared\par
+\noindent environment or communicating to accomplish collective objectives.\par
+\noindent  Recent multi-agent applications also span reinforcement-learning-enhanced collaborative\par
+\noindent reasoning and multimodal misinformation detection. MAST [5] identifies 14 recurring fail-\par
+\noindent ure patterns in such systems, motivating runtime diagnostics rather than evaluation only at the\par
+\noindent final task output. The rapid expansion of MAS into production deployments introduces op-\par
+\noindent erational demands that simple orchestration frameworks do not address: when an agent fails\par
+\noindent mid-workflow, which agent caused the failure? When a serving system evicts cached state,\par
+\noindent does this affect later diagnostic capability? When a safety guardrail intercepts an action, does\par
+\noindent the interception itself create a new failure mode?\par
+\noindent  Three broad system properties recur across the literature: (1) distributed execution across\par
+\noindent multiple agents, which creates execution traces spanning agent boundaries and introduces co-\par
+\noindent ordination overhead; (2) inter-agent communication, which creates channels through which\par
+\noindent failures can propagate (FAMAS’s spectrum analysis and TraceElephant’s trace collection both\par
+\noindent exploit these channels for attribution); and (3) inter-agent memory sharing, where prompts,\par
+\noindent tools, and cached state may be reused across the system, creating shared state dependencies that\par
+\noindent affect both serving efficiency and diagnostic evidence availability.\par
+\par\smallskip
+\noindent 2.2 Multi-Agent Workload Characteristics\par
+\noindent Multi-agent workloads differ from single-model serving in three ways that directly affect mem-\par
+\noindent ory placement, scheduling, and cache policy:\par
+\end{flushleft}

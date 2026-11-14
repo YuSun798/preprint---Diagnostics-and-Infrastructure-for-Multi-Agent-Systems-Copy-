@@ -1,0 +1,62 @@
+% Reconstructed text from V5 PDF page 44; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 44 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 44\par
+\par\smallskip
+\par\smallskip
+\noindent Table 12: DRICE assessment of representative systems spanning the diagnostic-serving spectrum. D\par
+\noindent = Diagnostics evidence (type/capture/availability); R = Retention policy (trigger/criterion/diagnostic-\par
+\noindent awareness); I = Infrastructure assumptions (model/memory/tenancy/workload); C = Cost decomposition\par
+\noindent (dominant component and magnitude); E = Evidence depth. ✓/– indicate presence/absence of the di-\par
+\noindent mension.\par
+\par\smallskip
+\noindent  System Layer D R I assumptions C (dominant) E\par
+\noindent  Diagnostic methods\par
+\noindent  CHIEF Diagnostics ✓ – Independent trace store Compute: 55K tok/traj T1a\par
+\noindent  MASPrism Diagnostics ✓ – GPU for 0.6B SLM Compute: 2.66s/traj T1a\par
+\noindent  FAMAS Diagnostics ✓ – Re-executable environment Compute: 105 min replay T1a\par
+\noindent  AgenTracer Diagnostics ✓ – 8×H100 (training only) Compute: RL training T1b\par
+\noindent  AgentRx Diagnostics ✓ – LLM API (GPT-5) Compute: \$0.18/traj T1a\par
+\noindent  TrajAudit Diagnostics ✓ – LLM API (frontier) Compute: 138K tok/traj T1a\par
+\noindent  Infrastructure systems\par
+\noindent  SGLang Infrastructure – ✓ GPU shared pool, single Memory: dynamic pool T1a\par
+\noindent  Mooncake Infrastructure – ✓ Disaggregated, RDMA Memory + network T1a\par
+\noindent  InferCept Infrastructure – ✓ Single GPU/TP, tool-call Memory: P/S/D decision T1a\par
+\noindent  KVFlow Infrastructure – ✓ Workflow DAG, single Memory: workflow cache T1a\par
+\noindent  Continuum Infrastructure – ✓ Single model, multi-turn Memory: TTL pinning T1a\par
+\noindent  DroidSpeak Infrastructure – ✓ Same-arch multi-LLM Compute: layer recomp T1a\par
+\noindent  ForkKV Infrastructure – ✓ Multi-LoRA, SGLang Memory: CoW dedup T1a\par
+\noindent  PolyKV Infrastructure – – Multi-agent, shared pool Memory: asymm. compress T1a\par
+\noindent  ConServe Infrastructure – ✓ Disaggregated, 2-phase Memory: obs.-based pin T1a\par
+\noindent  Bridge candidates\par
+\noindent  Pol.-driven rt. Bridge Partial ✓ Agent-aware GPU Memory + metadata T1a\par
+\noindent  TOPAS Bridge – ✓ Joint opt, shared Bt Memory: shared budget T1a\par
+\noindent  TokenCake Bridge Partial ✓ DAG-aware, A100/H20 Memory: dual scheduler T1a\par
+\noindent  ScaleSim Bridge – ✓ Agent-aware, multi-state Memory: invoc.-distance T1a\par
+\noindent  KAIROS Bridge Partial ✓ Agentic, GPU frequency Power: ctx-growth-aware T1a\par
+\noindent  Leyline Bridge – ✓ Policy-accepting kernel Memory: directive splice T1a\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  with retention policies). Most infrastructure systems (SGLang, Mooncake, InferCept)\par
+\noindent  have strong R scores (sophisticated retention) but no D dimension (they are unaware of\par
+\noindent  diagnostic value). Only the policy-driven runtime and TOPAS partially bridge this gap.\par
+\noindent  This gap is the central architectural finding of the review: the two communities have built\par
+\noindent  complementary capabilities but have not integrated them.\par
+\noindent  2. Infrastructure assumption mismatch. Diagnostic methods assume logged traces are\par
+\noindent  always available (I dimension: independent trace store). Infrastructure systems assume\par
+\noindent  GPU-resident KV cache (I dimension: GPU-only or disaggregated). The assumption\par
+\noindent  mismatch explains why cross-layer conflicts are rare in practice: the two layers typically\par
+\noindent  operate on separate storage.\par
+\noindent  3. Cost dominance shifts. For diagnostic methods, compute cost dominates (105 minutes\par
+\noindent  of replays for FAMAS, 55K tokens of LLM inference for CHIEF, 8× H100 of training\par
+\noindent  for AgenTracer). For infrastructure systems, memory cost dominates (cache capacity,\par
+\noindent  eviction overhead, RDMA transfer bandwidth). In a joint system, the dominant cost\par
+\noindent  component would shift depending on workload intensity and failure frequency.\par
+\noindent  4. Evidence depth correlates with specificity. Systems with T1a evidence depth (full-\par
+\noindent  text reading with page-level citations) provide the most reliable comparison basis. For\par
+\noindent  FAMAS, we can trace every accuracy number to a specific table cell in the source paper.\par
+\noindent  For T2 systems, claims are reported as stated and cannot be independently verified against\par
+\noindent  the source’s internal evidence.\par
+\end{flushleft}

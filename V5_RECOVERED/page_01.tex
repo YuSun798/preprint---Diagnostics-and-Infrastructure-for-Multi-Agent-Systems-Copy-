@@ -1,0 +1,56 @@
+% Reconstructed text from V5 PDF page 1; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 1 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for Foundation\par
+\noindent  Model-Based Multi-Agent Systems: An\par
+\noindent  Evidence-Aware Review\par
+\noindent  Yu Suna,∗ , Zuodong Xiangb , Yike Zhangc , Xinyu Guand , Pengcheng Xue ,\par
+\noindent  Yizirui Fangc , Zhenhua Huangf , Hailu Xug\par
+\noindent  a School of Engineering and Applied Science, University of Pennsylvania, Philadelphia, PA, USA\par
+\par\smallskip
+\noindent  b Department of Electrical and Computer Engineering, University of California, Davis, CA, USA\par
+\par\smallskip
+\noindent  c Department of Computer Science, Johns Hopkins University, Baltimore, MD, USA\par
+\par\smallskip
+\noindent  d University of Glasgow, Glasgow, Scotland, United Kingdom\par
+\par\smallskip
+\noindent  e Department of Computer Science, University of California, Irvine, CA, USA\par
+\par\smallskip
+\noindent  f School of Computer Science, South China Normal University, Guangzhou, China\par
+\par\smallskip
+\noindent  g Department of Computer Engineering and Computer Science, California State University, Long Beach, CA, USA\par
+\par\smallskip
+\noindent  ∗ Corresponding author. Email: yu.sun@alumni.upenn.edu\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  Abstract\par
+\noindent  Foundation model-based multi-agent systems (MAS) introduce reliability requirements\par
+\noindent  that span execution tracing, failure attribution, safety intervention, and serving-time re-\par
+\noindent  source management. Existing reviews typically analyze these functions separately. This\par
+\noindent  evidence-aware critical review maps 60 representative diagnostic methods, serving sys-\par
+\noindent  tems, and evaluation benchmarks along explicit axes: required evidence inputs, replay and\par
+\noindent  training demands, attribution granularity, intervention timing, state compatibility, work-\par
+\noindent  load assumptions, and runtime cost. We distinguish functional roles from implementation\par
+\noindent  strategies. A central question is when serving-state reclamation impairs later diagnosis.\par
+\noindent  We show that evicting a KV cache is not equivalent to deleting a diagnostic trace: inter-\par
+\noindent  ference arises only when evidence or a non-reconstructable execution dependency shares\par
+\noindent  a constrained resource, is actually discarded, and is needed within the diagnostic hori-\par
+\noindent  zon. We therefore formulate a conditional retention trade-off as a testable design hypoth-\par
+\noindent  esis rather than an established universal conflict. We propose DRICE (Diagnostics evi-\par
+\noindent  dence, Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth),\par
+\noindent  a structured evaluation framework for cross-layer comparison. Finally, we outline an in-\par
+\noindent  strumented, replay-capable evaluation protocol with matched reliability and serving met-\par
+\noindent  rics, and report retention-ablation results on real multi-agent failure traces. The resulting\par
+\noindent  synthesis highlights verifiable architectural interfaces and open questions without ranking\par
+\noindent  non-comparable systems or claiming that a joint optimization has already been empirically\par
+\noindent  demonstrated.\par
+\par\smallskip
+\noindent Keywords: Multi-agent systems, Foundation models, Failure localization, Observability, LLM\par
+\noindent serving, KV-cache management\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\end{flushleft}

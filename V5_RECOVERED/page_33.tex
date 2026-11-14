@@ -1,0 +1,60 @@
+% Reconstructed text from V5 PDF page 33; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 33 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 33\par
+\par\smallskip
+\par\smallskip
+\noindent Table 6: State types and diagnostic dependency boundaries. “Eviction creates diagnostic dependency”\par
+\noindent indicates whether removing the state object can trigger an evidence-loss event Li (T ) as defined in Eq. (1).\par
+\par\smallskip
+\noindent State object Consumer Co-located with Eviction → Li ? Condition\par
+\noindent KV cache tensors Serving GPU memory Rarely Only if trace is embedded in cache\par
+\noindent  metadata and no independent log exists\par
+\noindent Execution traces Diagnostics Log store / DB Yes (if sole copy) Di occurs if log retention < diagnostic\par
+\noindent  horizon\par
+\noindent Tool-call responses Both Trace + serving context Yes (if non-deterministic) Ri fails when tool output is stochastic\par
+\noindent  or environment has changed\par
+\noindent Model weights/adapters Serving GPU / disk No Weights are versioned; eviction affects\par
+\noindent  latency, not diagnostic content\par
+\noindent Random seeds Reproducibility Trace metadata Only if missing Ri fails without seed; replaying a se-\par
+\noindent  quence is unreliable\par
+\noindent Environment observations Diagnostics Trace Yes (if unrepeatable) External API responses, sensor read-\par
+\noindent  ings are typically non-reconstructable\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  • Ri (T ): object i’s content can be reconstructed faithfully at acceptable cost.\par
+\noindent  An evidence-loss event requires all three conditions:\par
+\par\smallskip
+\noindent  Li (T ) = Ni (T ) ∧ Di (T ) ∧ ¬Ri (T ). (1)\par
+\par\smallskip
+\noindent  By contrast, the case Ni ∧ Di ∧ Ri incurs recovery or prefill cost but does not reduce\par
+\noindent attribution quality. A cross-layer resource conflict additionally requires that diagnostic cap-\par
+\noindent ture/retention and serving share a genuinely constrained budget — memory, storage, bandwidth,\par
+\noindent or latency.\par
+\noindent  This test excludes the misleading generalization that every KV-cache eviction degrades ob-\par
+\noindent servability. It also identifies two experimentally separable effects:\par
+\noindent  1. Loss of information: the diagnostic signal is gone and cannot be recovered.\par
+\noindent  2. Delayed access to information: the signal can be recovered (via recomputation or replay)\par
+\noindent  but at additional cost.\par
+\par\smallskip
+\noindent 6.3 State Types and Dependency Boundaries\par
+\noindent Table 6 distinguishes the physical state, its consumer, and the outcome of reclamation. Co-\par
+\noindent location alone does not create a diagnostic dependency: a trace stored in an independently\par
+\noindent retained object store survives GPU KV eviction. Conversely, diagnostic information can be lost\par
+\noindent even without cache eviction when telemetry sampling discards an unrepeatable tool observation.\par
+\par\smallskip
+\noindent 6.4 Three-Tier Diagnostic-Serving Overlap Classification\par
+\noindent Based on the evidence-loss formalization and the reviewed systems, we classify diagnostic-\par
+\noindent serving interactions into three tiers:\par
+\noindent  1. Tier A — Independent operation. The diagnostic and serving layers manage distinct\par
+\noindent  state objects with separate storage budgets. Evicting KV cache does not affect diagnostic\par
+\noindent  traces, and diagnostic overhead does not constrain serving capacity. This is the most\par
+\noindent  common scenario: 16 of 22 infrastructure systems and all diagnostic methods that operate\par
+\noindent  on logged traces (FAMAS, TrajAudit, CHIEF, AgentRx, AgenTracer) fall into this tier.\par
+\noindent  2. Tier B — Shared resource, no evidence loss. The diagnostic and serving layers share\par
+\noindent  a constrained resource (GPU memory, network bandwidth) but the diagnostic signal is\par
+\noindent  reconstructable (Ri holds). Eviction increases diagnostic cost (recomputation or replay)\par
+\noindent  without reducing diagnostic quality. Example: a system that stores both KV cache and\par
+\end{flushleft}

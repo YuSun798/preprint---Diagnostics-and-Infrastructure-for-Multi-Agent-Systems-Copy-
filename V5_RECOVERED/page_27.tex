@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 27; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 27 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 27\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent (Table 3, §6.2). The system includes deadlock prevention: when scheduling fails due to space\par
+\noindent contention, it iteratively unpins entries with the latest program arrival time (§5.2). Presented as\par
+\noindent a workshop poster at ICLR 2026.\par
+\par\smallskip
+\noindent Workflow-aware caching. KVFlow [27] introduces workflow-aware prefix caching through\par
+\noindent the Agent Step Graph abstraction (§3.1): a DAG where nodes represent agent invocations and\par
+\noindent edges represent dependency relations, each node carrying a steps-to-execution value computed\par
+\noindent via recursive aggregation (max(predecessors)+1 for synchronization barriers, min(predecessors)+\par
+\noindent 1 for conditional branches). Eviction operates at the cache-tree node level rather than per-agent:\par
+\noindent all varying suffixes receive the highest eviction priority (evicted first), while fixed-prompt nodes\par
+\noindent inherit the steps-to-execution value of their nearest agent descendant. Shared prefix nodes re-\par
+\noindent ceive the minimum (most retainable) priority among their children. Under concurrent work-\par
+\noindent flows, conflicts at shared nodes are resolved by choosing the lowest priority (§3.1).\par
+\noindent  The system implements fully overlapped prefetching: background threads proactively load\par
+\noindent KV tensors from CPU to GPU for agents predicted to execute next, exploiting PCIe full-\par
+\noindent duplex. For branch points, all possible next agents are conservatively prefetched within a\par
+\noindent budget limit. Four cache node states (in GPU memory, backed up in CPU, loading, offload-\par
+\noindent ing) enable a status-aware scheduler that skips requests whose caches are still loading (§3.2).\par
+\noindent On single-workflow benchmarks with Llama-3.1-8B on A10G, KVFlow achieves up to 2.91×\par
+\noindent speedup over SGLang (GPU-only) and 1.83× over SGLang with hierarchical caching (§4.1).\par
+\noindent On the realistic PEER simulation, gains are more modest: 1.08–1.12× (§4.2). A key limi-\par
+\noindent tation is that workflow structure must be known upfront (declared as a DAG or captured via\par
+\noindent SGLang’s program structure), and gains diminish with shorter fixed prompts or longer outputs\par
+\noindent (NeurIPS 2025).\par
+\par\smallskip
+\noindent Communication-efficient sharing. KVCOMM [43] addresses inter-agent communication band-\par
+\noindent width by compressing KV cache transfers via an anchor pool mechanism. The system main-\par
+\noindent tains a fixed-size pool (V =20 by default) of representative KV pairs, using hybrid LFU+FIFO\par
+\noindent eviction when the pool reaches capacity (§3.3). New items enter the pool only if they fail a\par
+\noindent shareability criterion based on entropy thresholds (Equation 5); items that are shareable reuse\par
+\noindent existing anchors. Transmitted blocks are differentially encoded against the nearest anchor via\par
+\noindent positional de-rotation and re-rotation (requiring RoPE-based attention, §3.1). All agents must\par
+\noindent share identical model weights; different-weight same-architecture scenarios are “pending fur-\par
+\noindent ther exploration” (§6.1). On the ChatDev workload with 5 agents on a single H100, KVCOMM\par
+\noindent reduces TTFT by up to 3.6× while maintaining output quality (NeurIPS 2025).\par
+\par\smallskip
+\noindent Deduplication. ForkKV [36] applies copy-on-write (CoW) principles to KV cache man-\par
+\noindent agement: a shared base cache stores common prefix state, and each agent maintains only\par
+\noindent the residual delta from its divergence point. TokenDance reduces communication overhead\par
+\noindent through block-sparse differencing and deduplication of redundant KV segments across concur-\par
+\noindent rent agents.\par
+\par\smallskip
+\noindent Additional exact KV-reuse systems. CacheBlend [41] introduces tiered storage for multi-\par
+\noindent source KV cache reuse: cached KV blocks are stored across GPU, CPU, and disk tiers, with\par
+\noindent a cost-benefit model determining which tier to use based on expected access frequency and\par
+\noindent transfer latency (EuroSys 2025).\par
+\end{flushleft}

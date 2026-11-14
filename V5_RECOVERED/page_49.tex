@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 49; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 49 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 49\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  (7 November 2026) means that concurrent or subsequent work is not covered.\par
+\noindent  5. Single-reviewer evidence extraction. The evidence extraction was performed by the\par
+\noindent  author team without an independent second coder. Inter-coder reliability cannot be as-\par
+\noindent  sessed.\par
+\par\smallskip
+\noindent 9.4 Threats to Validity\par
+\noindent Construct validity. The evidence-loss formalization (Eq. 1) assumes that the three conditions\par
+\noindent (Ni , Di , Ri ) can be independently assessed. In practice, the need for evidence (Ni ) may depend\par
+\noindent on the outcome of reconstruction attempts (Ri ), creating a circular dependency that the static\par
+\noindent formalization does not capture.\par
+\par\smallskip
+\noindent External validity. The surveyed systems primarily target text-based LLM agents. Multi-\par
+\noindent modal agents (combining vision, audio, or embodied action) may introduce state types not\par
+\noindent covered by the current taxonomy. The DRICE framework’s dimensions are designed to be\par
+\noindent extensible, but we have not validated them on non-text workloads.\par
+\par\smallskip
+\par\smallskip
+\noindent 10 Conclusion\par
+\noindent This review has mapped 48 diagnostic methods and serving infrastructure systems, comple-\par
+\noindent mented by 12 evaluation benchmarks, for foundation model-based multi-agent systems, orga-\par
+\noindent nizing them by functional role and characterizing them along six method dimensions. Four\par
+\noindent main findings emerge.\par
+\noindent  First, the diagnostic-infrastructure interaction is conditional: evidence loss requires that\par
+\noindent needed diagnostic state is discarded from a shared resource before the diagnostic horizon and\par
+\noindent cannot be reconstructed (Eq. 1). Most current architectures avoid this scenario by storing traces\par
+\noindent independently of serving state, placing the majority of systems in Tier A (independent opera-\par
+\noindent tion). Among the T1 systems surveyed, none demonstrated a production case where KV-cache\par
+\noindent eviction destroyed diagnostic evidence.\par
+\noindent  Second, the DRICE evaluation framework reveals a systematic D–R gap: diagnostic meth-\par
+\noindent ods consume rich evidence but do not interact with retention policies, while infrastructure sys-\par
+\noindent tems implement sophisticated retention but are unaware of diagnostic value. The policy-driven\par
+\noindent runtime and TOPAS partially bridge this gap — the former feeds observability signals into\par
+\noindent eviction, the latter jointly optimizes prefix retention and scheduling under a shared capacity\par
+\noindent constraint — but within our curated corpus, we did not identify a system that jointly optimizes\par
+\noindent diagnostic retention and serving throughput.\par
+\noindent  Third, the retention ablation on real TraceElephant traces (220 failures, 5 task suites from\par
+\noindent 3 MAS frameworks) reveals a subsampling paradox: heuristic attributors achieve higher accu-\par
+\noindent racy at 10\% retention than at full retention, because subsampling removes normal events that\par
+\noindent cause false recovery signals. Importance-weighted sampling provides only marginal improve-\par
+\noindent ment over uniform random at low budgets (+0.008, within noise), suggesting the benefit derives\par
+\noindent from noise removal rather than from the specific importance scores. This finding characterizes\par
+\noindent a heuristic–retention interaction and motivates retention-aware diagnostic design, though repli-\par
+\noindent cation with LLM-judge attribution methods is necessary to establish generality.\par
+\noindent  Fourth, the diagnostic landscape is rapidly consolidating around zero-replay, single-trajectory\par
+\noindent methods: 10 of 12 failure-localization methods require no environment re-execution. Training-\par
+\noindent free signal-extraction approaches (MASPrism, 0.6B model, 2.66s/case) achieve competitive\par
+\end{flushleft}

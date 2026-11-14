@@ -1,0 +1,56 @@
+% Reconstructed text from V5 PDF page 19; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 19 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 19\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Tooling. AgentTrace [2] implements three logging surfaces — operational (method-level ex-\par
+\noindent ecution tracing with paired start/complete events), cognitive (LLM reasoning chain extrac-\par
+\noindent tion including CoT parsing, confidence estimates, and plan/reflection fields), and contextual\par
+\noindent (outbound API interactions auto-instrumented via OTel monkey-patching) — unified under a\par
+\noindent schema-validated append-only envelope with UUID, surface type, trace/span IDs, and UTC\par
+\noindent timestamps (§3.1–3.6). The system produces dual output: JSONL files for local analysis and\par
+\noindent OTel spans for distributed backends. While the architecture is well-specified with pseudocode\par
+\noindent (Algorithm 1, §4.2), no empirical evaluation of overhead, latency, or storage costs is reported\par
+\noindent (§4.5 states only “low overhead” qualitatively). No repository link or package name is provided.\par
+\noindent  Insights Generator [23] provides analytics over collected execution traces, enabling aggre-\par
+\noindent gate analysis across multiple agent runs: failure frequency by step type, time-to-failure dis-\par
+\noindent tributions, and cross-agent correlation patterns. The view-oriented debugging compiler [46]\par
+\noindent transforms raw execution logs into interactive visual representations: the compiler applies view\par
+\noindent transformations (filtering, aggregation, temporal alignment) to produce domain-specific debug-\par
+\noindent ging views from a common trace format, enabling human inspectors to navigate complex multi-\par
+\noindent agent executions without manually parsing log files.\par
+\noindent  LangSmith (LangChain, commercial tooling) provides a production-grade trace collection\par
+\noindent and analysis platform with built-in LLM evaluation, but its proprietary nature limits independent\par
+\noindent verification of overhead and accuracy claims.\par
+\noindent  The observability layer’s principal limitation for cross-layer analysis is coverage: no ex-\par
+\noindent isting standard captures the serving-side state (KV cache residency, eviction events, memory\par
+\noindent pressure) that Section 6 identifies as relevant for diagnostic-infrastructure interaction. Extend-\par
+\noindent ing OTel GenAI conventions to include serving-side attributes is one of the open directions\par
+\noindent proposed in Section 7.\par
+\par\smallskip
+\noindent 4.3 Safety Intervention and Guardrails\par
+\noindent Safety systems actively monitor and intervene in agent execution to prevent harmful actions.\par
+\noindent We review eight Tier-1 systems spanning three architectural patterns: graph-based guardrails,\par
+\noindent modular safety agents, and control-theoretic recovery.\par
+\par\smallskip
+\noindent Graph-based guardrails. G-Safeguard [37] addresses a specific threat model: adversarial\par
+\noindent agents embedded within a multi-agent system that manipulate other agents through malicious\par
+\noindent utterances. The system constructs a multi-agent utterance graph from inter-agent communica-\par
+\noindent tion, using SentenceBERT/MiniLM embeddings as node features and a learnable permutation-\par
+\noindent invariant fusion of interaction histories as edge features. An edge-featured GNN with a soft\par
+\noindent probabilistic classifier detects attacker nodes after each dialogue round. Trained on 800 samples\par
+\noindent from a GPT-4o-mini-based 8-agent MAS, the system scales to 20–80 agents without retraining.\par
+\noindent A key limitation is that detection is reactive: “by the time G-Safeguard identifies an attacker,\par
+\noindent certain nodes within the MAS have already been successfully compromised.” The system oper-\par
+\noindent ates purely on the utterance graph and does not inspect internal model serving state (ACL 2025\par
+\noindent Long Papers).\par
+\par\smallskip
+\noindent Modular safety agents. ShieldAgent [8] represents safety policies as Linear Temporal Logic\par
+\noindent (LTL) formulas organized into action-based probabilistic rule circuits via Markov Logic Net-\par
+\noindent works. For each agent action, the system extracts action/state predicates from policy documents,\par
+\noindent applies spectral clustering on state predicates for rule grouping, and evaluates via two fine-\par
+\noindent tuned guardrail models on InternVL2-2B. The Autonomous Safety Policy Manager (ASPM)\par
+\end{flushleft}

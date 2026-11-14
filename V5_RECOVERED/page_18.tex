@@ -1,0 +1,58 @@
+% Reconstructed text from V5 PDF page 18; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 18 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 18\par
+\par\smallskip
+\par\smallskip
+\noindent Table 2: Multi-axis comparison of failure-localization methods. NR = not reported at the current evi-\par
+\noindent dence depth. Environment replays, token cost, and model size are separated as distinct cost dimensions.\par
+\noindent T1a/T1b denote Tier-1 evidence with/without page-level citations; T2 denotes abstract-verified.\par
+\par\smallskip
+\noindent Method Category Evidence input Train? Re- Tok. Model Gran. Tier\par
+\noindent  plays\par
+\noindent FAMAS Statistical Re-exec runs No 20 NR 72B Action T1a\par
+\noindent TrajAudit LLM-guided Trajectories No 0 138K frontier Step T1a\par
+\noindent AgenTracer RL-trained Fail. trajs RL 8B 0 NR 8B Agt+Stp T1b\par
+\noindent MASPrism Signal-ext Prefill NLL No 0 7K 0.6B Step T1a\par
+\noindent CHIEF LLM-guided Hier. causal No 0 55K 671B Agt/Stp T1a\par
+\noindent AgentRx LLM-guided Traj+schemas No 0 5–16K frontier Step T1a\par
+\noindent RAFFLES LLM-guided Exec trace No 0 NR NR Step T1a\par
+\noindent Xia et al. Supervised Trace+verif LoRA 0 NR NR Agent T1b\par
+\noindent StepFinder Supervised Temporal BiLSTM 0 NR NR Step T2\par
+\noindent FALAT LLM-guided Dep. evid No 0 NR NR Step T2\par
+\noindent DoVer Intervention Interv. snaps No 4–12 NR NR Stp/Rec T2\par
+\noindent VerifyMAS LLM-guided Hyp+NLI Opt. SFT 0 NR NR Agt+Err T2\par
+\par\smallskip
+\par\smallskip
+\noindent (verification, attribution, debugging, safety enforcement, audit, recovery). Two cross-cutting at-\par
+\noindent tributes qualify every relation: provenance origin (instrumented, inferred, declared, or derived)\par
+\noindent and trace assurance (logged, tamper-evident, or attested), with attested being “the least devel-\par
+\noindent oped attribute in the works reviewed” (§2.2). The survey catalogs 27 representative systems\par
+\noindent (Table 3), 25 benchmarks (Table 8), 20 guardrail systems (Table 5), and 11 memory systems\par
+\noindent (Table 6). A key architectural insight is the distinction between evidence units (content-bearing\par
+\noindent artifacts such as tool outputs) and execution units (occurrences with actor and timestamp), which\par
+\noindent determines whether a trace record is sufficient for post-hoc attribution. Three gaps are identi-\par
+\noindent fied: limited integration of fine-grained provenance with trust functions, no benchmark evalu-\par
+\noindent ating complete provenance chains, and insufficient tamper-evident reporting.\par
+\par\smallskip
+\noindent Protocol-level standards. The OpenTelemetry GenAI semantic conventions [25] provide vendor-\par
+\noindent neutral attributes for LLM inference spans. Core gen\_ai.* attributes include operation name\par
+\noindent (chat, embeddings, execute\_tool, create\_agent, invoke\_agent, invoke\_workflow),\par
+\noindent provider and model identity, input/output token counts, cache read/creation tokens (v1.40), rea-\par
+\noindent soning output tokens for chain-of-thought models (v1.41), streaming flags and TTFT (v1.41),\par
+\noindent and agent/tool identifiers. MCP-specific attributes (mcp.method.name, mcp.session.id,\par
+\noindent mcp.protocol.version) were added in v1.39. Content events (prompts, completions,\par
+\noindent system instructions) are opt-in, controlled by an environment flag for privacy. Proposed agentic\par
+\noindent extensions (Issue \#35: task, action, team, artifact, and memory attributes) remain in “Todo”\par
+\noindent status as of November 2026.\par
+\noindent  The specification remains at Development status with no stabilization timeline, and provider\par
+\noindent coverage is uneven: OpenAI instrumentation is the most complete, while Anthropic, AWS\par
+\noindent Bedrock, and Google Vertex AI libraries have less detailed support. Framework-level integra-\par
+\noindent tion for LangGraph and CrewAI is in progress but incomplete. A fundamental architectural\par
+\noindent limitation is that OTel captures telemetry about model calls but provides no enforcement ca-\par
+\noindent pability: “telemetry can’t answer enforcement questions.” For cross-layer analysis, the most\par
+\noindent significant gap is the absence of serving-side attributes (cache residency, eviction events, mem-\par
+\noindent ory pressure, adapter loading status) that would enable correlating diagnostic trace availability\par
+\noindent with infrastructure state.\par
+\end{flushleft}

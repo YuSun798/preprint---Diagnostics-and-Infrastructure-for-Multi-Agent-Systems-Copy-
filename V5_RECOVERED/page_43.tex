@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 43; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 43 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 43\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent cache hit rate. We propose DRICE — Diagnostics evidence, Retention policy, Infrastructure\par
+\noindent assumptions, Cost decomposition, Evidence depth — as a structured evaluation framework for\par
+\noindent characterizing systems that span both layers.\par
+\par\smallskip
+\noindent 8.1 Framework Dimensions\par
+\noindent D — Diagnostics evidence. What diagnostic signal does the system consume or produce? We\par
+\noindent assess: (a) the evidence type (execution traces, attention scores, tool-call logs, prefill NLL, or\par
+\noindent none); (b) the capture mechanism (instrumentation, model introspection, or external logging);\par
+\noindent and (c) the evidence availability — whether the signal is available at runtime or only post-hoc.\par
+\noindent A system that produces diagnostic evidence as a byproduct of serving (e.g., the policy-driven\par
+\noindent runtime’s agent-identity embeddings) receives a higher D score than one that requires a separate\par
+\noindent diagnostic pipeline.\par
+\par\smallskip
+\noindent R — Retention policy. How does the system decide what to keep and what to discard? We\par
+\noindent characterize the retention policy along three sub-dimensions: (a) the eviction trigger (memory\par
+\noindent pressure, TTL expiry, explicit release, or never); (b) the retention criterion (recency, frequency,\par
+\noindent cost-benefit, workflow-awareness, or learned); and (c) the diagnostic awareness — whether the\par
+\noindent retention criterion considers the diagnostic value of the retained state. Among surveyed systems,\par
+\noindent only the policy-driven runtime incorporates observability signals into eviction decisions; no\par
+\noindent system explicitly weights diagnostic evidence retention.\par
+\par\smallskip
+\noindent I — Infrastructure assumptions. What serving-infrastructure constraints does the system\par
+\noindent assume? We distinguish: (a) model homogeneity (single-model, multi-adapter, or multi-model);\par
+\noindent (b) memory topology (GPU-only, CPU offload, disaggregated, or tiered); (c) multi-tenancy (ded-\par
+\noindent icated, shared-nothing, or shared-pool); and (d) workload pattern (request-level, session-level,\par
+\noindent workflow-level, or agent-level). Infrastructure assumptions determine whether a diagnostic\par
+\noindent method’s evidence requirements are compatible with the serving system’s state management.\par
+\par\smallskip
+\noindent C — Cost decomposition. We decompose runtime cost into four components: (a) compute\par
+\noindent cost (replays, model inference, signal extraction); (b) memory cost (trace storage, cache over-\par
+\noindent head, metadata); (c) latency cost (per-request overhead, diagnostic pipeline delay); and (d) com-\par
+\noindent munication cost (inter-node transfers, cache synchronization). This decomposition enables\par
+\noindent identifying which cost component dominates and whether diagnostic and serving costs share\par
+\noindent the same bottleneck.\par
+\par\smallskip
+\noindent E — Evidence depth. At what level of verification is the system’s performance characterized?\par
+\noindent We use the three-tier coding from Section 3.3: T1 (full-text with section-level evidence), T1b\par
+\noindent (full-text without page-level citation), and T2 (abstract-verified). Evidence depth determines\par
+\noindent how much confidence can be placed in comparative claims.\par
+\par\smallskip
+\noindent 8.2 Applying DRICE\par
+\noindent Table 12 applies the framework to 21 representative systems spanning the diagnostic-serving\par
+\noindent spectrum. Three observations emerge:\par
+\noindent  1. The D–R gap. Most diagnostic systems (CHIEF, MASPrism, FAMAS, AgenTracer) have\par
+\noindent  strong D scores (they consume rich evidence) but no R dimension (they do not interact\par
+\end{flushleft}

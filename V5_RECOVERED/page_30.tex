@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 30; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 30 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 30\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 5.3 Cross-Model Cache Transfer\par
+\noindent Cross-model cache transfer attempts to reuse KV-cache tensors computed by one model vari-\par
+\noindent ant for inference on another, avoiding full recomputation when agents use different models or\par
+\noindent adapter configurations.\par
+\noindent  DroidSpeak [20] enables KV cache sharing between different fine-tuned variants of the same\par
+\noindent base architecture. When transferring context from one LLM to another, DroidSpeak identifies\par
+\noindent which transformer layers require fresh computation (layers where the KV representations di-\par
+\noindent verge most between the two models) and which can reuse the donor model’s KV cache. This\par
+\noindent selective layer-wise recomputation achieves up to 4× throughput improvement and 3.1× faster\par
+\noindent prefill (TTFT reduction) with negligible quality loss on F1, Rouge-L, and code similarity met-\par
+\noindent rics. The key requirement is architectural compatibility: the donor and recipient models must\par
+\noindent share the same transformer architecture (different fine-tuned variants are acceptable, but cross-\par
+\noindent architecture sharing is not supported). The system is implemented in vLLM (UChicago + Mi-\par
+\noindent crosoft). For multi-agent scenarios, DroidSpeak enables agents using different LoRA-adapted\par
+\noindent models to share cached context without full recomputation — a capability that could signifi-\par
+\noindent cantly reduce serving costs in heterogeneous agent deployments.\par
+\noindent  LRAgent (ICML 2026) manages KV cache for multi-adapter scenarios by separating a\par
+\noindent shared base cache from per-adapter low-rank residuals, enabling cache reuse across requests\par
+\noindent that share the same base model but differ in their LoRA adapters.\par
+\par\smallskip
+\noindent 5.4 Agent-Specific Extensions\par
+\noindent Several systems extend general-purpose KV-cache management with agent-aware policies:\par
+\par\smallskip
+\noindent Agent-identity-aware scheduling. ScaleSim [28] manages heterogeneous per-agent state —\par
+\noindent KV caches, LoRA adapters, auxiliary draft models for speculative decoding, and action his-\par
+\noindent tories — using invocation-distance-based memory management. It is the only surveyed sys-\par
+\noindent tem that manages non-KV agent state (adapters and auxiliary models) alongside KV cache\par
+\noindent within a unified eviction framework. The core abstraction is invocation distance (§3.2): “a\par
+\noindent unified abstraction that estimates the relative order in which agents will issue future LLM re-\par
+\noindent quests.” Three categories of distance estimation are defined: independent simulation (inferred\par
+\noindent from action duration), interaction-involved (D = min(Daction , Dinteraction ), where Dinteraction =\par
+\noindent Physical Distance/Velocity), and predefined activation paths (hop count from information source\par
+\noindent via BFS).\par
+\noindent  The eviction policy is future reuse-aware: “instead of relying on recency-based policies\par
+\noindent such as LRU, ScaleSim prioritizes eviction based on invocation distance” (§3.3). Agents with\par
+\noindent larger distances are evicted first. A proactive prefetch mechanism restores offloaded agents be-\par
+\noindent fore their activation, running in parallel with inference since LLM inference does not involve\par
+\noindent CPU–GPU PCIe transfer. For shared memory objects (overlapping KV prefixes), the eviction\par
+\noindent distance is set to the minimum across all referencing agents (Appendix A). A preemption fall-\par
+\noindent back handles unexpected early activations by interrupting ongoing tasks.\par
+\noindent  The system achieves up to 1.74× speedup over SGLang on information-diffusion simula-\par
+\noindent tions, 1.73× on AgentSociety (independent agents), and 1.31× on Generative Agents (interaction-\par
+\noindent involved), tested with Qwen2.5-7B on a single NVIDIA H100 at 20\% active agent rate (§4.2,\par
+\noindent Figure 8). TTFT is consistently reduced by 48–68\% compared to hierarchical caching base-\par
+\noindent lines. The speedup is bounded by the decode phase proportion of total time (§4.3). A key\par
+\noindent limitation is that the application must provide invocation distance estimates through a unified\par
+\end{flushleft}

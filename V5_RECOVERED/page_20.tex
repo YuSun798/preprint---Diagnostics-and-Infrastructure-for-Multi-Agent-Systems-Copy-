@@ -1,0 +1,56 @@
+% Reconstructed text from V5 PDF page 20; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 20 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 20\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent optimization reduces the number of predicates by 50–65\% and rules by 50–76\%, enabling ef-\par
+\noindent ficient runtime verification. The system uses short-term memory (KV-cache, discarded after\par
+\noindent verification) and long-term memory (successful workflows, permanently stored), and is built on\par
+\noindent the MCP framework (ICML 2025).\par
+\noindent  LlamaFirewall [9] implements a three-layer defense architecture with distinct models per\par
+\noindent layer. PromptGuard 2 classifies input prompts for jailbreak/injection using energy-based loss\par
+\noindent with hardened tokenization, available in 86M-parameter (mDeBERTa-base) and 22M-parameter\par
+\noindent (DeBERTa-xsmall) variants. AlignmentCheck evaluates each agent action against the user’s\par
+\noindent stated goal using the execution trace and selected action via few-shot prompting (no fine-tuning;\par
+\noindent Llama 4 Maverick recommended as backing LLM). CodeShield performs two-tiered code scan-\par
+\noindent ning: Semgrep rules plus regex patterns covering 50+ CWEs across 7–8 programming lan-\par
+\noindent guages. The three layers have different timing: PromptGuard is preventive (pre-processing),\par
+\noindent AlignmentCheck is reactive (post-action), and CodeShield is reactive (pre-execution). The sys-\par
+\noindent tem is open-source.\par
+\par\smallskip
+\noindent Control-theoretic recovery. ReGuard [29] applies control-theoretic principles to agent re-\par
+\noindent covery: when a safety violation is detected, the system computes a corrective action using a\par
+\noindent formal model of the agent’s state transition dynamics, rather than simply blocking the action.\par
+\noindent This enables graceful degradation rather than hard stops, but requires a tractable state model.\par
+\par\smallskip
+\noindent Additional safety systems. SAIGuard [34] implements proactive defense via communication-\par
+\noindent state simulation: it constructs an interaction graph over the MAS, encodes messages with\par
+\noindent Qwen3-Embedding-0.6B (2-layer GNN, 1024 hidden dimensions), and estimates the impact\par
+\noindent of incoming messages on local and global agent states. Risky messages are detected via recon-\par
+\noindent struction deviations from benign patterns and sanitized before propagation — making SAIGuard\par
+\noindent the only preventive safety system in the survey. It reduces attack success rate from 16.51\%\par
+\noindent to 5.37\% (67.47\% reduction) while maintaining 89.83\% task accuracy and 98.68\% detection\par
+\noindent F1. A “systemic risk amplification” finding is notable: aggregated multi-agent attack success\par
+\noindent (51.78\%) far exceeds per-agent vulnerability (3.00\%).\par
+\noindent  SentinelAgent [12] implements three-level anomaly detection: node-level (individual agent\par
+\noindent behavior), edge-level (inter-agent communication anomalies), and path-level (multi-hop exe-\par
+\noindent cution chain attacks). Path-level detection catches all 6 tested scenarios but has the highest\par
+\noindent compute cost. The system uses IBM Granite Guardian 3.2 and LlamaFirewall as pre-trained\par
+\noindent backends without custom training. Evaluation is qualitative only (2 case studies).\par
+\noindent  AGrail [21] provides a lifelong agent guardrail framework combining rule-based constraints\par
+\noindent with learned safety policies. The “lifelong” aspect enables policy updates as agents encounter\par
+\noindent new scenarios without retraining. AgentDoG 1.5 [18] uses anomaly detection on execution\par
+\noindent patterns to identify both safety violations and performance degradation simultaneously — the\par
+\noindent only system producing both a safety verdict and a diagnostic attribution from the same analysis.\par
+\noindent  ReGuard [29] applies control-theoretic recovery: when a safety violation is detected, it\par
+\noindent models state transition dynamics and computes a corrective action rather than simply blocking\par
+\noindent the agent. This enables graceful degradation but requires a tractable state model.\par
+\par\smallskip
+\noindent Diagnostic-safety overlap. Safety systems and diagnostic systems share a key requirement:\par
+\noindent both need access to the agent’s execution state (tool calls, outputs, and intermediate reasoning).\par
+\noindent Three of the eight safety systems (SentinelAgent, AGrail, AgentDoG) explicitly consume di-\par
+\noindent agnostic traces as input to their safety decisions. This overlap suggests that serving-side state\par
+\end{flushleft}

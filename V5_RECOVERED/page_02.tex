@@ -1,0 +1,55 @@
+% Reconstructed text from V5 PDF page 2; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 2 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 2\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 1 Introduction\par
+\noindent Foundation model-based multi-agent systems (MAS), in which multiple Large Language Model\par
+\noindent (LLM) agents collaborate to solve complex tasks, are increasingly moving from demonstrations\par
+\noindent toward deployed workflows. As systems such as MetaGPT [13], CAMEL [15], ChatDev [30],\par
+\noindent and Internet of Agents [7] operate within shared environments, reliability and efficiency de-\par
+\noindent pend on operational layers that are less mature than orchestration itself. As these systems be-\par
+\noindent come architecturally sophisticated, reliability and efficiency depend on operational layers that\par
+\noindent lag behind the orchestration layer: the diagnostics layer, which supports failure localization,\par
+\noindent observability, and safety intervention; and the infrastructure layer, which manages memory,\par
+\noindent scheduling, and resources for multi-agent workloads.\par
+\noindent  Recent multi-agent applications span collaborative coding, scientific discovery, financial\par
+\noindent analysis, and social simulation. Within these applications, failure patterns are qualitatively\par
+\noindent different from single-agent errors: MAST [5] identifies 14 recurring failure modes in MAS,\par
+\noindent motivating runtime diagnostics rather than evaluation only at the final task output. When a\par
+\noindent multi-agent workflow fails, the central question is not just what failed but which agent caused\par
+\noindent the failure, at which step, and whether the serving infrastructure’s resource management deci-\par
+\noindent sions contributed to or masked the failure. Recent preprints illustrate adjacent model-level prob-\par
+\noindent lems that may arise in agent-enabled workloads: finite-beam reachability and continuous-query\par
+\noindent generation in generative recommendation, attribution-based forgetting in LoRA adaptation, and\par
+\noindent reading and reconciling temporal evidence in time-series forecasting. These are contextual ex-\par
+\noindent amples rather than multi-agent diagnostic or serving systems, and are not included in our core\par
+\noindent system tables.\par
+\par\smallskip
+\noindent 1.1 Scope and Positioning\par
+\noindent Existing surveys largely treat diagnostics and infrastructure separately. General agent surveys\par
+\noindent cover architectural patterns and collaboration mechanisms; AgentOps addresses telemetry and\par
+\noindent operational practice; offline agent evaluation benchmarks focus on task quality; single-model\par
+\noindent serving surveys address latency and throughput optimization; and MAS collaboration/failure\par
+\noindent surveys examine interaction patterns and failure modes. In our curated corpus, we review 48\par
+\noindent entries across four categories (12 failure-localization, 6 observability, 8 safety, 22 infrastructure)\par
+\noindent and 12 evaluation benchmarks (60 table entries; Appendix A). The resulting literature exposes\par
+\noindent complementary pieces of the runtime stack, but the relationship between the state required for\par
+\noindent diagnosis and the state managed by serving policies remains under-analyzed.\par
+\noindent  This review examines the interface between these two selected runtime functions. The title\par
+\noindent does not imply exhaustive treatment of orchestration, storage, networking, security operations,\par
+\noindent or all layers of a production stack. Our analytical contribution is a state-dependency and cost\par
+\noindent framework, not a claim that the reviewed mechanisms themselves are new. Table 1 contrasts\par
+\noindent our scope against five adjacent review areas, specifying the conceptual dimension this review\par
+\noindent adds to each.\par
+\noindent  Three broad system properties recur across the literature reviewed here: (1) distributed\par
+\noindent execution across multiple agents, which creates traces spanning agent boundaries; (2) inter-\par
+\noindent agent communication, which allows failures to propagate through communication channels;\par
+\noindent and (3) inter-agent memory sharing, where prompts, tools, and cached state may be reused\par
+\noindent across the system. Section 5 derives serving-side implications from these properties, high-\par
+\noindent lighting sparse activation, invocation distance, and inter-agent memory sharing as the workload\par
+\noindent characteristics that directly affect memory placement, scheduling, and cache policy.\par
+\end{flushleft}

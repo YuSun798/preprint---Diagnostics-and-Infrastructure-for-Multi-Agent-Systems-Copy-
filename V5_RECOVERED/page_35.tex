@@ -1,0 +1,56 @@
+% Reconstructed text from V5 PDF page 35; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 35 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 35\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent tool-call spans, reasoning traces, and intermediate outputs. These simulations model a de-\par
+\noindent ployment where diagnostic buffers share GPU memory with KV cache blocks, representing\par
+\noindent architectures where traces are embedded in the serving state rather than stored independently.\par
+\par\smallskip
+\noindent KV-cache eviction diagnostic impact. Table 7 reports the results for a 50-conversation, 100-\par
+\noindent block cache with 3 agents (deterministic, seed=42, warm-up=5 conversations). Under LRU\par
+\noindent eviction, 58.5\% of evictions removed blocks containing diagnostic content, while maintaining\par
+\noindent 100\% cache hit rate (67/100 diagnostic blocks retained). FIFO showed similar behavior. A\par
+\noindent diagnostic-aware policy achieved 58.2\% diagnostic eviction (a 0.3 pp reduction) but at substan-\par
+\noindent tial serving cost: cache hit rate dropped to 88.4\%. The diagnostic-aware policy trades 11.6\par
+\noindent percentage points of cache hit rate for complete diagnostic block retention — suggesting, in\par
+\noindent this simulated setting, that naive policy augmentation is insufficient and supporting the need for\par
+\noindent joint optimization (direction O1 in Section 7).\par
+\par\smallskip
+\noindent Table 7: KV-cache eviction simulation (illustrative; 50 conversations, 100-block cache, 3 agents,\par
+\noindent seed=42, simulated CPU workload). Hit rate = hits/(hits+misses). Diag-bearing = diagnostic-classified\par
+\noindent evictions / total evictions. A “diagnostic block” contains keyword-matched content (error messages,\par
+\noindent stack traces, tool return values). Metrics are cumulative over the full run after warm-up (5 conversa-\par
+\noindent tions).\par
+\par\smallskip
+\noindent  Policy Evictions Diag-bearing Hit rate Diag retained\par
+\noindent  LRU 2,688 58.5\% 100\% 67/100\par
+\noindent  FIFO 2,641 60.3\% 100\% 64/100\par
+\noindent  Diag-Aware 2,658 58.2\% 88.4\% 100/100\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Serving-system comparison. Table 8 reports a separate scenario: 20 conversations, 240 re-\par
+\noindent quests, 5,000-token cache (deterministic, seed=42). Flat LRU and RadixTree achieve compara-\par
+\noindent ble hit rates but dramatically different eviction counts, illustrating that infrastructure architec-\par
+\noindent ture choice affects the frequency of potential diagnostic-evidence disruption events even when\par
+\noindent aggregate serving performance is similar.\par
+\par\smallskip
+\noindent Table 8: Serving-system simulation (illustrative; 20 conversations, 240 requests, 5,000-token cache,\par
+\noindent seed=42, simulated CPU workload). Hit rate = hits/(hits+misses). Utilization = occupied cache tokens\par
+\noindent / total cache capacity. Metrics cumulative after warm-up.\par
+\par\smallskip
+\noindent  Policy Hit rate Utilization Mean TTFT Evictions\par
+\noindent  LRU Flat 95.45\% 91.1\% 13.456 ms 208\par
+\noindent  RadixTree 95.74\% 25.6\% 13.240 ms 0\par
+\par\smallskip
+\par\smallskip
+\noindent  Three caveats apply. The two scenarios use different cache sizes and workloads and are\par
+\noindent not directly comparable. The simulations use a simplified pipeline (simulated CPU workload,\par
+\noindent not production GPU serving); the cache sizes are small relative to production deployments; and\par
+\noindent the diagnostic-content classification uses keyword-based detection rather than actual attribution\par
+\noindent value assessment.\par
+\end{flushleft}

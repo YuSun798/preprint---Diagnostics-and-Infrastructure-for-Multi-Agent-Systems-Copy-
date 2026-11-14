@@ -1,0 +1,52 @@
+% Reconstructed text from V5 PDF page 39; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 39 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 39\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent depend on, coverage may degrade silently. The risk is acute for ShieldAgent [8], which main-\par
+\noindent tains short-term KV-cache memory “discarded after verification” — if the serving system evicts\par
+\noindent this before verification completes, the safety check is bypassed. Characterizing this coupling\par
+\noindent requires controlled experiments varying memory pressure while measuring safety coverage met-\par
+\noindent rics (false negative rate, bypass frequency).\par
+\par\smallskip
+\noindent 7.2 Diagnostic Overhead Characterization\par
+\noindent A prerequisite question for the validation protocol is whether diagnostic tracing itself introduces\par
+\noindent meaningful overhead. We benchmarked four tracing modes in a simulated multi-agent pipeline:\par
+\noindent no tracing, string-formatted logging, structured OTel-style spans, and causal DAG construction.\par
+\noindent  All tracing modes add estimated less than 3\% CPU overhead relative to the untraced baseline\par
+\noindent in our simulated multi-agent pipeline (single-threaded Python, 3 agents, 50 conversations; aver-\par
+\noindent aged over 3 runs). Structured OTel-style spans are slightly more efficient than string-formatted\par
+\noindent logging (the formatting overhead of string concatenation exceeds the metadata overhead of\par
+\noindent span construction). Causal DAG mode uses approximately 2× the memory of structured spans\par
+\noindent at high verbosity, because it maintains the full parent-child relationship graph in memory rather\par
+\noindent than streaming events to a sink. These measurements reflect CPU-side tracing cost in isolation;\par
+\noindent GPU-level overhead from shared memory contention with KV cache is not captured by this\par
+\noindent benchmark.\par
+\noindent  This result establishes that tracing overhead in isolation is negligible on CPU. The diagnostic-\par
+\noindent infrastructure interaction gap is therefore not about the raw cost of trace capture — it is about\par
+\noindent resource contention with serving at the GPU level, where KV cache memory and diagnostic\par
+\noindent evidence may compete for the same limited pool. No existing benchmark measures this GPU-\par
+\noindent level contention, and the overhead benchmark confirms that the right measurement target is\par
+\noindent GPU memory allocation under concurrent diagnostic and serving workloads, not CPU tracing\par
+\noindent cost.\par
+\par\smallskip
+\noindent 7.3 Validation Protocol for the Shared-Budget Hypothesis\par
+\noindent We propose a concrete experimental protocol for testing whether integrating diagnostic evi-\par
+\noindent dence retention into the serving-side eviction objective improves end-to-end failure attribution\par
+\noindent without unacceptable throughput loss.\par
+\par\smallskip
+\noindent Setup. Deploy a multi-agent system with: (a) a KV-cache serving backend with configurable\par
+\noindent eviction policy (SGLang or Mooncake as the base); (b) a diagnostic trace store with configurable\par
+\noindent retention budget; (c) injected failures at known locations for ground-truth attribution.\par
+\par\smallskip
+\noindent Independent variables.\par
+\noindent  1. Retention budget (b): the fraction of available memory allocated to diagnostic evidence\par
+\noindent  retention, varied from 0\% (pure serving) to 50\% (equal split).\par
+\noindent  2. Eviction policy: baseline (LRU, serving-only objective) vs. diagnostic-aware (serving +\par
+\noindent  diagnostic-value term).\par
+\noindent  3. Workload intensity: low (single-agent, sequential tasks) to high (multi-agent, concurrent\par
+\noindent  workflows with prefix sharing).\par
+\end{flushleft}

@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 16; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 16 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 16\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent mal causal estimators; the method requires open-weight SLMs (closed APIs are incompatible\par
+\noindent with prefill-stage signal extraction); only failed traces are evaluated, with false-positive control\par
+\noindent on mixed-success runs left as future work; the symptom ratio must be manually configured per\par
+\noindent benchmark; and on short traces (the AG subset of Who\&When), explicit reasoning methods\par
+\noindent such as A2P outperform MASPrism (43.65\% vs. 36.51\%, Table 1). Without the filtering stage,\par
+\noindent the method encounters out-of-memory failures on 73 of 117 GAIA traces (Table 3).\par
+\par\smallskip
+\noindent Additional LLM-guided methods. Beyond the four systems detailed above, the LLM-guided\par
+\noindent family has expanded rapidly. RAFFLES [51] applies iterative reasoning chains to progressively\par
+\noindent narrow the failure location, achieving 50.79\% step-level accuracy on algorithm-generated sce-\par
+\noindent narios in the Who\&When benchmark (EACL 2026). VerifyMAS [31] formulates attribution as\par
+\noindent hypothesis verification using natural language inference (NLI), optionally fine-tuned via SFT,\par
+\noindent producing agent-level attribution paired with error-type classification.\par
+\noindent  At the abstract-verified tier, additional systems reveal design directions: CausalFlow applies\par
+\noindent causal responsibility scores to agent trajectories via step-level counterfactual intervention. CAR\par
+\noindent (Causal Agent Replay) combines structural causal models with five do-operations and Shapley\par
+\noindent credit-splitting for multi-agent attribution. DCFA (EMNLP 2026) introduces a training-free\par
+\noindent dual-view approach: a global causal dependency graph combined with local counterfactual rea-\par
+\noindent soning, achieving +8.27\% step accuracy over the state of the art. HPFA (COLM 2026) uses\par
+\noindent hypergraph-based paired failure attribution with SFT + RL training. EDGE (EMNLP 2026)\par
+\noindent constructs multi-error dependency graphs, addressing the challenging case of multiple simul-\par
+\noindent taneous failures. DeFA achieves the highest accuracy on both Who\&When and Who\&When\par
+\noindent Pro’s text subset through protocol + semantic dependency propagation. EMFA establishes a\par
+\noindent new state of the art on step-level Who\&When attribution by modeling cascading + persistent\par
+\noindent error propagation loops.\par
+\noindent  These systems illustrate the field’s rapid progression from single-failure linear analysis to-\par
+\noindent ward multi-fault, graph-structured attribution. Three additional architectural directions are visi-\par
+\noindent ble: SDBL (AAAI 2026) proposes scoping the failure before localization — defining the failure\par
+\noindent boundary first, then identifying the root cause within that boundary. DuoTrace separates detec-\par
+\noindent tion from attribution, using a first pass to identify whether a failure occurred and a second pass\par
+\noindent to attribute where it originated. REFLECT (ICML 2026 Workshop) bridges diagnosis to inter-\par
+\noindent vention by generating repair actions from attributed failures — the only system in our survey\par
+\noindent that closes the loop from attribution to recovery in a single framework. Together, these 23 addi-\par
+\noindent tional systems (all abstract-verified) suggest that the failure-localization landscape is maturing\par
+\noindent from isolated tools toward integrated pipelines with standardized interfaces.\par
+\par\smallskip
+\noindent Benchmarks and evaluation. TRAIL [10] provides the first OTel-format benchmark for trace\par
+\noindent debugging: 1,987 spans across 148 traces from GAIA (multi-agent) and SWE-Bench Lite\par
+\noindent (single-agent) systems, with structured error categorization. The best model (Gemini 2.5 Pro)\par
+\noindent achieves only ∼11\% joint accuracy, revealing that current LLMs struggle with long structured\par
+\noindent traces. Token consumption is substantial: GAIA traces average 263–314K input tokens, while\par
+\noindent SWE-Bench traces average 617–728K, with a pronounced anti-correlation between trace length\par
+\noindent and accuracy (Pearson r = −0.29 to −0.38, §5.1.3). The annotation protocol required \$12.66\par
+\noindent per trace and 30–40 minutes of expert time, illustrating the cost of ground-truth creation for\par
+\noindent diagnostic evaluation.\par
+\noindent  RAFFLES [51] achieves 50.79\% step-level accuracy on algorithm-generated scenarios through\par
+\noindent iterative reasoning (K=2 rounds) at \$0.12 per short log and \$0.31 per long log using Claude\par
+\noindent Sonnet — 21–41× cheaper than a junior engineer (§5.1, Appendix D). Parallelized latency is\par
+\end{flushleft}

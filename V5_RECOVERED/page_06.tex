@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 6; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 6 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 6\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Sparse activation. Only a fraction of agents invoke the LLM at any moment: a 1,000-agent\par
+\noindent simulation may have fewer than 10 actively generating tokens. Under such workloads, keeping\par
+\noindent all agent state on the fastest memory tier can waste scarce accelerator memory. ScaleSim’s\par
+\noindent invocation-distance metric quantifies the temporal gap before an agent’s next call, enabling\par
+\noindent memory-tier demotion for inactive agents.\par
+\par\smallskip
+\noindent Invocation distance. Many workloads have structured activation patterns such as sequential\par
+\noindent queues, event-driven messaging, and dependency graphs. The temporal gap before an agent’s\par
+\noindent next call, termed invocation distance, can be estimated from application semantics in structured\par
+\noindent workloads but is not generally visible to request-level schedulers. This motivates workflow-\par
+\noindent aware caching approaches such as KVFlow, which predicts steps-to-execution for each cached\par
+\noindent prefix.\par
+\par\smallskip
+\noindent Inter-agent memory sharing. Agents may share context such as system prompts, environ-\par
+\noindent ment descriptions, and tool schemas. General serving systems already reuse such prefixes:\par
+\noindent SGLang’s RadixAttention and vLLM’s automatic prefix caching both exploit shared token se-\par
+\noindent quences. The additional opportunity in agentic systems is to use application-level structure\par
+\noindent (dependency graphs, message queues, or execution order) to guide cache retention decisions\par
+\noindent beyond request-level recency or frequency heuristics.\par
+\noindent  The relative importance of these properties varies by application domain. Simulation work-\par
+\noindent loads (ScaleSim’s target) exhibit strong sparse activation with predictable invocation patterns.\par
+\noindent Coding agent workflows (Continuum’s target) have long tool-call pauses with uncertain du-\par
+\noindent rations. Multi-model deployments (DroidSpeak’s target) add cross-architecture cache transfer\par
+\noindent challenges. The infrastructure systems reviewed in Section 5 address different subsets of these\par
+\noindent workload properties, and the optimal KV-cache management strategy depends on which prop-\par
+\noindent erties dominate in a given deployment.\par
+\par\smallskip
+\noindent 2.3 Runtime Layers\par
+\noindent We focus on two runtime layers that are less mature than orchestration:\par
+\par\smallskip
+\noindent Diagnostics layer. This layer supports failure localization (identifying which agent or step\par
+\noindent caused a failure), observability and tracing (continuously capturing execution evidence), and\par
+\noindent safety intervention (actively monitoring and preventing harmful actions). The diagnostic layer\par
+\noindent consumes execution state — traces, tool outputs, intermediate reasoning — to produce reliabil-\par
+\noindent ity outcomes: attribution reports, anomaly alerts, and safety blocks. The surveyed methods vary\par
+\noindent dramatically in their resource requirements: FAMAS requires 20 environment replays averag-\par
+\noindent ing 105 minutes per task, while MASPrism requires only two deterministic prefill passes at 2.66\par
+\noindent seconds on a 0.6B model. This three-orders-of-magnitude cost range has direct implications for\par
+\noindent cross-layer design: methods at the high end of the cost spectrum may compete with serving\par
+\noindent resources, while methods at the low end operate well within available headroom.\par
+\par\smallskip
+\noindent Infrastructure layer. This layer manages serving-time resources: KV-cache memory, com-\par
+\noindent pute scheduling, adapter placement, and power management for multi-agent workloads. The\par
+\noindent infrastructure layer consumes serving state — KV blocks, adapters, request metadata — and\par
+\noindent optimizes for throughput, latency, and resource utilization. Among the 22 Tier-1 infrastructure\par
+\end{flushleft}

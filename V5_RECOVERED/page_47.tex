@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 47; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 47 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 47\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 10 operate on single-trajectory analysis. MASPrism’s signal-extraction approach achieves com-\par
+\noindent petitive accuracy with a 0.6B model and zero output tokens, at 6.69× lower latency than com-\par
+\noindent parable methods. This trend suggests that the diagnostic layer’s demand on the infrastructure\par
+\noindent layer is decreasing: newer methods require only logged traces, not re-execution access. The\par
+\noindent implication for cross-layer design is significant — if future diagnostic methods universally op-\par
+\noindent erate on logged traces stored independently of GPU memory, the Tier C evidence-loss scenario\par
+\noindent becomes architecturally impossible.\par
+\par\smallskip
+\noindent Agent-aware infrastructure is emerging but single-objective. Nine of 22 infrastructure sys-\par
+\noindent tems incorporate agent-level metadata into their management policies (ScaleSim, TokenCake,\par
+\noindent KVFlow, KVCOMM, ForkKV, TokenDance, KAIROS, the policy-driven runtime, LRAgent).\par
+\noindent However, all optimize for serving metrics (throughput, latency, cache hit rate) rather than di-\par
+\noindent agnostic value. The agent-awareness is used to improve serving predictions, not to protect\par
+\noindent diagnostic state. This creates an architectural asymmetry: the infrastructure layer is increas-\par
+\noindent ingly capable of agent-level reasoning, but the objective function it optimizes does not include\par
+\noindent diagnostic value.\par
+\par\smallskip
+\noindent The cross-layer conflict is narrower than assumed. The evidence-loss formalization (Eq. 1)\par
+\noindent reveals that most diagnostic-serving interactions fall into Tier A (independent operation) or\par
+\noindent Tier B (shared resource, reconstructable evidence). Tier C evidence-loss scenarios require non-\par
+\noindent reconstructable state co-managed by the serving layer — a condition that current architectures\par
+\noindent generally avoid by storing traces independently. Among 82 surveyed systems, we identified no\par
+\noindent system where KV-cache eviction demonstrably destroyed diagnostic evidence in a production\par
+\noindent deployment.\par
+\par\smallskip
+\noindent Step-level attribution remains an open challenge. Across the 12 failure-localization meth-\par
+\noindent ods, step-level accuracy is substantially lower than agent-level accuracy. The best step-level re-\par
+\noindent sults are approximately 52\% (TrajAudit RootSE and CHIEF on algorithm-generated scenarios),\par
+\noindent compared to agent-level accuracies exceeding 70\%. Who\&When reports step-level accuracy\par
+\noindent degrades to approximately 0\% on trajectories exceeding 93 steps. TraceElephant demonstrates\par
+\noindent that complete traces improve step-level accuracy by 76\% relative (16\% to 28.1\%), compared\par
+\noindent to only 22\% relative improvement at the agent level. This granularity gap implies that in-\par
+\noindent frastructure decisions affecting trace completeness have a disproportionate impact on the most\par
+\noindent challenging — and often most useful — level of diagnostic attribution.\par
+\par\smallskip
+\noindent Benchmark infrastructure is fragmented. The 12 surveyed benchmarks collectively cover\par
+\noindent failure attribution, reliability, and safety evaluation, but use different trace formats, annotation\par
+\noindent protocols, evaluation metrics, and failure definitions. No common evaluation protocol exists,\par
+\noindent and 0 of 12 benchmarks evaluate diagnostic-infrastructure interaction. TraceElephant [6] pro-\par
+\noindent vides the richest traces (380 structured JSONs with step-level tool logs) but no serving-side\par
+\noindent instrumentation. Who\&When [48] defines the first standardized attribution protocol but oper-\par
+\noindent ates entirely offline. TRAIL [10] is the first OTel-format benchmark, enabling integration with\par
+\noindent serving-side telemetry, but its best model achieves only 11\% joint accuracy — suggesting that\par
+\noindent structured traces alone are insufficient without specialized attribution methods. The absence of a\par
+\noindent cross-layer benchmark is both a gap and an opportunity: building one would require combining\par
+\noindent a realistic multi-agent workload generator, a configurable serving backend (with tunable evic-\par
+\noindent tion policy and memory pressure), injected failures at known locations, and matched diagnostic\par
+\noindent and serving metrics.\par
+\end{flushleft}

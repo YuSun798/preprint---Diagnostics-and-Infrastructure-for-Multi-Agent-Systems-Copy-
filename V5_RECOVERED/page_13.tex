@@ -1,0 +1,57 @@
+% Reconstructed text from V5 PDF page 13; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 13 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 13\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent  Role), and three edge types connecting them (§4.1). The system backtracks through this\par
+\noindent  graph in reverse topological order using synthesized virtual oracles Ok = ⟨Goal, Pre-\par
+\noindent  conditions, Key Evidence, Acceptance Criteria⟩, then applies counterfactual attribution\par
+\noindent  through four progressive stages: local analysis, planning-control analysis, data-flow anal-\par
+\noindent  ysis, and deviation-aware analysis (§4.2–4.3). A RAG knowledge base constructed from\par
+\noindent  165 GAIA and 33 AssistantBench examples supports subtask decomposition.\par
+\noindent  Using DeepSeek-V3.2 (671B parameters, approximately 37B active via sparse MoE) as\par
+\noindent  its backbone, CHIEF achieves the highest reported agent-level accuracy at 77.59\% on\par
+\noindent  handcrafted scenarios and 76.80\% on algorithm-generated scenarios (Table 1). Step-level\par
+\noindent  accuracy is 29.31\% (handcrafted) and 52.00\% (algorithm-generated). The system con-\par
+\noindent  sumes 55,085 tokens per trajectory on handcrafted scenarios and 19,504 on algorithm-\par
+\noindent  generated ones (Table 2). Reported costs are presented in original units; we avoid cross-\par
+\noindent  paper cost ratios when workloads and measurement conditions differ. The method was\par
+\noindent  tested on TITAN RTX with 32GB RAM using API inference (§5). Its effectiveness de-\par
+\noindent  pends on graph fidelity: hallucinated edges in the causal graph propagate attribution errors\par
+\noindent  through the backtracking process (§7). A single-benchmark evaluation (Who\&When) and\par
+\noindent  single-root-cause assumption (no cumulative error propagation verification) limit gener-\par
+\noindent  alizability.\par
+\noindent  • TrajAudit [35] addresses the challenge of long execution trajectories (often thousands of\par
+\noindent  steps in coding agents) through two preprocessing stages before LLM-based diagnosis.\par
+\noindent  Semantic Structure Folding (SSF) merges consecutive actions with similar semantics,\par
+\noindent  reducing the trajectory length while preserving the decision structure; the paper reports\par
+\noindent  94.6\% of steps folded on average (§VII-D). Progressive Failure Reasoning (PFR) then\par
+\noindent  applies a multi-round narrowing strategy that progressively identifies the earliest decisive\par
+\noindent  error step.\par
+\noindent  The system was tested with five LLM backbones: Claude Sonnet 4.5 (default), Gemini\par
+\noindent  3.1 Pro, GPT-5.2, DeepSeek V4 Pro, and Qwen3-235B (Table VI). The best configuration\par
+\noindent  achieves 52.0\% step-level RootSE accuracy without reference trajectories and 49.0\% with\par
+\noindent  reference trajectories, representing +21.6 and +10.8 percentage-point gains over direct-\par
+\noindent  prompting baselines respectively (Table II). Token consumption averages 138K per case\par
+\noindent  (Table VII, §VII-C), making TrajAudit the most token-intensive single-trajectory method\par
+\noindent  in the survey.\par
+\noindent  Several limitations are notable (§IX). The dataset was filtered from 500 to 102 instances,\par
+\noindent  excluding ambiguous and multi-failure cases. The method is evaluated on single-agent\par
+\noindent  coding tasks only; 37\% of MAS failures are inter-agent cooperation breakdowns, which\par
+\noindent  TrajAudit does not address. A strong positional bias exists: accuracy drops to 19–26\%\par
+\noindent  when errors occur in the first 20\% of steps, and 81\% of mispredictions are later than the\par
+\noindent  true error step by an average of 14.5 steps. Ablation confirms SSF as critical (−11.4\%\par
+\noindent  vs. −3.5\% for PFR, Table VII).\par
+\noindent  • AgentRx [3] synthesizes behavioral constraints from toolset schemas and domain poli-\par
+\noindent  cies, then uses an LLM judge to evaluate each step against the generated constraints.\par
+\noindent  The method operates in two phases: first, constraint generation produces semantic asser-\par
+\noindent  tions for each step based on the available tool definitions and optional domain policy Π\par
+\noindent  (9 failure categories in a structured taxonomy); second, a judge protocol evaluates each\par
+\noindent  step against these constraints. On τ -bench [42] (airline and retail scenarios), AgentRx\par
+\noindent  achieves 42.7\% step accuracy, with the AgentRx W\&W* variant showing +23.9 percent-\par
+\noindent  age points over the 18.8\% baseline (Table 3). Cost is \$0.18 per trajectory versus \$0.05 for\par
+\noindent  judge-only evaluation (3.6× overhead), with constraint generation consuming 81\% of the\par
+\end{flushleft}

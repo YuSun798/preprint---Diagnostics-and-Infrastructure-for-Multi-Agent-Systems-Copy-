@@ -1,0 +1,61 @@
+% Reconstructed text from V5 PDF page 3; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 3 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 3\par
+\par\smallskip
+\par\smallskip
+\noindent Table 1: Conceptual differences from adjacent reviews. The entries describe emphases rather than binary\par
+\noindent claims of exclusive coverage. Our contribution is a comparison of evidence requirements and state-\par
+\noindent lifetime dependencies across diagnosis and serving, not a claim to invent the component techniques.\par
+\par\smallskip
+\noindent  Review area Unit of analysis Principal concern Dimension added here\par
+\noindent  MAS orchestration Agent roles, workflow Coordination, framework Serving-state lifetimes and diagnostic\par
+\noindent  graph design dependencies\par
+\noindent  AgentOps Telemetry, operational Monitoring, trace collec- Evidence preservation vs. reclamation\par
+\noindent  practice tion cost\par
+\noindent  Agent evaluation Benchmark tasks, scores Offline task quality Replayability, granularity, online timing\par
+\noindent  LLM-serving Requests, KV blocks, Latency, throughput Agent-level future calls and restoration\par
+\noindent  workers\par
+\noindent  MAS collaboration Inter-agent interactions Failure, collaboration pat- Shared evidence, explicit retention con-\par
+\noindent  terns ditions\par
+\noindent  This review Diagnostic evidence, Conditional cross-layer Evidence inputs, training, replay, tim-\par
+\noindent  serving state dependencies ing, cost, recoverability\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent 1.2 The Diagnostic-Infrastructure Gap\par
+\noindent The gap between diagnostic and infrastructure research is both conceptual and practical. Con-\par
+\noindent ceptually, diagnostic methods are designed under an implicit assumption that execution traces\par
+\noindent are always available — stored in a log database, replay buffer, or trace store that is independent\par
+\noindent of the serving engine’s memory management. Infrastructure systems, conversely, optimize for\par
+\noindent throughput and latency without considering whether their eviction decisions affect downstream\par
+\noindent diagnostic capability. Neither community has systematically characterized the conditions under\par
+\noindent which these assumptions interact.\par
+\noindent  Practically, this gap manifests in three ways. First, among the 12 evaluation benchmarks\par
+\noindent in our curated corpus, we did not identify one that evaluates how diagnostic overhead affects\par
+\noindent serving throughput or how eviction policies affect attribution accuracy. Second, within the\par
+\noindent serving-infrastructure studies examined at full-text depth, we did not identify a reported sys-\par
+\noindent tem that jointly optimizes diagnostic retention and serving throughput under a single measured\par
+\noindent resource budget — the closest system (TOPAS) optimizes serving throughput alone. Third,\par
+\noindent the observability standards that could bridge the gap (OpenTelemetry GenAI conventions) lack\par
+\noindent serving-side attributes: there are no standardized attributes for KV cache residency, eviction\par
+\noindent events, or memory pressure.\par
+\noindent  This review addresses the gap by mapping both layers along shared dimensions (evidence\par
+\noindent inputs, training, replay, granularity, timing, cost), formalizing the conditions for cross-layer\par
+\noindent conflict (Section 6), and proposing a structured evaluation framework (DRICE, Section 8) and\par
+\noindent validation protocol (Section 7.3) that make the shared-budget hypothesis testable.\par
+\noindent  This is a curated critical review rather than a systematic review. The inclusion boundary,\par
+\noindent evidence-selection rules, and verification tiers are described in Section 3. Quantitative claims\par
+\noindent used for comparison come from full-text sources; abstract-level results are marked [a] and are\par
+\noindent not used to compute cross-system deltas or rankings.\par
+\par\smallskip
+\noindent Why gap identification is a contribution. Identifying that a widely assumed conflict is con-\par
+\noindent ditional (not universal) changes the design space for joint diagnostic-infrastructure systems. If\par
+\noindent the conflict were universal, practitioners would need to build shared-budget managers for every\par
+\noindent deployment. Because the conflict requires three specific conditions (Eq. 1), practitioners should\par
+\noindent instead instrument for the specific conditions under which interference occurs. The simulated\par
+\noindent KV-eviction experiment (Section 6.6) illustrates that, in a simplified CPU-based cache model,\par
+\noindent naive policy augmentation produces a negative trade-off; live GPU-serving validation remains\par
+\noindent future work. The retention ablation (Section 7.3) reveals a further non-obvious interaction on\par
+\end{flushleft}

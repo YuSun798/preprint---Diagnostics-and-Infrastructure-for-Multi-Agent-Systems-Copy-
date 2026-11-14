@@ -1,0 +1,54 @@
+% Reconstructed text from V5 PDF page 8; non-native source
+\par\smallskip\noindent\rule{\textwidth}{0.4pt}\par{\sffamily\footnotesize Original V5 page 8 -- recovered text}\par\begin{flushleft}\footnotesize\ttfamily
+\par\smallskip
+\par\smallskip
+\noindent Diagnostics and Serving Infrastructure for MAS 8\par
+\par\smallskip
+\par\smallskip
+\par\smallskip
+\noindent Citation chaining. After the initial query-based search, we performed forward citation tracing\par
+\noindent (finding papers that cite a seed paper) and backward citation tracing (examining references\par
+\noindent within each selected paper). This process identified 34 additional failure-localization systems\par
+\noindent not captured by the initial queries, primarily because they use domain-specific terminology\par
+\noindent (“root cause analysis,” “trajectory debugging,” “error attribution”) that does not always co-\par
+\noindent occur with “multi-agent” in titles or abstracts. We also traced infrastructure systems through\par
+\noindent the KV-cache-management citation network starting from vLLM and SGLang, identifying 16\par
+\noindent additional systems that address multi-agent workload patterns.\par
+\par\smallskip
+\noindent 3.2 Inclusion and Exclusion Criteria\par
+\noindent Inclusion criteria. A paper enters the core system tables when it satisfies at least one of the\par
+\noindent following:\par
+\noindent  1. It describes a runtime diagnostic operation for foundation-model agents: failure localiza-\par
+\noindent  tion, observability or tracing, safety intervention, or diagnostic benchmarking.\par
+\noindent  2. It describes a serving-time resource management mechanism (memory, scheduling, cache,\par
+\noindent  or power) reused by or designed for agentic workloads.\par
+\noindent  3. It provides a baseline or architectural prerequisite directly reused by multi-agent diagnos-\par
+\noindent  tic or serving systems.\par
+\par\smallskip
+\noindent Exclusion criteria. We exclude: (a) orchestration-only frameworks without runtime diagnos-\par
+\noindent tic or serving mechanisms (e.g., workflow graph definitions); (b) single-model inference op-\par
+\noindent timization without multi-agent or agentic extensions; (c) offline-only evaluation methods that\par
+\noindent do not address runtime behavior; (d) long-term memory architectures without serving-time re-\par
+\noindent source management; and (e) general agent surveys that do not provide system-level implemen-\par
+\noindent tation details for diagnosis or serving.\par
+\par\smallskip
+\noindent Selection cutoff. The reference list was frozen for editorial inspection on 7 November 2026.\par
+\noindent This is a revision cutoff, not a systematically reconstructed search date: the original exploratory\par
+\noindent collection did not preserve database-by-database queries, retrieval timestamps, or screening\par
+\noindent exclusions. We therefore describe the corpus as a curated landscape rather than claiming\par
+\noindent PRISMA-style systematic completeness.\par
+\par\smallskip
+\noindent 3.3 Evidence Coding\par
+\noindent Each included system is assigned an evidence tier that reflects the depth of our verification:\par
+\noindent  • Tier 1a (T1a): Full-text reading with section-level evidence extraction. Quantitative\par
+\noindent  claims, method details, cost metrics, and limitations are traced to specific sections, tables,\par
+\noindent  or figures in the source paper. All systems in the core comparison tables are at least T1.\par
+\noindent  • Tier 1b (T1b): Full-text reading but without page-level citation (e.g., the evidence was\par
+\noindent  extracted from the complete paper but specific section numbers were not recorded).\par
+\noindent  • Tier 2 (T2): Abstract-level verification. The system’s existence, claimed function, and\par
+\noindent  headline results are confirmed, but detailed method mechanics and cost breakdowns are\par
+\noindent  not independently verified.\par
+\noindent  Abstract-only evidence is marked [a] in the text and is not used to compute cross-system\par
+\noindent deltas or rankings. A source-level evidence-audit checklist accompanies the supplementary\par
+\noindent material.\par
+\end{flushleft}
