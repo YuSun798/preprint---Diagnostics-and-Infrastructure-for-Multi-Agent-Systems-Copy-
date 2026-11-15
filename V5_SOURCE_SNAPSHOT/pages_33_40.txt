@@ -1,0 +1,436 @@
+V5 AUTHORITATIVE PDF TEXT EXTRACTION (not native LaTeX source)
+Source: Survey_MAS_Diagnostics_Neurocomputing_v5_evidence_audit(1).pdf
+Pages: 33-40 / 56
+Formatting / image figures must be verified against the uploaded PDF.
+
+<PARSED TEXT FOR PAGE: 33 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                                                          33
+
+
+Table 6: State types and diagnostic dependency boundaries. “Eviction creates diagnostic dependency”
+indicates whether removing the state object can trigger an evidence-loss event Li (T ) as defined in Eq. (1).
+
+State object               Consumer          Co-located with           Eviction → Li ?              Condition
+KV cache tensors           Serving           GPU memory                Rarely                       Only if trace is embedded in cache
+                                                                                                    metadata and no independent log exists
+Execution traces           Diagnostics       Log store / DB            Yes (if sole copy)           Di occurs if log retention < diagnostic
+                                                                                                    horizon
+Tool-call responses        Both              Trace + serving context   Yes (if non-deterministic)   Ri fails when tool output is stochastic
+                                                                                                    or environment has changed
+Model weights/adapters     Serving           GPU / disk                No                           Weights are versioned; eviction affects
+                                                                                                    latency, not diagnostic content
+Random seeds               Reproducibility   Trace metadata            Only if missing              Ri fails without seed; replaying a se-
+                                                                                                    quence is unreliable
+Environment observations   Diagnostics       Trace                     Yes (if unrepeatable)        External API responses, sensor read-
+                                                                                                    ings are typically non-reconstructable
+
+
+
+    • Ri (T ): object i’s content can be reconstructed faithfully at acceptable cost.
+    An evidence-loss event requires all three conditions:
+
+                                         Li (T ) = Ni (T ) ∧ Di (T ) ∧ ¬Ri (T ).                                                       (1)
+
+     By contrast, the case Ni ∧ Di ∧ Ri incurs recovery or prefill cost but does not reduce
+attribution quality. A cross-layer resource conflict additionally requires that diagnostic cap-
+ture/retention and serving share a genuinely constrained budget — memory, storage, bandwidth,
+or latency.
+     This test excludes the misleading generalization that every KV-cache eviction degrades ob-
+servability. It also identifies two experimentally separable effects:
+    1. Loss of information: the diagnostic signal is gone and cannot be recovered.
+    2. Delayed access to information: the signal can be recovered (via recomputation or replay)
+       but at additional cost.
+
+6.3      State Types and Dependency Boundaries
+Table 6 distinguishes the physical state, its consumer, and the outcome of reclamation. Co-
+location alone does not create a diagnostic dependency: a trace stored in an independently
+retained object store survives GPU KV eviction. Conversely, diagnostic information can be lost
+even without cache eviction when telemetry sampling discards an unrepeatable tool observation.
+
+6.4      Three-Tier Diagnostic-Serving Overlap Classification
+Based on the evidence-loss formalization and the reviewed systems, we classify diagnostic-
+serving interactions into three tiers:
+   1. Tier A — Independent operation. The diagnostic and serving layers manage distinct
+      state objects with separate storage budgets. Evicting KV cache does not affect diagnostic
+      traces, and diagnostic overhead does not constrain serving capacity. This is the most
+      common scenario: 16 of 22 infrastructure systems and all diagnostic methods that operate
+      on logged traces (FAMAS, TrajAudit, CHIEF, AgentRx, AgenTracer) fall into this tier.
+   2. Tier B — Shared resource, no evidence loss. The diagnostic and serving layers share
+      a constrained resource (GPU memory, network bandwidth) but the diagnostic signal is
+      reconstructable (Ri holds). Eviction increases diagnostic cost (recomputation or replay)
+      without reducing diagnostic quality. Example: a system that stores both KV cache and
+
+<PARSED TEXT FOR PAGE: 34 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                34
+
+
+
+      diagnostic attention scores in GPU memory — evicting the KV cache forces reprefill but
+      the attention scores for attribution can be recomputed from the prompt.
+   3. Tier C — Evidence loss risk. The diagnostic layer depends on state that is co-managed
+      by the serving layer, and reconstruction is infeasible (¬Ri ). This occurs when: (a) tool-
+      call responses are cached in KV metadata rather than an independent trace store; (b) teleme-
+      try sampling is budget-coupled with serving throughput; or (c) the environment is non-
+      deterministic and no replay mechanism exists. Among surveyed systems, only two can-
+      didates approach this tier: the policy-driven runtime (which feeds observability signals
+      into eviction but does not formally protect diagnostic state) and TOPAS (which jointly
+      optimizes prefix retention and scheduling under a shared capacity constraint Bt but does
+      not incorporate diagnostic value into the objective).
+
+6.5    Counterexamples: When the Conflict Does Not Arise
+The three-tier classification in Section 6.4 predicts specific cases where cross-layer conflict
+should not arise. We verify these predictions against the surveyed systems:
+
+Independent trace stores. All T1 failure-localization methods store their input evidence in-
+dependently of the serving KV cache. FAMAS operates on re-executable runs stored in a log
+database. TrajAudit, CHIEF, AgentRx, and MASPrism operate on trajectory logs that are per-
+sisted before the KV cache is populated for the next request. Even AgenTracer’s RL-trained
+model operates on stored trajectory data, not on live KV state. This architectural pattern —
+trace persistence before KV allocation — is the primary reason the cross-layer conflict is rare:
+the diagnostic layer’s input is already decoupled from the serving layer’s managed state.
+
+Deterministic recomputation. The distinction between evidence loss and delayed access
+(Section 6.2) is empirically relevant. When SGLang evicts a KV prefix, the tokens remain
+in the prompt text, and the KV tensors can be recomputed deterministically. This is a Tier B
+interaction: the serving system incurs a recomputation cost, but no diagnostic information is
+lost because the diagnostic layer operates on the prompt and output text, not the KV tensors.
+The same logic applies to Mooncake’s disaggregated architecture: KV blocks transferred via
+RDMA are recomputable from the prompt, so evicting a transferred block incurs latency but
+not evidence loss.
+
+Non-KV state types. Model weights and adapters are versioned and persistent: evicting a
+LoRA adapter from GPU memory does not destroy the adapter (it remains on disk). ScaleSim
+explicitly manages adapter state alongside KV cache, but adapter eviction is a latency event
+(requiring reload), not a data-loss event. Random seeds, when recorded in trace metadata, are
+trivially reconstructable. The only state type with genuine evidence-loss risk is unrepeatable
+environment observations — tool-call responses from external APIs, stochastic environment
+states, and real-time sensor data — and these are typically stored in the trace, not in the KV
+cache.
+
+6.6    Illustrative Cross-Layer Simulation
+To illustrate the cross-layer interaction concretely, we simulated a 3-agent pipeline with a 100-
+block KV cache serving 50 conversations (simulated CPU workload). Each agent generates
+
+<PARSED TEXT FOR PAGE: 35 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                     35
+
+
+
+tool-call spans, reasoning traces, and intermediate outputs. These simulations model a de-
+ployment where diagnostic buffers share GPU memory with KV cache blocks, representing
+architectures where traces are embedded in the serving state rather than stored independently.
+
+KV-cache eviction diagnostic impact. Table 7 reports the results for a 50-conversation, 100-
+block cache with 3 agents (deterministic, seed=42, warm-up=5 conversations). Under LRU
+eviction, 58.5% of evictions removed blocks containing diagnostic content, while maintaining
+100% cache hit rate (67/100 diagnostic blocks retained). FIFO showed similar behavior. A
+diagnostic-aware policy achieved 58.2% diagnostic eviction (a 0.3 pp reduction) but at substan-
+tial serving cost: cache hit rate dropped to 88.4%. The diagnostic-aware policy trades 11.6
+percentage points of cache hit rate for complete diagnostic block retention — suggesting, in
+this simulated setting, that naive policy augmentation is insufficient and supporting the need for
+joint optimization (direction O1 in Section 7).
+
+Table 7: KV-cache eviction simulation (illustrative; 50 conversations, 100-block cache, 3 agents,
+seed=42, simulated CPU workload). Hit rate = hits/(hits+misses). Diag-bearing = diagnostic-classified
+evictions / total evictions. A “diagnostic block” contains keyword-matched content (error messages,
+stack traces, tool return values). Metrics are cumulative over the full run after warm-up (5 conversa-
+tions).
+
+                 Policy          Evictions       Diag-bearing    Hit rate   Diag retained
+                 LRU                 2,688          58.5%          100%        67/100
+                 FIFO                2,641          60.3%          100%        64/100
+                 Diag-Aware          2,658          58.2%         88.4%       100/100
+
+
+
+Serving-system comparison. Table 8 reports a separate scenario: 20 conversations, 240 re-
+quests, 5,000-token cache (deterministic, seed=42). Flat LRU and RadixTree achieve compara-
+ble hit rates but dramatically different eviction counts, illustrating that infrastructure architec-
+ture choice affects the frequency of potential diagnostic-evidence disruption events even when
+aggregate serving performance is similar.
+
+Table 8: Serving-system simulation (illustrative; 20 conversations, 240 requests, 5,000-token cache,
+seed=42, simulated CPU workload). Hit rate = hits/(hits+misses). Utilization = occupied cache tokens
+/ total cache capacity. Metrics cumulative after warm-up.
+
+                    Policy        Hit rate       Utilization   Mean TTFT     Evictions
+                    LRU Flat      95.45%           91.1%        13.456 ms       208
+                    RadixTree     95.74%           25.6%        13.240 ms        0
+
+
+    Three caveats apply. The two scenarios use different cache sizes and workloads and are
+not directly comparable. The simulations use a simplified pipeline (simulated CPU workload,
+not production GPU serving); the cache sizes are small relative to production deployments; and
+the diagnostic-content classification uses keyword-based detection rather than actual attribution
+value assessment.
+
+<PARSED TEXT FOR PAGE: 36 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                   36
+
+
+
+6.7    TOPAS as the Closest Existing System
+TOPAS [24] formulates KV-cache management as a joint optimization over prefix selection and
+request scheduling under a shared capacity constraint:
+                             ∑              ∑
+                       max       tputj s.t.     xk ·sizek ≤ Bt , s ∈ S                   (2)
+                             x,s
+                                   j             k
+
+where Bt is the total KV-cache budget, xk indicates prefix retention, s is the scheduling assign-
+ment, and S is the set of feasible schedules.
+    This is the closest existing system to a shared diagnostic-serving budget: it demonstrates that
+joint optimization across caching and scheduling under a single capacity constraint is tractable
+and improves throughput over decoupled policies. However, TOPAS optimizes exclusively for
+serving throughput — Bt does not include a diagnostic-evidence retention term. Extending the
+objective to max α·throughput+(1−α)·diagnostic_value would require: (a) a measurable defi-
+nition of diagnostic value, (b) a mechanism to estimate Ni (T ) at eviction time, and (c) empirical
+validation that the trade-off is worthwhile. We propose such a validation protocol in Section 7.
+
+6.8    Additional Bridge Candidates
+Beyond TOPAS, four infrastructure systems partially bridge the diagnostic-serving boundary,
+ranked by the directness of their bridge:
+
+the policy-driven runtime. The policy-driven runtime [47] constructs agent-identity embed-
+dings and engine-event transition matrices, using learned transition probabilities for survival-
+based eviction. This represents an observe→act loop: observability signals (agent identity and
+engine events) feed into serving decisions (eviction policy). However, the observability signals
+are serving-oriented (predicting cache reuse) rather than diagnostic-oriented (preserving attri-
+bution evidence). The policy-driven runtime is the closest system to a diagnostic-serving bridge
+in architecture, but the farthest in intent — it uses observation to improve serving, not to protect
+diagnostic state.
+
+TokenCake. TokenCake [4] feeds runtime signals (function-call events, GPU pressure snap-
+shots, DAG structural information) into its temporal-spatial cache scheduling. The temporal
+scheduler’s event-driven offload and predictive upload mechanisms demonstrate that runtime
+diagnostic signals can inform serving decisions with low overhead (offload decision overhead
+is subsumed by the function-call stall time). However, like the policy-driven runtime, the signals
+serve the caching objective; diagnostic trace retention is not a first-class constraint.
+
+ConServe. ConServe replaces predictive cache management with observation-based policies:
+rather than estimating future access patterns from workload models, it pins KV cache at the
+conversation level based on observed access patterns from deployment data. This observation-
+replaces-prediction approach is relevant because diagnostic trace retention could similarly be
+driven by observed failure rates rather than predicted diagnostic value.
+
+KAIROS. KAIROS [44] monitors per-agent context growth rate and memory pressure to
+make power-management decisions. Context growth acts as a serving-side observable that cor-
+relates with diagnostic complexity: agents with rapidly growing context are more likely to gen-
+erate complex execution traces that are expensive to reconstruct if evicted. However, KAIROS
+optimizes for power efficiency, not diagnostic retention.
+
+<PARSED TEXT FOR PAGE: 37 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                   37
+
+
+
+Key insight: observation without protection. All four bridge candidates share a common
+pattern: they use diagnostic-adjacent signals (agent identity, execution events, context patterns)
+to improve serving decisions, but none uses serving-side state management to protect diag-
+nostic evidence. The bridge is unidirectional: diagnostics→serving, not serving→diagnostics.
+Building the reverse direction — serving-side retention that considers diagnostic value — is the
+central open question addressed in Section 7.
+
+6.9    Counterexamples: When Eviction Does Not Harm Diagnosis
+To sharpen the conditional nature of the cross-layer relationship, we enumerate cases where
+KV-cache eviction explicitly does not create an evidence-loss event:
+   1. Independent trace storage. When diagnostic traces are stored in a log database or ob-
+       ject store separate from GPU memory, KV-cache eviction has no effect on diagnostic
+       availability. This is the default architecture for 16 of 22 infrastructure systems and all T1
+       failure-localization methods.
+   2. Deterministic environments. When tool responses are deterministic (same input always
+       produces same output) and the input is logged, any lost KV state can be recomputed from
+       the prompt text. The recomputation cost is a Tier B effect (increased latency), not a Tier C
+       effect (information loss).
+   3. Post-hoc attribution. 10 of 12 failure-localization methods operate on completed tra-
+       jectories after the task has finished. By the time attribution runs, the KV cache for that
+       task has typically already been evicted. These methods read from logs, not from GPU
+       memory.
+   4. Prefix-sharing under exact match. SGLang’s radix tree and Mooncake’s distributed
+       pool serve the same text to multiple requesters without any diagnostic state being embed-
+       ded in the cached prefix. Evicting a shared prefix forces recomputation for future requests
+       but does not destroy any agent-specific diagnostic information.
+    These counterexamples explain why the cross-layer conflict is empirically uncommon de-
+spite the theoretical possibility: current systems are architected to avoid it.
+
+
+7     Research Directions and Validation Protocol
+This section identifies five open research directions that emerge from the cross-layer analy-
+sis, and specifies a concrete validation protocol for the most actionable one: testing whether a
+shared diagnostic-serving budget can improve end-to-end system reliability without unaccept-
+able throughput loss.
+
+7.1    Open Directions
+O1: Joint diagnostic-serving optimization. Within the studies examined at full-text depth
+in our curated corpus, we did not identify a system that jointly optimizes diagnostic evidence
+retention and serving throughput under a shared budget. TOPAS demonstrates that joint prefix-
+scheduling optimization under a capacity constraint is tractable, but its objective function does
+not include diagnostic value. Extending TOPAS-style formulations to incorporate a diagnostic-
+retention term requires three capabilities that no system in our corpus provides: (a) a measur-
+able proxy for diagnostic value at eviction time — the retention ablation results (Section 7.3)
+show that this depends on the attribution method, since heuristic methods benefit from selective
+
+<PARSED TEXT FOR PAGE: 38 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                 38
+
+
+
+retention while the effect on LLM-judge methods is unknown; (b) an estimation of the prob-
+ability Ni (T ) at eviction time, which requires predicting whether a failure will occur within
+the diagnostic horizon — a fundamentally harder problem than predicting prefix reuse; and
+(c) empirical validation on realistic workloads where diagnostic queries may be rare compared
+to serving requests.
+    The architectural pathway is clearer than the algorithmic one. The policy-driven runtime [47]
+already constructs agent-identity embeddings and engine-event transition matrices; adding a
+diagnostic-value signal to these features would extend the survival-based eviction policy to
+consider both serving reuse and diagnostic retention. Continuum’s TTL-based framework [16]
+provides another natural extension point: diagnostic-critical state could receive longer TTL
+values, implementing a cost-benefit retention policy that weighs serving throughput against di-
+agnostic value.
+
+O2: Cross-layer benchmarks. The benchmark gap identified in Section 4.4 is particularly
+acute for cross-layer evaluation. A cross-layer benchmark would need four components that
+currently exist in isolation: (a) a realistic multi-agent workload generator (TraceElephant [6]
+provides 220 failures from production systems but no serving-side workload); (b) a config-
+urable serving backend with tunable eviction policy and memory pressure; (c) injected failures
+at known locations for ground-truth attribution; and (d) matched diagnostic and serving metrics
+measured simultaneously. The closest existing infrastructure is the TRAIL benchmark [10],
+which uses OTel-format traces architecturally compatible with serving-side telemetry. Extend-
+ing TRAIL to include serving-side OTel spans (cache hit/miss events, eviction decisions) would
+create the first cross-layer dataset. However, TRAIL’s low baseline accuracy (∼11%) suggests
+that cross-layer evaluation may be premature until single-layer attribution reaches higher accu-
+racy.
+
+O3: Scalability of training-free methods. MASPrism’s [19] 0.6B-parameter signal-extraction
+approach achieves competitive accuracy at dramatically lower cost than frontier-model methods
+(2.66s vs. 105 min for FAMAS). Whether this paradigm scales to longer trajectories, multi-
+agent coordination failures (37% of MAS failures per TrajAudit §IX), and heterogeneous ar-
+chitectures remains open. The approach relies on the assumption that prefill-stage NLL and at-
+tention signals carry diagnostic information — an assumption that may weaken for distributed
+coordination failures. A promising direction is combining lightweight signal extraction with
+targeted LLM reasoning: use MASPrism-style filtering to identify candidate failure regions
+cheaply, then deploy CHIEF-style hierarchical analysis only on the narrowed candidate set.
+
+O4: Observability standards for multi-agent state. The OpenTelemetry GenAI conven-
+tions [25] cover LLM inference spans but lack serving-side attributes: cache residency, eviction
+events, memory pressure, adapter loading. The proposed agentic extensions (Issue #35) remain
+at Todo status. Extending the standard would enable three capabilities: (a) diagnostic sys-
+tems detecting when evidence is at eviction risk; (b) cross-layer benchmarks using standardized
+telemetry; and (c) automated DRICE I-dimension assessment. The implementation challenge
+is frequency: serving events occur per-token while diagnostic events occur per-failure, so ag-
+gregate attributes (cache utilization, eviction rate) are more practical than per-token instrumen-
+tation.
+
+O5: Safety-infrastructure coupling. Three safety systems (SentinelAgent, AGrail, Agent-
+DoG) consume diagnostic traces as input. If the serving layer evicts state these safety monitors
+
+<PARSED TEXT FOR PAGE: 39 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                  39
+
+
+
+depend on, coverage may degrade silently. The risk is acute for ShieldAgent [8], which main-
+tains short-term KV-cache memory “discarded after verification” — if the serving system evicts
+this before verification completes, the safety check is bypassed. Characterizing this coupling
+requires controlled experiments varying memory pressure while measuring safety coverage met-
+rics (false negative rate, bypass frequency).
+
+7.2    Diagnostic Overhead Characterization
+A prerequisite question for the validation protocol is whether diagnostic tracing itself introduces
+meaningful overhead. We benchmarked four tracing modes in a simulated multi-agent pipeline:
+no tracing, string-formatted logging, structured OTel-style spans, and causal DAG construction.
+    All tracing modes add estimated less than 3% CPU overhead relative to the untraced baseline
+in our simulated multi-agent pipeline (single-threaded Python, 3 agents, 50 conversations; aver-
+aged over 3 runs). Structured OTel-style spans are slightly more efficient than string-formatted
+logging (the formatting overhead of string concatenation exceeds the metadata overhead of
+span construction). Causal DAG mode uses approximately 2× the memory of structured spans
+at high verbosity, because it maintains the full parent-child relationship graph in memory rather
+than streaming events to a sink. These measurements reflect CPU-side tracing cost in isolation;
+GPU-level overhead from shared memory contention with KV cache is not captured by this
+benchmark.
+    This result establishes that tracing overhead in isolation is negligible on CPU. The diagnostic-
+infrastructure interaction gap is therefore not about the raw cost of trace capture — it is about
+resource contention with serving at the GPU level, where KV cache memory and diagnostic
+evidence may compete for the same limited pool. No existing benchmark measures this GPU-
+level contention, and the overhead benchmark confirms that the right measurement target is
+GPU memory allocation under concurrent diagnostic and serving workloads, not CPU tracing
+cost.
+
+7.3    Validation Protocol for the Shared-Budget Hypothesis
+We propose a concrete experimental protocol for testing whether integrating diagnostic evi-
+dence retention into the serving-side eviction objective improves end-to-end failure attribution
+without unacceptable throughput loss.
+
+Setup. Deploy a multi-agent system with: (a) a KV-cache serving backend with configurable
+eviction policy (SGLang or Mooncake as the base); (b) a diagnostic trace store with configurable
+retention budget; (c) injected failures at known locations for ground-truth attribution.
+
+Independent variables.
+  1. Retention budget (b): the fraction of available memory allocated to diagnostic evidence
+     retention, varied from 0% (pure serving) to 50% (equal split).
+  2. Eviction policy: baseline (LRU, serving-only objective) vs. diagnostic-aware (serving +
+     diagnostic-value term).
+  3. Workload intensity: low (single-agent, sequential tasks) to high (multi-agent, concurrent
+     workflows with prefix sharing).
+
+<PARSED TEXT FOR PAGE: 40 / 56>
+
+Diagnostics and Serving Infrastructure for MAS                                                    40
+
+
+
+Dependent variables.
+  1. Attribution error rate: incorrect attributions/total attribution samples. Measures diag-
+     nostic accuracy independent of timing; the denominator is attribution queries, not time.
+  2. False-alarm proportion: false alerts during fault-free execution/total observed fault-free runs.
+     This proportion-based definition avoids the denominator ambiguity of a time-based rate.
+     Alternatively, report as false alarms per 1,000 agent-hours = false_alerts/agent-hours ×
+     1,000 when continuous monitoring is evaluated.
+  3. Detection delay: tdetection − tfault_injection . Measures how quickly a diagnostic system iden-
+     tifies an injected fault after it occurs.
+  4. Detection lead time: tfault_manifestation − talarm , defined only when talarm < tfault_manifestation .
+     Applies only when the diagnostic system provides genuine advance warning before the
+     fault manifests as a task-level failure.
+  5. Task success rate: fraction of tasks completed successfully, measuring whether diagnos-
+     tic overhead degrades serving.
+  6. Recovery rate: fraction of detected failures where the system successfully recovers (via
+     replay, intervention, or fallback).
+  7. Throughput: requests per second, measuring serving performance under the diagnostic-
+     aware eviction policy.
+
+Baselines.
+  1. No diagnostic retention: pure serving-optimized eviction (LRU/LFU); diagnostic meth-
+      ods operate on independently stored traces only.
+  2. Full diagnostic retention: all execution state is retained indefinitely; unlimited memory
+      (full-retention baseline for attribution quality).
+  3. Random retention: a fraction of state is randomly selected for retention (controls for the
+      effect of memory allocation vs. intelligent selection).
+
+Timing assumptions. The diagnostic horizon T should be set to at least the longest observed
+multi-agent workflow completion time in the target benchmark. For typical multi-agent cod-
+ing tasks (TraceElephant), this is 10–30 minutes; for production workflows, T may extend to
+hours. The protocol should test multiple values of T to characterize how the evidence-loss event
+probability Li (T ) changes with horizon length.
+
+Retention ablation on real traces. We evaluate on 220 failure traces from TraceElephant [6]
+(ACL 2026), spanning 5 task suites from 3 multi-agent frameworks: Captain-Agent on GAIA
+(73 traces) and AssistantBench (12), Magentic-One on GAIA (74) and AssistantBench (17),
+and SWE-Agent on SWE-Bench Verified (44). Each trace includes step-level execution records
+and human-annotated mistake attribution (agent and step).
+    We tested four retention strategies across 10 budget levels (10–100% in 10% increments),
+using two attribution methods:
+    • Full retention (S1): keep all trace events (full-retention baseline).
+    • Random sampling (S2): uniform random event selection at each budget level (3 seeds;
+      mean ± SD reported).
+    • Recency (S3): keep the most recent events (deterministic).
+    • Importance-based (S4): score-based selection prioritizing error-indicative events (deter-
+      ministic).
+    Attribution methods were: (a) a causal-graph heuristic that traces backward through re-
+tained events, identifying the earliest unrecovered error as the root cause (falls back to last-error
