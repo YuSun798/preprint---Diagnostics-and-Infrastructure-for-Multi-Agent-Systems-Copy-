@@ -1,31 +1,42 @@
-# Latest V5 — GitHub-to-Overleaf editable recovery (PDF-only source)
+# Diagnostics and Serving Infrastructure for Foundation Model-Based Multi-Agent Systems
+## Unified Neurocomputing source — authoritative root: main.tex
 
-This repository now includes a **56-page PDF-to-text LaTeX reconstruction** on main.
-It is not the native V5 Overleaf source and NOT a page-identical recreation of the supplied PDF.
-The original 56-page PDF remains the authoritative visual reference.
+The repository's **root main.tex** is now a single Elsevier-style, editable manuscript
+reconstructed from the author's 56-page V5 PDF. It is not the old per-page
+verbatim dump. The previous LaTeX manuscript is preserved under
+`FCS LaTeX Template(1)/` for source history, not imported as a second paper.
 
-**Use in an Overleaf project linked to this GitHub repo**:
-1. In Overleaf: Integrations > GitHub > Pull GitHub changes.
-2. Choose **main.tex** at the repository root as the main LaTeX document.
-3. Compile using XeLaTeX. The original dated project is preserved under
-   `FCS LaTeX Template(1)/`, with `template.tex` unchanged.
-4. To display the **exact original V5 PDF without any layout difference**, upload
-   `latest_v5.pdf` from the previously delivered
-   `MAS_V5_Overleaf_import_exact.zip` to Overleaf and select the archive
-   wrapper `V5_PDF_Archive.tex` from that ZIP as main. PDF binary was not
-   uploaded by the GitHub connector in this operation.
+### What is integrated
+- Ten main numbered sections plus the system census and evidence-audit appendix;
+- **All 13 original manuscript tables as native, editable LaTeX longtables**;
+- Four figures: Figures 1–3 preserved from the V5 PDF as figure assets and
+  Figure 4 rebuilt to use the **same twelve benchmarks** as Table 3 and
+  distinguish native step-level root-cause labels from task-success scoring;
+- Original **52 bibliography entries** with original numeric citation IDs,
+  plus 14 supplemental source records mapped from previously uncited methods;
+- Original V5 new retention experiments (Tables 7–11), corrected McNemar pair
+  direction, two-sided exact p-value labelling, DRICE and section-level analysis.
 
-**Files on main**
-- `main.tex`: XeLaTeX root for recovered editable text.
-- `V5_RECOVERED/page_01.tex` ... `page_56.tex`: preserved per-page PDF text.
-- `v5_experimental_reconciliation.tex`: all author-reported new V5 Tables
-  7–11 plus DRICE summary, including explicit statistical caveats.
+### Reproducible compile
+From Overleaf: **Integrations → GitHub → Pull GitHub changes** and select
+root `main.tex` as the Main document; use **XeLaTeX**. The old
+`FCS LaTeX Template(1)/template.tex` must NOT be selected.
+Locally run `latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex`.
+CI builds the article on GitHub and uploads the compiled PDF artifact.
 
-**Caveats:** figures, float layout, mathematical typesetting, the V5 original
-bibliography formatting and page geometry are not natively reconstructed;
-some extracted text may need manual restoration. The recovered numerical tables
-are marked author-reported and not independently replicated. This update does
-not claim 8/10 evidence quality or an Overleaf account-side synchronization.
+### Content and scientific provenance
+- V5 is the **authoritative** current manuscript. The previous 55-page PDF was
+  compared, and superseded claims or bibliographic errors were **not** revived.
+  The 56-page original PDF and the old PDF are preserved in the downloadable
+  unified ZIP artifact supplied in ChatGPT, not embedded in GitHub source.
+- Corrected TokenCake EuroSys 2027 ordinal, tau-bench author list, NeurIPS
+  2024 proceedings label, and benchmark root-cause capability classification.
+- Reported numerical Tables 7–11 are **not new independently reproduced
+  experiments**. The raw 220-case correctness vectors and cache access/eviction
+  logs were not supplied; paired confidence bounds and cache denominators must
+  be independently regenerated before declaring evidence-quality 8/10.
+- The 60-entry source tiers are inherited from author V5; bibliography mapping
+  is not equivalent to full-text claim-by-claim verification.
 
-**Further evidence audit:** see the separate GitHub draft PR #1, which contains
-a 60-entry evidence matrix and citation corrections not yet promoted to main.
+The project's GitHub CI validates **compilability and structural completeness**.
+It cannot certify every scientific statement or guarantee acceptance.
