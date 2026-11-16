@@ -1,0 +1,53 @@
+% Vector rendering of former Figure 2, moved to Appendix C.
+% Matched visual grammar to Figure 1: blue/green/ochre panels, pale gray
+% bands, outlined rounded boxes, compact sans-serif labels and arrows.
+% Curated, non-PRISMA design: no invented screening counts.
+\begin{tikzpicture}[x=1cm,y=1cm,font=\sffamily,
+  >={Latex[length=2mm,width=1.3mm]},
+  bluebox/.style={rounded corners=2.7mm,draw=blue!65!black,fill=blue!12,line width=.75pt,align=center,inner sep=2pt},
+  greenbox/.style={rounded corners=2.7mm,draw=green!58!black,fill=green!12,line width=.75pt,align=center,inner sep=3pt},
+  amberbox/.style={rounded corners=2.7mm,draw=orange!75!black,fill=orange!12,line width=.75pt,align=center,inner sep=3pt},
+  flowblue/.style={draw=blue!65!black,line width=.95pt,-Latex},
+  flowgreen/.style={draw=green!55!black,line width=.85pt,-Latex},
+  flowamber/.style={draw=orange!75!black,line width=.85pt,-Latex}]
+\fill[black!5,rounded corners=2.5mm] (0,6.85) rectangle (16.2,10.15);
+\node[anchor=west,font=\bfseries\small] at (.38,9.77) {Literature Sources};
+\node[bluebox,minimum width=2.72cm,minimum height=.72cm,font=\bfseries\scriptsize] (ieee) at (1.67,8.96) {IEEE Xplore};
+\node[bluebox,minimum width=2.72cm,minimum height=.72cm,font=\bfseries\scriptsize] (acm) at (4.80,8.96) {ACM DL};
+\node[bluebox,minimum width=2.72cm,minimum height=.72cm,font=\bfseries\scriptsize] (scopus) at (7.93,8.96) {Scopus};
+\node[bluebox,minimum width=2.72cm,minimum height=.72cm,font=\bfseries\scriptsize] (scholar) at (11.06,8.96) {Google Scholar};
+\node[bluebox,minimum width=2.72cm,minimum height=.72cm,font=\bfseries\scriptsize] (arxiv) at (14.19,8.96) {arXiv};
+\foreach \boxname in {ieee,acm,scopus,scholar,arxiv} {\draw[blue!65!black,line width=.7pt] (\boxname.south) -- ++(0,-.28);}
+\draw[blue!65!black,line width=.75pt] (1.67,8.32) -- (14.19,8.32);
+\draw[flowblue] (7.93,8.32) -- (7.93,8.09);
+\node[greenbox,minimum width=5.75cm,minimum height=.79cm,font=\bfseries\scriptsize] (chain) at (4.75,7.52) {Forward/backward citation chaining};
+\node[greenbox,minimum width=5.75cm,minimum height=.79cm,font=\bfseries\scriptsize] (target) at (11.45,7.52) {Targeted search and expert curation};
+\draw[green!58!black,dashed,line width=.8pt] (chain.south) -- (4.75,6.98) -- (8.1,6.98);
+\draw[green!58!black,dashed,line width=.8pt] (target.south) -- (11.45,6.98) -- (8.1,6.98);
+
+\fill[black!5,rounded corners=2.5mm] (0,2.52) rectangle (16.2,6.65);
+\node[anchor=west,font=\bfseries\small] at (.38,6.48) {Selection Criteria};
+\draw[flowamber] (8.1,6.98) -- (8.1,6.52);
+\node[amberbox,minimum width=12.75cm,minimum height=1.20cm] (include) at (8.1,5.27) {
+  {\bfseries\footnotesize Inclusion}\\[-1pt]
+  {\scriptsize Runtime diagnostic, observability, safety, or serving-management mechanisms for FM agents}\\[-1pt]
+  {\scriptsize Directly reused technical prerequisites and system-level implementation evidence}
+};
+\node[amberbox,minimum width=12.75cm,minimum height=1.20cm] (exclude) at (8.1,3.69) {
+  {\bfseries\footnotesize Exclusion}\\[-1pt]
+  {\scriptsize Orchestration-only frameworks; single-model methods without agentic extensions}\\[-1pt]
+  {\scriptsize Offline-only evaluations or memory studies without runtime mechanisms}
+};
+\draw[flowamber] (include.south) -- (exclude.north);
+\draw[flowgreen] (8.1,3.06) -- (8.1,2.79);
+
+\fill[black!5,rounded corners=2.5mm] (0,.15) rectangle (16.2,2.41);
+\node[anchor=west,font=\bfseries\small] at (.38,2.23) {Curated Corpus};
+\node[greenbox,minimum width=12.75cm,minimum height=1.27cm,align=center] at (8.1,1.10) {
+  {\bfseries\small 60 core entries}\\[-1pt]
+  {\scriptsize 48 non-benchmark entries: 12 localization + 6 observability + 8 safety + 22 infrastructure}\\[-1pt]
+  {\scriptsize 12 evaluation benchmarks}
+};
+\node[font=\itshape\scriptsize,text=black!70] at (8.1,-.15)
+  {Curated critical review; no preserved database-level screening counts or systematic PRISMA flow.};
+\end{tikzpicture}
