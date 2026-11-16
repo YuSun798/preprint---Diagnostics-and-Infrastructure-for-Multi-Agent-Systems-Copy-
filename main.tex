@@ -14,6 +14,10 @@
 \captionsetup{font=small}
 \setlength{\emergencystretch}{3em}
 \journal{Neurocomputing}
+
+% SOURCE-CONSISTENCY NOTE (2026-11-15): Tables 1--13 and Figures 1--4
+% remain derived from the provided V5 PDF. Some captions, benchmark labels,
+% bibliography metadata and statistical wording are deliberately corrected.
 \begin{document}
 \begin{frontmatter}
 \title{Diagnostics and Serving Infrastructure for Foundation Model-Based Multi-Agent Systems: An Evidence-Aware Review}
@@ -23,13 +27,13 @@
 \author[jhu]{Yizirui Fang}\author[scnu]{Zhenhua Huang}
 \author[csulb]{Hailu Xu}
 \cortext[cor1]{Corresponding author}
-\address[upenn]{University of Pennsylvania, Philadelphia, PA, USA}
-\address[ucd]{University of California, Davis, CA, USA}
-\address[jhu]{Johns Hopkins University, Baltimore, MD, USA}
+\address[upenn]{School of Engineering and Applied Science, University of Pennsylvania, Philadelphia, PA, USA}
+\address[ucd]{Department of Electrical and Computer Engineering, University of California, Davis, CA, USA}
+\address[jhu]{Department of Computer Science, Johns Hopkins University, Baltimore, MD, USA}
 \address[glasgow]{University of Glasgow, Scotland, United Kingdom}
-\address[uci]{University of California, Irvine, CA, USA}
-\address[scnu]{South China Normal University, Guangzhou, China}
-\address[csulb]{California State University, Long Beach, CA, USA}
+\address[uci]{Department of Computer Science, University of California, Irvine, CA, USA}
+\address[scnu]{School of Computer Science, South China Normal University, Guangzhou, China}
+\address[csulb]{Department of Computer Engineering and Computer Science, California State University, Long Beach, CA, USA}
 \begin{abstract}
 Foundation model-based multi-agent systems (MAS) introduce reliability requirements that span execution tracing, failure attribution, safety intervention, and serving-time resource management. Existing reviews typically analyze these functions separately. This evidence-aware critical review maps 60 representative diagnostic methods, serving systems, and evaluation benchmarks along explicit axes: required evidence inputs, replay and training demands, attribution granularity, intervention timing, state compatibility, workload assumptions, and runtime cost. We distinguish functional roles from implementation strategies. A central question is when serving-state reclamation impairs later diagnosis. We show that evicting a KV cache is not equivalent to deleting a diagnostic trace: interference arises only when evidence or a non-reconstructable execution dependency shares a constrained resource, is actually discarded, and is needed within the diagnostic horizon. We therefore formulate a conditional retention trade-off as a testable design hypothesis rather than an established universal conflict. We propose DRICE (Diagnostics evidence, Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth), a structured evaluation framework for cross-layer comparison. Finally, we outline an instrumented, replay-capable evaluation protocol with matched reliability and serving metrics, and report retention-ablation results on real multi-agent failure traces. The resulting synthesis highlights verifiable architectural interfaces and open questions without ranking non-comparable systems or claiming that a joint optimization has already been empirically demonstrated.
 \end{abstract}
@@ -73,7 +77,7 @@ Why gap identification is a contribution. Identifying that a widely assumed conf
 
 \begin{figure}[!htbp]\centering
 \includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_1.jpg}
-\caption{Bounded scope: diagnostic evidence and serving state are distinct; dashed dependencies hold only under specified conditions.}\label{fig:v5_1}\end{figure}
+\caption{Bounded review scope. The diagnostics layer (top, blue) and infrastructure layer (bottom, green) manage different state objects. Dashed arrows indicate conditional cross-layer dependencies: diagnostic evidence loss requires all three conditions (shared constrained resource, evidence actually discarded, needed within the diagnostic horizon). Most traces are stored out-of-band and survive KV cache eviction.}\label{fig:v5_1}\end{figure}
 real traces: heuristic attributors can improve under subsampling, and a controlled recoveryablation confirms the mechanism (Section 7.3). Together, these findings provide actionable design guidance that the existing literature --- which either ignores the cross-layer interaction or assumes a universal conflict --- does not. Our contributions are: 1. A multi-axis diagnostic comparison (C1). We separate function (localization, monitoring, intervention, evaluation) from methods' evidence inputs, replay demands, training requirements, attribution granularity, intervention timing, and runtime cost. These dimensions may overlap and are not mutually exclusive method families. We review 12 failure-localization methods (8 T1), 6 observability systems, and 8 safety/guardrail systems. 2. A workload-conditioned serving analysis (C2). We distinguish textual context sharing, exact KV-cache reuse, and cross-model cache transfer, and characterize the compatibility, recomputation, and placement assumptions that delimit each optimization across 22 Tier- 1 infrastructure systems. 3. A conditional cross-layer hypothesis (C3). We formalize when state reclamation can actually harm diagnosis as an evidence-loss event Li(T) = Ni(T) $\wedge$Di(T) $\wedge$$\neg$Ri(T), document the conditions under which this occurs, and identify TOPAS as the closest existing system to a shared diagnostic-serving budget. 4. A structured evaluation framework (C4). We propose DRICE (Diagnostics evidence, Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth) to organize cross-layer comparison tables and highlight the D--R gap between diagnostic and infrastructure systems. 5. A concrete validation protocol (C5). We specify online signals, baselines, timing as-
 
 
@@ -188,10 +192,10 @@ Failure localization identifies which agent, step, or action caused an observed 
 
 \begin{figure}[!htbp]\centering
 \includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_2.jpg}
-\caption{Curated corpus assembly; five databases and citation chaining. No unsupported PRISMA counts are asserted.}\label{fig:v5_2}\end{figure}
+\caption{Curated corpus assembly. This is a curated landscape review, not a PRISMA-compliant systematic review; no database-level screening logs were preserved. Sources: IEEE Xplore, ACM DL, Scopus, Google Scholar and arXiv plus forward/backward citation chaining through November 2026. Inclusion requires a described runtime diagnostic or serving mechanism for foundation-model agents. Terminal corpus: 48 non-benchmark entries (systems, surveys, and standards) plus 12 benchmarks = 60 entries.}\label{fig:v5_2}\end{figure}
 \begin{figure}[!htbp]\centering
 \includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_3.jpg}
-\caption{Functional diagnostic taxonomy across evidence inputs, training, replay, granularity, timing and cost.}\label{fig:v5_3}\end{figure}
+\caption{Classification taxonomy: four diagnostic functions (rows) characterized along six method dimensions (columns). Representative systems are placed in each cell; functions are not mutually exclusive algorithm classes. The same method may serve multiple functions. Red shading indicates diagnostic-layer systems.}\label{fig:v5_3}\end{figure}
 Statistical methods. FAMAS \cite{v5ref11} adapts spectrum-based fault localization (SBFL) from software engineering to multi-agent failure attribution. The method parses failed execution logs into structured $\langle$agent, action, state$\rangle$triples using an LLM (Qwen2.5-72B) for log parsing, then applies the Kulczynski2 suspiciousness formula with two domain-specific modifications: temporal decay weighting (later actions receive higher suspiciousness) and action-frequency normalization (\S{}3--4). The method requires k=20 environment replays per failure to build the execution spectrum (\S{}5.1, confirmed). Sensitivity analysis shows monotonic accuracy improvement with replay count: k=5 yields 46.0 action-level correct attributions, k=10 yields 47.6, k=15 yields 50.8, and k=20 yields 54 (\S{}5.4, Figure 4). The best agent-level accuracy is 62.07\% on handcrafted multi-agent systems and 57.61\% overall in the Who\&When benchmark; the best action-level accuracy is 41.38\% (handcrafted) and 29.35\% (overall) (Table 2). The method's principal cost is replay time: on average 105 minutes per task (range 38-- 248 minutes), while the spectrum analysis itself completes in under one minute (\S{}5.2). This makes FAMAS the most expensive T1 method by wall-clock time, but the only one with formal coverage guarantees from SBFL theory. The method degrades on very short trajectories (<11 steps, where the spectrum is too sparse) and very long ones (38--65 steps, where the action space dilutes individual suspiciousness scores) (\S{}6.1, Figure 6). A single benchmark (Who\&When with 184 failure logs) limits generalizability (\S{}6.2).
 
 
@@ -501,8 +505,26 @@ cache induces a new prefill pass but does not destroy information --- the prompt
 For a serving-side state object i and a diagnostic horizon T, define three events:
 
 
-$\bullet$ Ni(T): a later diagnosis needs information uniquely carried by object i. $\bullet$ Di(T): object i's relevant information is discarded before the diagnostic horizon.
-
+\begin{itemize}
+\item $N_i(T)$: a later diagnosis needs information uniquely carried by object $i$.
+\item $D_i(T)$: object $i$'s relevant information is discarded before the diagnostic horizon.
+\item $R_i(T)$: object $i$'s content can be reconstructed faithfully at acceptable cost.
+\end{itemize}
+An evidence-loss event requires all three conditions:
+\begin{equation}\label{eq:v5_evidence_loss}
+L_i(T) = N_i(T) \land D_i(T) \land \neg R_i(T).
+\end{equation}
+By contrast, the case $N_i \land D_i \land R_i$ incurs recovery or prefill cost
+but does not reduce attribution quality. A cross-layer resource conflict
+additionally requires that diagnostic capture/retention and serving share a
+genuinely constrained budget---memory, storage, bandwidth, or latency.
+This test excludes the misleading generalization that every KV-cache eviction
+degrades observability. It also identifies two experimentally separable effects:
+\begin{enumerate}
+\item Loss of information: the diagnostic signal is gone and cannot be recovered.
+\item Delayed access to information: the signal can be recovered (via recomputation
+or replay) but at additional cost.
+\end{enumerate}
 
 \begin{center}
 \begingroup
@@ -510,7 +532,7 @@ $\bullet$ Ni(T): a later diagnosis needs information uniquely carried by object 
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|}
-\caption{State types and diagnostic dependency boundaries. Eviction matters only when the required evidence cannot be recovered.}\label{tab:v5_6}\\
+\caption{State types and diagnostic dependency boundaries. Eviction creates diagnostic dependency only when discarding a required state object can trigger the evidence-loss event $L_i(T)$ in Eq.~\ref{eq:v5_evidence_loss}.}\label{tab:v5_6}\\
 \hline
 \textbf{State object} & \textbf{Consumer} & \textbf{Storage} & \textbf{Evidence loss risk} & \textbf{Condition} \\ \hline
 \endfirsthead
@@ -525,7 +547,6 @@ Environment observations & Diagnostics & Trace & If unrepeatable & External API/
 \end{longtable}
 \endgroup
 \end{center}
-1. Loss of information: the diagnostic signal is gone and cannot be recovered. 2. Delayed access to information: the signal can be recovered (via recomputation or replay) but at additional cost.
 
 
 \subsection{State Types and Dependency Boundaries}
@@ -571,7 +592,7 @@ KV-cache eviction diagnostic impact. Table 7 reports the results for a 50-conver
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|}
-\caption{CPU-based illustrative KV-cache eviction simulation (50 conversations, 100 blocks, 3 agents, seed 42). Values are author-reported and not independently replicated.}\label{tab:v5_7}\\
+\caption{KV-cache eviction simulation (illustrative: 50 conversations, 100-block cache, 3 agents, seed 42, simulated CPU workload). Hit rate = hits/(hits+misses). Diagnostic-bearing means diagnostic-classified evictions divided by all evictions; a diagnostic block contains keyword-matched error messages, stack traces or tool return values. Cumulative metrics after a warm-up of five conversations. Author-reported, not independently replicated.}\label{tab:v5_7}\\
 \hline
 \textbf{Policy} & \textbf{Evictions} & \textbf{Diagnostic-bearing} & \textbf{Hit rate} & \textbf{Diagnostic blocks retained} \\ \hline
 \endfirsthead
@@ -592,7 +613,7 @@ Serving-system comparison. Table 8 reports a separate scenario: 20 conversations
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|}
-\caption{Separate CPU simulation (20 conversations, 240 requests, 5,000-token cache). Metrics cannot be compared directly with Table 7.}\label{tab:v5_8}\\
+\caption{Serving-system simulation (illustrative: 20 conversations, 240 requests, 5,000-token cache, seed 42, simulated CPU workload). Hit rate = hits/(hits+misses); utilization = occupied cache tokens / capacity. Metrics cumulative after warm-up. Results are not directly comparable with Table 7.}\label{tab:v5_8}\\
 \hline
 \textbf{Policy} & \textbf{Hit rate} & \textbf{Utilization} & \textbf{Mean TTFT (ms)} & \textbf{Evictions} \\ \hline
 \endfirsthead
@@ -719,7 +740,7 @@ $\bullet$ Full retention (S1): keep all trace events (full-retention baseline). 
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.316\linewidth}|p{0.316\linewidth}|p{0.316\linewidth}|}
-\caption{Retention ablation at 10\% budget on 220 TraceElephant traces. Random: mean +/- SD over three seeds.}\label{tab:v5_9}\\
+\caption{Retention ablation at 10\% budget on 220 TraceElephant traces (five task suites, three MAS frameworks). S2 reports mean and standard deviation over three seeds; S1, S3 and S4 are deterministic. Higher is better.}\label{tab:v5_9}\\
 \hline
 \textbf{Strategy} & \textbf{Causal graph} & \textbf{Last-error} \\ \hline
 \endfirsthead
@@ -738,7 +759,7 @@ S4 Importance & 0.532 & 0.500 \\ \hline
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|}
-\caption{Causal-graph attribution accuracy over all retention budgets. S2 denotes the reported seed mean.}\label{tab:v5_10}\\
+\caption{Causal-graph attribution accuracy across all retention budgets (220 TraceElephant traces). S1 is constant and S2 reports its seed mean. The inverted accuracy-versus-budget slope is visible for S2 and S4.}\label{tab:v5_10}\\
 \hline
 \textbf{Budget} & \textbf{S1 full} & \textbf{S2 random} & \textbf{S3 recency} & \textbf{S4 importance} \\ \hline
 \endfirsthead
@@ -771,19 +792,25 @@ Recovery-ablation: confirmed mechanism. A controlled follow-up experiment isolat
 \setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
-\begin{longtable}{|p{0.233\linewidth}|p{0.233\linewidth}|p{0.233\linewidth}|p{0.233\linewidth}|}
-\caption{Recovery-heuristic ablation (n=220): corrected pair orientation and uncorrected exact McNemar p-values. The source PDF labeled these values mid-p in error. Its original confidence interval remains unverified without paired outputs.}\label{tab:v5_11}\\
+\begin{longtable}{|p{0.202\linewidth}|p{0.127\linewidth}|p{0.10\linewidth}|p{0.173\linewidth}|p{0.189\linewidth}|}
+\caption{Recovery-heuristic ablation (n=220): corrected pair orientation and uncorrected exact McNemar p-values. The source PDF labeled these values mid-p in error. The source-PDF 95\% confidence interval is included for traceability but cannot be verified without case-level paired outputs.}\label{tab:v5_11}\\
 \hline
-\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} \\ \hline
+\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} & \textbf{Source PDF CI (unverified)} \\ \hline
 \endfirsthead
-\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} \\ \hline
+\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} & \textbf{Source PDF CI (unverified)} \\ \hline
 \endhead
-C1 Original, full & 101/220 & .459 & -- \\ \hline
-C2 No recovery, full & 117/220 & .532 & .003719 vs C1 \\ \hline
-C3 No recovery, S4 at 10\% & 119/220 & 0.541 & .891923 vs C2 \\ \hline
+C1 Original, full & 101/220 & .459 & -- & -- \\ \hline
+C2 No recovery, full & 117/220 & .532 & .003719 vs C1 & [+2.73, +11.82] pp \\ \hline
+C3 No recovery, S4 at 10\% & 119/220 & 0.541 & .891923 vs C2 & crosses zero \\ \hline
 \end{longtable}
 \endgroup
 \end{center}
+Under the table's paired-case convention (b: new method correct and old wrong;
+c: old correct and new wrong), the net gains imply $b=22,c=6$ for
+C1$\rightarrow$C2 and $b=28,c=26$ for C2$\rightarrow$C3.
+The corresponding two-sided mid-$p$ values, if mid-$p$ were used,
+would be 0.0023157 and 0.7877062, respectively; the displayed
+$p$ values instead use the uncorrected two-sided exact test.
 Correcting the recovery heuristic accounts for most of the apparent subsampling benefit: C2 recovers +7.3 percentage points over C1 (McNemar p = 0.004), matching the accuracy of importance-based subsampling at 10\% budget under the original heuristic (C2 $\approx$S4@10\% = 0.532). Two independent paths --- (a) fixing the heuristic directly, (b) subsampling away the events the flawed logic depends on --- converge to the same accuracy. This confirms that the inverted slope in Table 10 was driven by the recovery-detection artifact, not by a genuine benefit of less data. The residual 0.9-percentage-point improvement under importance sampling (C3 vs. C2) is not statistically significant (p = 0.892) and should not be interpreted as robust without replication with other attributors. The improvement is not uniform across suites: GAIA suites show the largest gains (+9.5 pp) while SWE-Agent slightly regresses under C2 (-2.3 pp), suggesting the recovery logic interacts differently with framework-specific trace structures.
 
 
