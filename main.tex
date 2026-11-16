@@ -18,6 +18,7 @@
 % SOURCE-CONSISTENCY NOTE (2026-11-15): Tables 1--13 and Figures 1--4
 % remain derived from the provided V5 PDF. Some captions, benchmark labels,
 % bibliography metadata and statistical wording are deliberately corrected.
+\newcolumntype{Y}[1]{>{\raggedright\arraybackslash}p{#1}}
 \begin{document}
 \begin{frontmatter}
 \title{Diagnostics and Serving Infrastructure for Foundation Model-Based Multi-Agent Systems: An Evidence-Aware Review}
@@ -248,33 +249,56 @@ Observability systems continuously capture execution evidence during agent opera
 Conceptual taxonomies. The Agent Traces survey \cite{v5ref39} proposes a six-dimensional provenance taxonomy that structures the observability design space. The six dimensions are: (1) trace sources (instructions/inputs, reasoning, retrieval, tool use, MCP boundaries, memory, environment, multi-agent communication); (2) evidence and execution units (content-bearing artifacts vs. occurrences with actor and timestamp); (3) provenance relations (nine relations in four families: semantic support, content derivation, causal dependence, and procedural dependence); (4) tracing granularity and timing (run, step, tool-call, parameter, claim, and token/span levels; pre-execution, runtime, post-hoc, continuous); (5) representation forms (structured logs, execution graphs, evidence graphs, provenance graphs, runtime state); and (6) trust functions
 
 
-\begin{center}
+\begin{table}[!tbp]
+\centering
+\caption{Multi-axis comparison of failure-localization methods. Panels A and B show complementary dimensions for the same twelve methods. NR denotes not reported; precise T2 details require independent full-text verification.}
+\label{tab:v5_2}
 \begingroup
-\setlength{\tabcolsep}{2pt}
-\renewcommand{\arraystretch}{1.16}
-\scriptsize
-\begin{longtable}{|p{0.094\linewidth}|p{0.094\linewidth}|p{0.094\linewidth}|p{0.094\linewidth}|p{0.094\linewidth}|p{0.094\linewidth}|p{0.094\linewidth}|p{0.094\linewidth}|p{0.094\linewidth}|}
-\caption{Multi-axis comparison of failure-localization methods. NR means not reported at the current evidence depth; T2 values require primary full-text verification.}\label{tab:v5_2}\\
-\hline
-\textbf{Method} & \textbf{Category} & \textbf{Evidence input} & \textbf{Training} & \textbf{Replays} & \textbf{Tokens} & \textbf{Model} & \textbf{Granularity} & \textbf{Evidence} \\ \hline
-\endfirsthead
-\textbf{Method} & \textbf{Category} & \textbf{Evidence input} & \textbf{Training} & \textbf{Replays} & \textbf{Tokens} & \textbf{Model} & \textbf{Granularity} & \textbf{Evidence} \\ \hline
-\endhead
-FAMAS & Statistical & Re-executions & No & 20 & NR & 72B & Action & T1a \\ \hline
-TrajAudit & LLM guided & Trajectories & No & 0 & 138K & Frontier & Step & T1a \\ \hline
-AgenTracer & RL trained & Failure traces & RL, 8B & 0 & NR & 8B & Agent+Step & T1b \\ \hline
-MASPrism & Signal extraction & Prefill NLL & No & 0 & 7K & 0.6B & Step & T1a \\ \hline
-CHIEF & LLM guided & Causal graph & No & 0 & 55K & 671B & Agent+Step & T1a \\ \hline
-AgentRx & LLM guided & Traces+schemas & No & 0 & 5--16K & Frontier & Step & T1a \\ \hline
-RAFFLES & LLM guided & Execution traces & No & 0 & NR & NR & Step & T1a \\ \hline
-Xia et al. & Supervised & Traces+verification & LoRA & 0 & NR & NR & Agent & T1b \\ \hline
-StepFinder & Supervised & Temporal features & BiLSTM & 0 & NR & NR & Step & T2 \\ \hline
-FALAT & LLM guided & Dependencies & No & 0 & NR & NR & Step & T2 \\ \hline
-DoVer & Intervention & Snapshots & No & 4--12* & NR & NR & Step/Recovery & T2 \\ \hline
-VerifyMAS & LLM guided & Hypotheses+NLI & Optional SFT & 0 & NR & NR & Agent+Error & T2 \\ \hline
-\end{longtable}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.14}
+\footnotesize
+\noindent\textbf{Panel A. Evidence and execution requirements}\par\smallskip
+\begin{tabular}{@{}Y{.16\linewidth}Y{.205\linewidth}Y{.267\linewidth}Y{.185\linewidth}Y{.099\linewidth}@{}}
+\toprule
+\textbf{Method} & \textbf{Category} & \textbf{Evidence input} & \textbf{Training} & \textbf{Replays} \\
+\midrule
+FAMAS & Statistical & Re-executions & No & 20 \\
+TrajAudit & LLM guided & Trajectories & No & 0 \\
+AgenTracer & RL trained & Failure traces & RL, 8B & 0 \\
+MASPrism & Signal extraction & Prefill NLL & No & 0 \\
+CHIEF & LLM guided & Causal graph & No & 0 \\
+AgentRx & LLM guided & Traces+schemas & No & 0 \\
+RAFFLES & LLM guided & Execution traces & No & 0 \\
+Xia et al. & Supervised & Traces+verification & LoRA & 0 \\
+StepFinder & Supervised & Temporal features & BiLSTM & 0 \\
+FALAT & LLM guided & Dependencies & No & 0 \\
+DoVer & Intervention & Snapshots & No & 4--12* \\
+VerifyMAS & LLM guided & Hypotheses+NLI & Optional SFT & 0 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\noindent\textbf{Panel B. Resource profile and output granularity}\par\smallskip
+\begin{tabular}{@{}Y{.226\linewidth}Y{.154\linewidth}Y{.156\linewidth}Y{.287\linewidth}Y{.096\linewidth}@{}}
+\toprule
+\textbf{Method} & \textbf{Tokens} & \textbf{Model} & \textbf{Granularity} & \textbf{Tier} \\
+\midrule
+FAMAS & NR & 72B & Action & T1a \\
+TrajAudit & 138K & Frontier & Step & T1a \\
+AgenTracer & NR & 8B & Agent + Step & T1b \\
+MASPrism & 7K & 0.6B & Step & T1a \\
+CHIEF & 55K & 671B & Agent + Step & T1a \\
+AgentRx & 5--16K & Frontier & Step & T1a \\
+RAFFLES & NR & NR & Step & T1a \\
+Xia et al. & NR & NR & Agent & T1b \\
+StepFinder & NR & NR & Step & T2 \\
+FALAT & NR & NR & Step & T2 \\
+DoVer & NR & NR & Step / Recovery & T2 \\
+VerifyMAS & NR & NR & Agent + Error & T2 \\
+\bottomrule
+\end{tabular}
+\par\smallskip\raggedright\scriptsize *Reported at T2 evidence depth; replay count not independently full-text audited.
 \endgroup
-\end{center}
+\end{table}
 (verification, attribution, debugging, safety enforcement, audit, recovery). Two cross-cutting attributes qualify every relation: provenance origin (instrumented, inferred, declared, or derived) and trace assurance (logged, tamper-evident, or attested), with attested being ``the least developed attribute in the works reviewed'' (\S{}2.2). The survey catalogs 27 representative systems (Table 3), 25 benchmarks (Table 8), 20 guardrail systems (Table 5), and 11 memory systems (Table 6). A key architectural insight is the distinction between evidence units (content-bearing artifacts such as tool outputs) and execution units (occurrences with actor and timestamp), which determines whether a trace record is sufficient for post-hoc attribution. Three gaps are identified: limited integration of fine-grained provenance with trust functions, no benchmark evaluating complete provenance chains, and insufficient tamper-evident reporting.
 
 
@@ -334,33 +358,34 @@ Cross-cutting analysis. Figure 4 presents a coverage matrix across 10 evaluation
 \begin{figure}[!htbp]\centering
 \includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_4_corrected.pdf}
 \caption{Re-audited capability matrix for the same 12 benchmarks as Table 3; direct agent and step root-cause labels are distinguished from task completion and safety scoring.}\label{fig:v5_4}\end{figure}
-\begin{center}
+\begin{table}[!tbp]
+\centering
+\caption{Diagnostic and safety benchmarks. Attribution support means \emph{native} agent- or step-level root-cause labels, not task success or post-hoc interpretability. In particular, $\tau$-bench does not provide native step-level causal-attribution labels.}
+\label{tab:v5_3}
 \begingroup
-\setlength{\tabcolsep}{2pt}
+\setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
-\begin{longtable}{|p{0.150\linewidth}|p{0.150\linewidth}|p{0.150\linewidth}|p{0.150\linewidth}|p{0.150\linewidth}|p{0.150\linewidth}|}
-\caption{Diagnostic and safety benchmarks. Native labels, rather than post-hoc usability, govern attribution support. Bold changes from the source: tau-bench has no native step-level causal-attribution label.}\label{tab:v5_3}\\
-\hline
-\textbf{Benchmark} & \textbf{Venue} & \textbf{Scale (author-reported)} & \textbf{MAS} & \textbf{Native attribution} & \textbf{Evidence} \\ \hline
-\endfirsthead
-\textbf{Benchmark} & \textbf{Venue} & \textbf{Scale (author-reported)} & \textbf{MAS} & \textbf{Native attribution} & \textbf{Evidence} \\ \hline
-\endhead
-TraceElephant & ACL 2026 & 220 failures & Yes & Agent+Step & T1 \\ \hline
-Who\&When & ICML 2025 & 184 failures & Yes & Agent+Step & T1 \\ \hline
-RootSE & Preprint & 102 cases & No & Step & T1 \\ \hline
-tau-bench & arXiv 2024 & NR & No & None (goal-state success) & T1 \\ \hline
-MultiAgentBench\\cite{v5supp7} & ACL 2025 & 600 tasks & Yes & No native RCA & T1 \\ \hline
-GuardianAgentBench\\cite{v5supp8} & Preprint & 580 scenarios & Yes & No verified step-RCA & T1 \\ \hline
-ReliabilityBench\\cite{v5supp9} & Preprint & 1,280 episodes & No & No native RCA & T1 \\ \hline
-Agent-SafetyBench\\cite{v5supp10} & Preprint & 2,000 & No & No native RCA & T1 \\ \hline
-AgentHarm\\cite{v5supp11} & ICLR 2025 & 440 tasks & No & No native RCA & T1 \\ \hline
-TAMAS\\cite{v5supp12} & ACL 2026 & 300 instances & Yes & No native RCA & T1 \\ \hline
-ASB\\cite{v5supp13} & ICLR 2025 & 10 scenarios & No & No native RCA & T1 \\ \hline
-OSGuard\\cite{v5supp14} & Preprint & 324 examples & No & Unsafe-action labels, not RCA & T1 \\ \hline
-\end{longtable}
+\begin{tabular}{@{}Y{.250\linewidth}Y{.111\linewidth}Y{.154\linewidth}Y{.065\linewidth}Y{.247\linewidth}Y{.057\linewidth}@{}}
+\toprule
+\textbf{Benchmark} & \textbf{Venue} & \textbf{Scale (reported)} & \textbf{MAS} & \textbf{Native attribution} & \textbf{Tier} \\
+\midrule
+TraceElephant & ACL 2026 & 220 failures & Yes & Agent+Step & T1 \\
+Who\&When & ICML 2025 & 184 failures & Yes & Agent+Step & T1 \\
+RootSE & Preprint & 102 cases & No & Step & T1 \\
+tau-bench & arXiv 2024 & NR & No & None (goal-state success) & T1 \\
+MultiAgentBench \cite{v5supp7} & ACL 2025 & 600 tasks & Yes & No native RCA & T1 \\
+GuardianAgent\newline Bench \cite{v5supp8} & Preprint & 580 scenarios & Yes & No verified step-RCA & T1 \\
+ReliabilityBench \cite{v5supp9} & Preprint & 1,280 episodes & No & No native RCA & T1 \\
+Agent-SafetyBench \cite{v5supp10} & Preprint & 2,000 & No & No native RCA & T1 \\
+AgentHarm \cite{v5supp11} & ICLR 2025 & 440 tasks & No & No native RCA & T1 \\
+TAMAS \cite{v5supp12} & ACL 2026 & 300 instances & Yes & No native RCA & T1 \\
+ASB \cite{v5supp13} & ICLR 2025 & 10 scenarios & No & No native RCA & T1 \\
+OSGuard \cite{v5supp14} & Preprint & 324 examples & No & Unsafe-action labels, not RCA & T1 \\
+\bottomrule
+\end{tabular}
 \endgroup
-\end{center}
+\end{table}
 \section{Serving Infrastructure}
 This section reviews 22 Tier-1 infrastructure systems that manage serving-time state for LLMbased workloads, with emphasis on those designed for or directly applicable to multi-agent scenarios. We organize the analysis around three state-sharing categories that reviewers and practitioners often conflate: textual context sharing (\S{}5.1), exact KV-cache reuse (\S{}5.2), and cross-model cache transfer (\S{}5.3). Section 5.4 covers agent-specific extensions that bridge general-purpose serving toward multi-agent workloads.
 
@@ -446,32 +471,33 @@ The diagnostic methods reviewed in Section 4 consume execution evidence; the ser
 A KV cache is a computational acceleration structure: it stores precomputed attention tensors so that subsequent tokens can be generated without reprocessing the prompt. Removing a KV
 
 
-\begin{center}
+\begin{table}[!tbp]
+\centering
+\caption{Infrastructure serving systems (part 1): general-purpose and prefix-caching systems.}
+\label{tab:v5_4}
 \begingroup
-\setlength{\tabcolsep}{2pt}
-\renewcommand{\arraystretch}{1.16}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.13}
 \footnotesize
-\begin{longtable}{|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|}
-\caption{Infrastructure serving systems (part 1): general-purpose and prefix-caching systems.}\label{tab:v5_4}\\
-\hline
-\textbf{System} & \textbf{State} & \textbf{Policy} & \textbf{Agent-aware} & \textbf{Venue} \\ \hline
-\endfirsthead
-\textbf{System} & \textbf{State} & \textbf{Policy} & \textbf{Agent-aware} & \textbf{Venue} \\ \hline
-\endhead
-vLLM & KV blocks & All-or-nothing & No & SOSP 2023 \\ \hline
-SGLang & KV prefix tree & LRU leaf first & No & NeurIPS 2024 \\ \hline
-DistServe & KV tensors & Pull-based & No & OSDI 2024 \\ \hline
-Mooncake & KV disaggregation & LRU/LFU configurable & No & FAST 2025 \\ \hline
-Parrot & Semantic variables & Explicit free & No & OSDI 2024 \\ \hline
-InferCept & KV blocks & Min-waste adaptive & No & ICML 2024 \\ \hline
-CacheBlend & Per-chunk KV & Tiered storage & No & EuroSys 2025 \\ \hline
-Continuum & KV prefix & TTL cost-benefit & No & ICLR 2026 workshop \\ \hline
-TOPAS & KV prefix + scheduler & Joint optimization & No & arXiv 2026 \\ \hline
-Leyline\\cite{v5supp3} & KV positional & Directive splice & No & arXiv 2026 \\ \hline
-ConServe\\cite{v5supp6} & KV conversation & Conversation pinning & No & ICML 2026 \\ \hline
-\end{longtable}
+\begin{tabular}{@{}Y{.146\linewidth}Y{.233\linewidth}Y{.280\linewidth}Y{.123\linewidth}Y{.132\linewidth}@{}}
+\toprule
+\textbf{System} & \textbf{State} & \textbf{Policy} & \textbf{Agent-aware} & \textbf{Venue} \\
+\midrule
+vLLM & KV blocks & All-or-nothing & No & SOSP 2023 \\
+SGLang & KV prefix tree & LRU leaf first & No & NeurIPS 2024 \\
+DistServe & KV tensors & Pull-based & No & OSDI 2024 \\
+Mooncake & KV disaggregation & LRU/LFU configurable & No & FAST 2025 \\
+Parrot & Semantic variables & Explicit free & No & OSDI 2024 \\
+InferCept & KV blocks & Min-waste adaptive & No & ICML 2024 \\
+CacheBlend & Per-chunk KV & Tiered storage & No & EuroSys 2025 \\
+Continuum & KV prefix & TTL cost-benefit & No & ICLR 2026 workshop \\
+TOPAS & KV prefix + scheduler & Joint optimization & No & arXiv 2026 \\
+Leyline\cite{v5supp3} & KV positional & Directive splice & No & arXiv 2026 \\
+ConServe\cite{v5supp6} & KV conversation & Conversation pinning & No & ICML 2026 \\
+\bottomrule
+\end{tabular}
 \endgroup
-\end{center}
+\end{table}
 \begin{center}
 \begingroup
 \setlength{\tabcolsep}{2pt}
@@ -488,13 +514,13 @@ TokenCake & KV blocks & Temporal and spatial & Yes & EuroSys 2027 (check status)
 KVFlow & KV prefix & Workflow aware & Yes & NeurIPS 2025 \\ \hline
 KVCOMM & Compressed KV & Anchor LFU + FIFO & Yes & NeurIPS 2025 \\ \hline
 ForkKV & KV CoW & Deduplication & Yes & arXiv 2026 \\ \hline
-TokenDance\\cite{v5supp2} & KV block-sparse & Sparse difference & Yes & arXiv 2026 \\ \hline
+TokenDance\cite{v5supp2} & KV block-sparse & Sparse difference & Yes & arXiv 2026 \\ \hline
 KAIROS & Per-agent context & Context growth aware & Yes & arXiv 2026 \\ \hline
 Policy-driven runtime & Agent+events & Survival-learned & Yes & arXiv 2026 \\ \hline
 ScaleSim & KV+adapter+draft & Invocation distance & Yes & arXiv 2026 \\ \hline
 DroidSpeak & Per-layer KV & Selective recompute & No & arXiv 2024 \\ \hline
-LRAgent\\cite{v5supp4} & KV base+LoRA & Shared base & Yes & ICML 2026 \\ \hline
-PolyKV\\cite{v5supp5} & Shared compressed & Asymmetric compress & No & arXiv 2026 \\ \hline
+LRAgent\cite{v5supp4} & KV base+LoRA & Shared base & Yes & ICML 2026 \\ \hline
+PolyKV\cite{v5supp5} & Shared compressed & Asymmetric compress & No & arXiv 2026 \\ \hline
 \end{longtable}
 \endgroup
 \end{center}
@@ -526,27 +552,28 @@ degrades observability. It also identifies two experimentally separable effects:
 or replay) but at additional cost.
 \end{enumerate}
 
-\begin{center}
+\begin{table}[!tbp]
+\centering
+\caption{State types and diagnostic dependency boundaries. Eviction creates a diagnostic dependency only if discarding a necessary state object can trigger the evidence-loss event $L_i(T)$ in Eq.~\ref{eq:v5_evidence_loss}.}
+\label{tab:v5_6}
 \begingroup
-\setlength{\tabcolsep}{2pt}
-\renewcommand{\arraystretch}{1.16}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.19}
 \footnotesize
-\begin{longtable}{|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|}
-\caption{State types and diagnostic dependency boundaries. Eviction creates diagnostic dependency only when discarding a required state object can trigger the evidence-loss event $L_i(T)$ in Eq.~\ref{eq:v5_evidence_loss}.}\label{tab:v5_6}\\
-\hline
-\textbf{State object} & \textbf{Consumer} & \textbf{Storage} & \textbf{Evidence loss risk} & \textbf{Condition} \\ \hline
-\endfirsthead
-\textbf{State object} & \textbf{Consumer} & \textbf{Storage} & \textbf{Evidence loss risk} & \textbf{Condition} \\ \hline
-\endhead
-KV tensors & Serving & GPU memory & Rare & If evidence uniquely embedded in cache metadata \\ \hline
-Execution traces & Diagnostics & Log store/DB & Yes, if sole copy & Deletion before diagnostic horizon \\ \hline
-Tool-call responses & Both & Trace and context & If non-deterministic & Stochastic API response cannot be reproduced \\ \hline
-Model weights/adapters & Serving & GPU/disk & Usually no & Eviction increases latency, not evidence loss \\ \hline
-Random seeds & Reproducibility & Trace metadata & If missing & Exact replay may fail \\ \hline
-Environment observations & Diagnostics & Trace & If unrepeatable & External API/sensor observations may be irrecoverable \\ \hline
-\end{longtable}
+\begin{tabular}{@{}Y{.165\linewidth}Y{.185\linewidth}Y{.154\linewidth}Y{.176\linewidth}Y{.210\linewidth}@{}}
+\toprule
+\textbf{State object} & \textbf{Consumer} & \textbf{Storage} & \textbf{Evidence-loss risk} & \textbf{Condition} \\
+\midrule
+KV tensors & Serving & GPU memory & Rare & If evidence uniquely embedded in cache metadata \\
+Execution traces & Diagnostics & Log store/DB & Yes, if sole copy & Deletion before diagnostic horizon \\
+Tool-call responses & Both & Trace and context & If non-deterministic & Stochastic API response cannot be reproduced \\
+Model weights/adapters & Serving & GPU/disk & Usually no & Eviction increases latency, not evidence loss \\
+Random seeds & Reproducibility & Trace metadata & If missing & Exact replay may fail \\
+Environment observations & Diagnostics & Trace & If unrepeatable & External API/sensor observations may be irrecoverable \\
+\bottomrule
+\end{tabular}
 \endgroup
-\end{center}
+\end{table}
 
 
 \subsection{State Types and Dependency Boundaries}
@@ -1022,7 +1049,7 @@ Table 13 lists all systems and benchmarks included in this review. Systems are c
 14 & OTel GenAI & Observability & T1a \\ \hline
 15 & AgentTrace & Observability & T1a \\ \hline
 16 & Insights Generator & Observability & T1a \\ \hline
-17 & LangSmith\\cite{v5supp1} & Observability & T1b \\ \hline
+17 & LangSmith\cite{v5supp1} & Observability & T1b \\ \hline
 18 & VCC & Observability & T1a \\ \hline
 19 & G-Safeguard & Safety & T1a \\ \hline20 & ShieldAgent & Safety & T1a \\ \hline
 21 & LlamaFirewall & Safety & T1a \\ \hline
