@@ -5,6 +5,8 @@
 \documentclass[preprint,12pt]{elsarticle}
 \usepackage{fontspec}
 \usepackage{amsmath,amssymb,graphicx,booktabs,longtable,tabularx,array,geometry}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
 \usepackage{hyperref}
 \usepackage[section]{placeins}
 \usepackage{caption}
@@ -120,7 +122,7 @@ systems surveyed, eviction mechanisms range from simple LRU (SGLang) to learned 
 
 
 \section{Review Methodology}
-We assembled a curated critical-review corpus through iterative database exploration, backward/forward citation chaining, and eligibility-based selection. Because database-specific search logs and screening decisions were not retained, we do not report a PRISMA-style numerical flow or claim systematic completeness. The PRISMA 2020 guidelines \cite{v5ref26} informed the reporting structure only. Figure 2 summarizes the sources, inclusion criteria, and final corpus composition. We describe our search strategy, selection criteria, evidence-coding scheme, and the classification taxonomy below.
+We assembled a curated critical-review corpus through iterative database exploration, backward/forward citation chaining, and eligibility-based selection. Because database-specific search logs and screening decisions were not retained, we do not report a PRISMA-style numerical flow or claim systematic completeness. The PRISMA 2020 guidelines \cite{v5ref26} informed the reporting structure only. The sources, inclusion criteria, and final corpus composition are summarized in \ref{app:curated_flow} (Figure~\ref{fig:v5_corpus_flow}). We describe our search strategy, selection criteria, evidence-coding scheme, and the classification taxonomy below.
 
 
 \subsection{Search Strategy}
@@ -180,20 +182,18 @@ finding to its source section, table, or figure; and (10) cross-layer analysis n
 
 
 \subsection{Corpus Summary}
-The 60 core table entries comprise 56 entries assessed at Tier 1 (T1a or T1b) and four at Tier 2. The core failure-localization table includes eight full-text-verified (T1) methods and four abstract-verified (T2) methods. The T2 entries --- StepFinder, FALAT, DoVer, and VerifyMAS --- are retained for landscape coverage but are not used to support fine-grained mechanistic or quantitative cross-method comparisons unless their primary full texts are independently checked. Additional contextual works discussed in the running text are not included in this count. By category: 12 failure-localization methods (8 T1, 4 T2), 6 observability entries (all T1), 8 safety and guardrail systems (4 T1a, 4 T1b), 22 infrastructure systems (all T1), and 12 evaluation benchmarks (all T1). See Appendix A for the complete census. Additionally, we include a retention-ablation experiment on real TraceElephant traces (220 failures) to support the validation protocol proposed in Section 7. Figure 2 illustrates the corpus assembly process.
+The 60 core table entries comprise 56 entries assessed at Tier 1 (T1a or T1b) and four at Tier 2. The core failure-localization table includes eight full-text-verified (T1) methods and four abstract-verified (T2) methods. The T2 entries --- StepFinder, FALAT, DoVer, and VerifyMAS --- are retained for landscape coverage but are not used to support fine-grained mechanistic or quantitative cross-method comparisons unless their primary full texts are independently checked. Additional contextual works discussed in the running text are not included in this count. By category: 12 failure-localization methods (8 T1, 4 T2), 6 observability entries (all T1), 8 safety and guardrail systems (4 T1a, 4 T1b), 22 infrastructure systems (all T1), and 12 evaluation benchmarks (all T1). See Appendix A for the complete census. Additionally, we include a retention-ablation experiment on real TraceElephant traces (220 failures) to support the validation protocol proposed in Section 7. \ref{app:curated_flow} records the curated selection workflow without implying a PRISMA-compliant screening count.
 
 
 \section{Diagnostics}
-This section organizes the diagnostic landscape along functional roles rather than implementation categories, following the taxonomy introduced in Section 3.4. We cover failure localization (\S{}4.1), observability and tracing (\S{}4.2), safety intervention and guardrails (\S{}4.3), and diagnostic benchmarks (\S{}4.4). For each subsection, methods are characterized along the six method dimensions defined in Section 3.4: evidence inputs, training requirements, replay demands, attribution granularity, intervention timing, and runtime cost. Figure 3 provides a matrix view of the taxonomy with representative systems placed in cells.
+This section organizes the diagnostic landscape along functional roles rather than implementation categories, following the taxonomy introduced in Section 3.4. We cover failure localization (\S{}4.1), observability and tracing (\S{}4.2), safety intervention and guardrails (\S{}4.3), and diagnostic benchmarks (\S{}4.4). For each subsection, methods are characterized along the six method dimensions defined in Section 3.4: evidence inputs, training requirements, replay demands, attribution granularity, intervention timing, and runtime cost. Figure~\ref{fig:v5_3} provides a matrix view of the taxonomy with representative systems placed in cells.
 
 
 \subsection{Failure Localization}
 Failure localization identifies which agent, step, or action caused an observed failure. We identify four methodological families among the 8 Tier-1 methods reviewed: statistical methods adapted from software fault localization, LLM-guided methods that use a language model as an investigator, RL-trained methods that learn attribution policies, and training-free signalextraction methods that exploit model internals.
 
 
-\begin{figure}[!htbp]\centering
-\includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_2.jpg}
-\caption{Curated corpus assembly. This is a curated landscape review, not a PRISMA-compliant systematic review; no database-level screening logs were preserved. Sources: IEEE Xplore, ACM DL, Scopus, Google Scholar and arXiv plus forward/backward citation chaining through November 2026. Inclusion requires a described runtime diagnostic or serving mechanism for foundation-model agents. Terminal corpus: 48 non-benchmark entries (systems, surveys, and standards) plus 12 benchmarks = 60 entries.}\label{fig:v5_2}\end{figure}
+
 \begin{figure}[!htbp]\centering
 \includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_3.jpg}
 \caption{Classification taxonomy: four diagnostic functions (rows) characterized along six method dimensions (columns). Representative systems are placed in each cell; functions are not mutually exclusive algorithm classes. The same method may serve multiple functions. Red shading indicates diagnostic-layer systems.}\label{fig:v5_3}\end{figure}
@@ -349,7 +349,7 @@ agents appear more capable than they are when evaluated on single attempts rathe
 Gap: no cross-layer benchmark. A striking finding from the benchmark analysis is that none of the 12 Tier-1 benchmarks evaluates the diagnostics-infrastructure interaction: how diagnostic trace capture affects serving throughput, or how serving-side eviction policies affect diagnostic fidelity. TraceElephant's middleware is described as ``lightweight'' (\S{}3.2) but provides no quantitative overhead measurements. Who\&When's attribution is purely offline post-hoc analysis. This gap is not merely an oversight --- it reflects the architectural separation between diagnostic and serving research communities, and motivates the validation protocol proposed in Section 7.
 
 
-Cross-cutting analysis. Figure 4 presents a coverage matrix across 10 evaluation dimensions for all 12 benchmarks. Three systematic gaps are visible:
+Cross-cutting analysis. Figure~\ref{fig:v5_4} presents a coverage matrix across 10 evaluation dimensions for all 12 benchmarks. Three systematic gaps are visible:
 
 
 1. No benchmark tests diagnostic-infrastructure interaction. The ``Diag-infra interaction'' column is entirely empty: 0 of 12 benchmarks measure how diagnostic trace capture affects serving throughput, or how eviction policies affect attribution accuracy. This is the strongest visual evidence for the survey's gap thesis. 2. No benchmark tests concurrent agents. All attribution benchmarks evaluate singleagent or sequential multi-agent traces; none evaluates attribution under concurrent agent execution where KV cache contention and scheduling decisions may affect trace availability. 3. Attribution and scale are inversely related. Only 4 of 12 benchmarks provide steplevel attribution labels (TraceElephant, Who\&When, TrajAudit). The largest benchmarks (Who\&When Pro at 12,326 traces, Agent-SafetyBench at 2,000 cases) have no attribution labels. The annotation cost barrier (TraceElephant's \$12.66/trace, Who\&When's 84.3 human-hours) explains this inverse relationship: high-fidelity attribution at large scale would exceed \$150K. Trace fidelity is bipartite: benchmarks either provide full execution traces (TraceElephant, Who\&When, RootSE) or output-only evaluation (ReliabilityBench, Agent-SafetyBench, AgentHarm, OSGuard). The intermediate case --- partial trace with structured metadata but without full step-level tool logs --- is absent, despite being the most common deployment scenario. Failure-attribution benchmarks and safety benchmarks use entirely different evaluation protocols: attribution benchmarks measure causal agent/step identification accuracy, while safety benchmarks measure attack success rate or scenario coverage. No benchmark evaluates both dimensions simultaneously.
@@ -1142,6 +1142,30 @@ PDF supplied for reconstruction. The restructured LaTeX source, numeric
 table data, citation map and aggregate arithmetic checks are available
 in the project source package. These do not substitute for unreleased raw
 simulator events and 220 paired evaluation predictions.
+
+\clearpage
+\section{Curated Corpus Assembly and Selection Criteria}
+\label{app:curated_flow}
+The curated review draws on five databases, forward/backward citation chaining,
+and targeted searches, as described in Section 3.1. The inclusion/exclusion rules
+are defined in Section 3.2. The diagram below is a qualitative description of
+those documented steps, not a numerical screening reconstruction. Database-level
+screening logs were not preserved; only the final 48 non-benchmark entries and
+12 evaluation benchmarks are reported as the curated corpus.
+
+\begingroup
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{C.\arabic{figure}}
+\begin{figure}[!htbp]
+\centering
+\resizebox{\textwidth}{!}{\input{figures/curated_corpus_flow.tex}}
+\caption{Curated corpus assembly. Blue boxes denote literature sources; green boxes show
+chaining/curation and the final corpus; ochre boxes summarize selection rules.
+This is a curated critical review, not a PRISMA systematic review: no
+unsupported database screening counts are shown.}
+\label{fig:v5_corpus_flow}
+\end{figure}
+\endgroup
 
 \begin{thebibliography}{99}
 \bibitem{v5ref1} Reyna Abhyankar, Zijian He, Vikranth Srivatsa, Hao Zhang, and Yiying Zhang. InferCept: Efficient intercept support for augmented large language model inference. In Proceedings of the 41st International Conference on Machine Learning (ICML), volume 235 of PMLR, pages 81--95, 2024. arXiv:2402.01869.
