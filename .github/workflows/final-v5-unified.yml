@@ -30,8 +30,8 @@ jobs:
           extra=Path("bibliography_restored_2026.tex").read_text()
           atlas=Path("literature_coverage_2026.tex").read_text()
           import re
-          keys=re.findall(r'\\\\bibitem\{([^}]+)\}', extra)
-          cites=re.findall(r'\\\\cite\{(ext[0-9]+)\}', atlas)
+          keys=re.findall(r'\\bibitem\{([^}]+)\}', extra)
+          cites=re.findall(r'\\cite\{(ext[0-9]+)\}', atlas)
           assert len(keys)==148 and len(set(keys))==148, len(keys)
           assert len(set(cites))==148, len(set(cites))
           assert set(keys)==set(cites)
