@@ -1,55 +1,59 @@
-% Source-coded matrix with much larger searchable XeLaTeX text.
-% Two panels keep all 12 x 10 labels, rather than squeezing into raster art.
-\begin{figure}[p]
-\centering
-\caption{Benchmark capability matrix: native attribution labels versus task outcomes. The same 12 benchmarks and ten axes as the V5 evidence matrix are preserved in two readable panels.}
-\label{fig:v5_4}
+% Figure 3 - faithful 12-by-10 benchmark capability matrix.
+% Retains the original grid, order, Yes/Partial/NR/No values and color semantics.
+% Landscape page allows >= 9 pt readable, fully searchable text.
+\clearpage
+\begin{landscape}
+\begin{center}
 \begingroup
-\fontsize{9.2}{11.1}\selectfont
-\setlength{\tabcolsep}{2.7pt}
-\renewcommand{\arraystretch}{1.08}
-\noindent\textbf{Panel A. Diagnostic and safety dimensions}\par\smallskip
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{.229\textwidth}*{5}{>{\centering\arraybackslash}X}@{}}
-\toprule
-\textbf{Benchmark} & \textbf{Multi-agent} & \textbf{Native step RCA} & \textbf{Native agent RCA} & \textbf{Failure taxonomy} & \textbf{Safety eval.} \\
-midrule
-\textbf{TraceElephant} & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
-\textbf{Who\&When} & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
-\textbf{RootSE} & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
-\textbf{$\tau$-bench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR \\
-\textbf{MultiAgentBench} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR \\
-\textbf{GuardianAgentBench} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
-\textbf{ReliabilityBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
-\textbf{Agent-SafetyBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
-\textbf{AgentHarm} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{TAMAS} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
-\textbf{ASB} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
-\textbf{OSGuard} & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
-ottomrule
-end{tabularx}
-parmedskip
-
-oindent	extbf{Panel B. Robustness, interaction and availability}parsmallskip
-egin{tabularx}{	extwidth}{@{}>{aggedrightarraybackslash}p{.229	extwidth}*{5}{>{centeringarraybackslash}X}@{}}
-	oprule
-\textbf{Benchmark} & \textbf{Adversarial robustness} & \textbf{Collaboration} & \textbf{Fault reliability} & \textbf{Diag./infra. interaction} & \textbf{Public data} \\
-midrule
-\textbf{TraceElephant} & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{Who\&When} & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{RootSE} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{$\tau$-bench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{MultiAgentBench} & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{GuardianAgentBench} & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial \\
-\textbf{ReliabilityBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial \\
-\textbf{Agent-SafetyBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{AgentHarm} & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{TAMAS} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{ASB} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
-\textbf{OSGuard} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial \\
-ottomrule
-end{tabularx}
-parsmallskip
-
-oindent{ootnotesize Green = source-coded support; yellow = partial; pale red = NR/no verified native label. A task-success score is not a ground-truth agent or decisive-step attribution label. NR is not evidence of impossibility.}
-endgroup
-end{figure}
+\definecolor{benchgreen}{RGB}{197,226,202}
+\definecolor{benchyellow}{RGB}{255,242,186}
+\definecolor{benchpink}{RGB}{247,208,214}
+\setlength{\tabcolsep}{2.0pt}
+\renewcommand{\arraystretch}{1.0}
+\newcommand{\bcell}[2]{\cellcolor{#1}\parbox[c][0.79cm][c]{1.91cm}{\centering\fontsize{9.5}{11.3}\selectfont #2}}
+\fontsize{9.5}{11.3}\selectfont
+{\bfseries\Large Benchmark Capability Matrix --- Native Labels vs. Task Outcomes}\par\bigskip
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.70cm}|*{10}{>{\centering\arraybackslash}p{1.97cm}|}@{}}
+\textbf{Benchmark} &
+\textbf{Multi-agent support} &
+\textbf{Native step RCA} &
+\textbf{Native agent RCA} &
+\textbf{Failure taxonomy} &
+\textbf{Safety evaluation} &
+\textbf{Adversarial robustness} &
+\textbf{Collaboration quality} &
+\textbf{Reliability under faults} &
+\textbf{Diag--infra interaction} &
+\textbf{Public availability}\\
+\hline
+\bfseries TraceElephant & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries Who\&When & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries RootSE & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries $\tau$-bench & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries MultiAgentBench & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries GuardianAgentBench & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} \\
+\hline
+\bfseries ReliabilityBench & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} \\
+\hline
+\bfseries Agent-SafetyBench & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries AgentHarm & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries TAMAS & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries ASB & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
+\hline
+\bfseries OSGuard & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} \\
+\hline
+\end{tabular}
+\par\medskip
+\captionof{figure}{Re-audited benchmark capability matrix for the same twelve benchmarks and ten columns as the source. Green = Yes; yellow = Partial; pink = NR/No (not reported or no verified native label). Task success and safety scoring do not constitute step-level causal-attribution labels.}
+\label{fig:v5_4}
+\endgroup
+\end{center}
+\end{landscape}
