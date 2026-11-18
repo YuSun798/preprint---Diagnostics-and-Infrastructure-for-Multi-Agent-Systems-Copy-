@@ -5,6 +5,7 @@
 \documentclass[preprint,12pt]{elsarticle}
 \usepackage{fontspec}
 \usepackage{amsmath,amssymb,graphicx,booktabs,longtable,tabularx,array,geometry}
+\usepackage{colortbl}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
 \usepackage{hyperref}
@@ -219,9 +220,7 @@ Failure localization identifies which agent, step, or action caused an observed 
 
 
 
-\begin{figure}[!htbp]\centering
-\includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_3.jpg}
-\caption{Classification taxonomy: four diagnostic functions (rows) characterized along six method dimensions (columns). Representative systems are placed in each cell; functions are not mutually exclusive algorithm classes. The same method may serve multiple functions. Red shading indicates diagnostic-layer systems.}\label{fig:v5_3}\end{figure}
+\input{figures/diagnostic_taxonomy_readable.tex}
 Statistical methods. FAMAS \cite{v5ref11} adapts spectrum-based fault localization (SBFL) from software engineering to multi-agent failure attribution. The method parses failed execution logs into structured $\langle$agent, action, state$\rangle$triples using an LLM (Qwen2.5-72B) for log parsing, then applies the Kulczynski2 suspiciousness formula with two domain-specific modifications: temporal decay weighting (later actions receive higher suspiciousness) and action-frequency normalization (\S{}3--4). The method requires k=20 environment replays per failure to build the execution spectrum (\S{}5.1, confirmed). Sensitivity analysis shows monotonic accuracy improvement with replay count: k=5 yields 46.0 action-level correct attributions, k=10 yields 47.6, k=15 yields 50.8, and k=20 yields 54 (\S{}5.4, Figure 4). The best agent-level accuracy is 62.07\% on handcrafted multi-agent systems and 57.61\% overall in the Who\&When benchmark; the best action-level accuracy is 41.38\% (handcrafted) and 29.35\% (overall) (Table 2). The method's principal cost is replay time: on average 105 minutes per task (range 38-- 248 minutes), while the spectrum analysis itself completes in under one minute (\S{}5.2). This makes FAMAS the most expensive T1 method by wall-clock time, but the only one with formal coverage guarantees from SBFL theory. The method degrades on very short trajectories (<11 steps, where the spectrum is too sparse) and very long ones (38--65 steps, where the action space dilutes individual suspiciousness scores) (\S{}6.1, Figure 6). A single benchmark (Who\&When with 184 failure logs) limits generalizability (\S{}6.2).
 
 
@@ -412,9 +411,7 @@ Cross-cutting analysis. Figure~\ref{fig:v5_4} presents a coverage matrix across 
 1. No benchmark tests diagnostic-infrastructure interaction. The ``Diag-infra interaction'' column is entirely empty: 0 of 12 benchmarks measure how diagnostic trace capture affects serving throughput, or how eviction policies affect attribution accuracy. This is the strongest visual evidence for the survey's gap thesis. 2. No benchmark tests concurrent agents. All attribution benchmarks evaluate singleagent or sequential multi-agent traces; none evaluates attribution under concurrent agent execution where KV cache contention and scheduling decisions may affect trace availability. 3. Attribution and scale are inversely related. Only 4 of 12 benchmarks provide steplevel attribution labels (TraceElephant, Who\&When, TrajAudit). The largest benchmarks (Who\&When Pro at 12,326 traces, Agent-SafetyBench at 2,000 cases) have no attribution labels. The annotation cost barrier (TraceElephant's \$12.66/trace, Who\&When's 84.3 human-hours) explains this inverse relationship: high-fidelity attribution at large scale would exceed \$150K. Trace fidelity is bipartite: benchmarks either provide full execution traces (TraceElephant, Who\&When, RootSE) or output-only evaluation (ReliabilityBench, Agent-SafetyBench, AgentHarm, OSGuard). The intermediate case --- partial trace with structured metadata but without full step-level tool logs --- is absent, despite being the most common deployment scenario. Failure-attribution benchmarks and safety benchmarks use entirely different evaluation protocols: attribution benchmarks measure causal agent/step identification accuracy, while safety benchmarks measure attack success rate or scenario coverage. No benchmark evaluates both dimensions simultaneously.
 
 
-\begin{figure}[!htbp]\centering
-\includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_4_corrected.pdf}
-\caption{Re-audited capability matrix for the same 12 benchmarks as Table 3; direct agent and step root-cause labels are distinguished from task completion and safety scoring.}\label{fig:v5_4}\end{figure}
+\input{figures/benchmark_capability_readable.tex}
 \begin{table}[!tbp]
 \centering
 \caption{Diagnostic and safety benchmarks. Attribution support means \emph{native} agent- or step-level root-cause labels, not task success or post-hoc interpretability. In particular, $\tau$-bench does not provide native step-level causal-attribution labels.}
