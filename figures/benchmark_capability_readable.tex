@@ -1,0 +1,55 @@
+% Source-coded matrix with much larger searchable XeLaTeX text.
+% Two panels keep all 12 x 10 labels, rather than squeezing into raster art.
+\begin{figure}[p]
+\centering
+\caption{Benchmark capability matrix: native attribution labels versus task outcomes. The same 12 benchmarks and ten axes as the V5 evidence matrix are preserved in two readable panels.}
+\label{fig:v5_4}
+\begingroup
+\fontsize{9.2}{11.1}\selectfont
+\setlength{\tabcolsep}{2.7pt}
+\renewcommand{\arraystretch}{1.08}
+\noindent\textbf{Panel A. Diagnostic and safety dimensions}\par\smallskip
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{.229\textwidth}*{5}{>{\centering\arraybackslash}X}@{}}
+\toprule
+\textbf{Benchmark} & \textbf{Multi-agent} & \textbf{Native step RCA} & \textbf{Native agent RCA} & \textbf{Failure taxonomy} & \textbf{Safety eval.} \\
+midrule
+\textbf{TraceElephant} & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
+\textbf{Who\&When} & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{green!17}Yes & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
+\textbf{RootSE} & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
+\textbf{$\tau$-bench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR \\
+\textbf{MultiAgentBench} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR \\
+\textbf{GuardianAgentBench} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
+\textbf{ReliabilityBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR \\
+\textbf{Agent-SafetyBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
+\textbf{AgentHarm} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{TAMAS} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
+\textbf{ASB} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
+\textbf{OSGuard} & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes \\
+ottomrule
+end{tabularx}
+parmedskip
+
+oindent	extbf{Panel B. Robustness, interaction and availability}parsmallskip
+egin{tabularx}{	extwidth}{@{}>{aggedrightarraybackslash}p{.229	extwidth}*{5}{>{centeringarraybackslash}X}@{}}
+	oprule
+\textbf{Benchmark} & \textbf{Adversarial robustness} & \textbf{Collaboration} & \textbf{Fault reliability} & \textbf{Diag./infra. interaction} & \textbf{Public data} \\
+midrule
+\textbf{TraceElephant} & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{Who\&When} & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{RootSE} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{$\tau$-bench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{MultiAgentBench} & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{GuardianAgentBench} & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial \\
+\textbf{ReliabilityBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial \\
+\textbf{Agent-SafetyBench} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{AgentHarm} & \cellcolor{yellow!23}Partial & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{TAMAS} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{ASB} & \cellcolor{green!17}Yes & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{green!17}Yes \\
+\textbf{OSGuard} & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{red!11}NR & \cellcolor{yellow!23}Partial \\
+ottomrule
+end{tabularx}
+parsmallskip
+
+oindent{ootnotesize Green = source-coded support; yellow = partial; pale red = NR/no verified native label. A task-success score is not a ground-truth agent or decisive-step attribution label. NR is not evidence of impossibility.}
+endgroup
+end{figure}
