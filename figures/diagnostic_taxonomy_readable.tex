@@ -1,47 +1,57 @@
-% Readable, fully editable replacement of the original 4x6 raster matrix.
-% 10 pt unscaled text; two panels avoid sub-6pt embedded text.
-\begin{figure}[p]
-\centering
-\caption{Diagnostic taxonomy across four operational roles and six orthogonal methodological dimensions. Panels share the same role order; roles are not mutually exclusive methods.}
-\label{fig:v5_3}
+% Figure 2 - faithful 4-by-6 diagnostic taxonomy matrix.
+% Editable text; same row/column arrangement as original, enlarged by
+% using a dedicated landscape page instead of shrinking a raster image.
+\clearpage
+\begin{landscape}
+\begin{center}
 \begingroup
-\fontsize{10}{12}\selectfont
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.56}
-\noindent\textbf{Panel A. Evidence, training and replay requirements}\par\smallskip
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{.155\textwidth}*{3}{>{\raggedright\arraybackslash}X}@{}}
-\toprule
-\textbf{Operational role} & \textbf{Evidence inputs} & \textbf{Training required} & \textbf{Environment replay} \\
-midrule
-\rowcolor{blue!10}
-Localization & Traces, prefill signals, trajectories & None (CHIEF, FAMAS); RL (AgenTracer) & 20 replays (FAMAS); others vary \\
-\rowcolor{green!10}
-Monitoring & Spans, logs, corpus traces & Typically none & Not required for capture \\
-\rowcolor{orange!11}
-Intervention & Context, policies, graph structure & GNN or optional SFT & Not normally required \\
-\rowcolor{blue!6}
-Evaluation & Labeled failures and trajectories & Typically none & Benchmark-dependent \\
-ottomrule
-end{tabularx}
-parigskip
-
-oindent	extbf{Panel B. Attribution, timing and measurement cost}parsmallskip
-egin{tabularx}{	extwidth}{@{}>{aggedrightarraybackslash}p{.155	extwidth}*{3}{>{aggedrightarraybackslash}X}@{}}
-	oprule
-\textbf{Operational role} & \textbf{Output granularity} & \textbf{Intervention timing} & \textbf{Runtime cost type} \\
-midrule
-\rowcolor{blue!10}
-Localization & Agent, step, action & Post-hoc diagnosis & Replay count, tokens, parameters \\
-\rowcolor{green!10}
-Monitoring & Span and event level & Online and offline & Storage and processing overhead \\
-\rowcolor{orange!11}
-Intervention & Agent and message level & Before or after action & Latency, API requests \\
-\rowcolor{blue!6}
-Evaluation & Agent, step, failure mode & Offline scoring & Trace scale, label coverage \\
-ottomrule
-end{tabularx}
-parmedskip
-
-oindent{ootnotesize Representative properties, not universal requirements for each method. Entries reflect the V5 role taxonomy; see Table~ef{tab:v5_2} for method-specific evidence tiers.}
-endgroup
-end{figure}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+\definecolor{taxblue}{RGB}{203,226,248}
+\definecolor{taxgreen}{RGB}{211,235,218}
+\definecolor{taxyellow}{RGB}{255,241,200}
+\newcommand{\taxtext}[2]{\cellcolor{#1}\parbox[c][2.12cm][c]{3.00cm}{\centering\fontsize{10.5}{12.6}\selectfont #2}}
+\fontsize{10.5}{12.6}\selectfont
+{\bfseries\Large Diagnostic Taxonomy Matrix}\par\bigskip
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.48cm}|*{6}{>{\centering\arraybackslash}p{3.13cm}|}@{}}
+& \textbf{Evidence inputs} & \textbf{Training required} & \textbf{Replay required} & \textbf{Attribution granularity} & \textbf{Intervention timing} & \textbf{Runtime cost type}\\
+\cline{2-7}
+\textbf{Localization} &
+\taxtext{taxblue}{Traces, prefill signals, trajectories} &
+\taxtext{taxyellow}{None (CHIEF, FAMAS); RL (AgenTracer)} &
+\taxtext{taxyellow}{20$\times$ (FAMAS); 0 (others)} &
+\taxtext{taxgreen}{Agent, step, action} &
+\taxtext{taxgreen}{Post-hoc} &
+\taxtext{taxblue}{Replay count, tokens, parameters}\\
+\cline{2-7}
+\textbf{Monitoring} &
+\taxtext{taxblue}{Spans, logs, corpus traces} &
+\taxtext{taxgreen}{None} &
+\taxtext{taxgreen}{None} &
+\taxtext{taxgreen}{Span/event level} &
+\taxtext{taxgreen}{Online + offline} &
+\taxtext{taxblue}{\$/run; ms overhead}\\
+\cline{2-7}
+\textbf{Intervention} &
+\taxtext{taxblue}{Context, policy, graph structure} &
+\taxtext{taxyellow}{GNN (G-Safe), SFT optional} &
+\taxtext{taxgreen}{None} &
+\taxtext{taxgreen}{Agent/message level} &
+\taxtext{taxyellow}{Pre/post action} &
+\taxtext{taxblue}{Latency (ms), API queries}\\
+\cline{2-7}
+\textbf{Evaluation} &
+\taxtext{taxblue}{Labeled failures, traces} &
+\taxtext{taxgreen}{None} &
+\taxtext{taxyellow}{Varies} &
+\taxtext{taxgreen}{Agent, step, failure mode} &
+\taxtext{taxgreen}{Offline evaluation} &
+\taxtext{taxblue}{Scale (\# traces), coverage}\\
+\cline{2-7}
+\end{tabular}
+\par\medskip
+\captionof{figure}{Functional diagnostic taxonomy. The original four roles, six method dimensions, cell content, and color coding are preserved; labels are re-typeset as searchable, enlarged LaTeX text. Role-level descriptions are representative, not universal requirements for each method.}
+\label{fig:v5_3}
+\endgroup
+\end{center}
+\end{landscape}
