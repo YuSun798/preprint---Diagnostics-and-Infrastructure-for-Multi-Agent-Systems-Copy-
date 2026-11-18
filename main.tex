@@ -6,6 +6,7 @@
 \usepackage{fontspec}
 \usepackage{amsmath,amssymb,graphicx,booktabs,longtable,tabularx,array,geometry}
 \usepackage{colortbl}
+\usepackage{pdflscape}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
 \usepackage{hyperref}
@@ -93,23 +94,15 @@ This section establishes the technical context for the diagnostic and infrastruc
 
 
 \subsection{Foundation Model-Based Multi-Agent Systems}
-\paragraph{Agent architecture foundations.}
-The 60-entry core corpus concerns runtime diagnosis and serving rather than
-all agent architectures. Complementary agent designs span multi-agent
-conversation frameworks such as AutoGen~\cite{ext065},
-interaction environments such as AgentVerse~\cite{ext066},
-and cognitive accounts of language-agent memory and
-control~\cite{ext068}. Generative Agents~\cite{ext067}
-and Reflexion~\cite{ext071} further motivate the separation of
-persistent execution records, environment state and internal deliberation.
-These systems are used here as architectural context, not as evidence
-that serving-cache eviction destroys diagnostic traces.
+\input{related_literature/agent_foundations.tex}
 
 
 A foundation model-based agent operates in a perception--reasoning--action loop, using an LLM to process observations and execute actions such as tool invocations, code execution, and interagent communication. The underlying model workloads can also be multimodal: recent systems combine visual, audio, and clinical or platform metadata for domain-specific prediction and governance. A multi-agent system (MAS) comprises multiple such agents, as exemplified by MetaGPT, CAMEL, ChatDev, and Internet of Agents (IoA), operating within a shared environment or communicating to accomplish collective objectives. Recent multi-agent applications also span reinforcement-learning-enhanced collaborative reasoning and multimodal misinformation detection. MAST \cite{v5ref5} identifies 14 recurring failure patterns in such systems, motivating runtime diagnostics rather than evaluation only at the final task output. The rapid expansion of MAS into production deployments introduces operational demands that simple orchestration frameworks do not address: when an agent fails mid-workflow, which agent caused the failure? When a serving system evicts cached state, does this affect later diagnostic capability? When a safety guardrail intercepts an action, does the interception itself create a new failure mode? Three broad system properties recur across the literature: (1) distributed execution across multiple agents, which creates execution traces spanning agent boundaries and introduces coordination overhead; (2) inter-agent communication, which creates channels through which failures can propagate (FAMAS's spectrum analysis and TraceElephant's trace collection both exploit these channels for attribution); and (3) inter-agent memory sharing, where prompts, tools, and cached state may be reused across the system, creating shared state dependencies that affect both serving efficiency and diagnostic evidence availability.
 
 
 \subsection{Multi-Agent Workload Characteristics}
+\input{related_literature/collaboration.tex}
+
 Multi-agent workloads differ from single-model serving in three ways that directly affect memory placement, scheduling, and cache policy:
 
 
@@ -123,6 +116,8 @@ Inter-agent memory sharing. Agents may share context such as system prompts, env
 
 
 \subsection{Runtime Layers}
+\input{related_literature/runtime_ops.tex}
+
 We focus on two runtime layers that are less mature than orchestration:
 
 
@@ -197,15 +192,7 @@ finding to its source section, table, or figure; and (10) cross-layer analysis n
 
 
 \subsection{Corpus Summary}
-\paragraph{Core evidence corpus versus full reference coverage.}
-The 60-entry core system-and-benchmark census is deliberately narrower
-than the full bibliography: the latter also includes architectural
-foundations, external task environments, comparative serving mechanisms,
-security protocols, surveys and source documentation. An extended,
-category-coded source map in Appendix~\ref{app:lit_coverage}
-records the provenance of additional contextual literature.
-Contextual coverage must not be conflated with full-text evidence verification
-or with new entries in the 60-system/benchmark comparison tables.
+The core census comprises 60 entries, while the broader bibliography includes agent architectures, security, benchmarks, and serving systems used to delimit context. Unlike the previous source catalog in Appendix D, supporting references are now integrated into the specific claims of the Background, Diagnostics, Benchmark, Safety and Serving Infrastructure sections. Their presence does not imply that all source-level findings were independently reproduced.
 
 
 The 60 core table entries comprise 56 entries assessed at Tier 1 (T1a or T1b) and four at Tier 2. The core failure-localization table includes eight full-text-verified (T1) methods and four abstract-verified (T2) methods. The T2 entries --- StepFinder, FALAT, DoVer, and VerifyMAS --- are retained for landscape coverage but are not used to support fine-grained mechanistic or quantitative cross-method comparisons unless their primary full texts are independently checked. Additional contextual works discussed in the running text are not included in this count. By category: 12 failure-localization methods (8 T1, 4 T2), 6 observability entries (all T1), 8 safety and guardrail systems (4 T1a, 4 T1b), 22 infrastructure systems (all T1), and 12 evaluation benchmarks (all T1). See Appendix A for the complete census. Additionally, we include a retention-ablation experiment on real TraceElephant traces (220 failures) to support the validation protocol proposed in Section 7. \ref{app:curated_flow} records the curated selection workflow without implying a PRISMA-compliant screening count.
@@ -216,6 +203,8 @@ This section organizes the diagnostic landscape along functional roles rather th
 
 
 \subsection{Failure Localization}
+\input{related_literature/failure_attribution.tex}
+
 Failure localization identifies which agent, step, or action caused an observed failure. We identify four methodological families among the 8 Tier-1 methods reviewed: statistical methods adapted from software fault localization, LLM-guided methods that use a language model as an investigator, RL-trained methods that learn attribution policies, and training-free signalextraction methods that exploit model internals.
 
 
@@ -267,14 +256,7 @@ Design trade-offs. Table 2 presents the multi-axis comparison. Three trade-off a
 
 
 \subsection{Observability and Tracing}
-\paragraph{Operational provenance context.}
-Agent-oriented logging and provenance must distinguish a trace event
-from the state it describes. Process-mining approaches~\cite{ext014}
-and broader workflow-provenance traditions~\cite{ext141}
-offer ways to reason about sequences and causal dependencies, but their
-recording assumptions may differ from a GPU serving engine.
-We use them as cross-domain context rather than as measured
-diagnostic-versus-serving retention experiments.
+\input{related_literature/observability.tex}
 
 
 Observability systems continuously capture execution evidence during agent operation, providing the raw data that localization and safety methods consume. We identify three levels of maturity: conceptual taxonomies that define what should be traced, protocol-level standards that specify how traces are encoded, and tooling that implements the capture pipeline.
@@ -343,14 +325,7 @@ Tooling. AgentTrace \cite{v5ref2} implements three logging surfaces --- operatio
 
 
 \subsection{Safety Intervention and Guardrails}
-\paragraph{Cross-agent security boundary.}
-Prompt Infection~\cite{ext106} illustrates that inter-agent communication
-can transmit adversarial instructions. Interface-level protocols, including
-the Model Context Protocol~\cite{ext120}, specify connection and
-tool-exchange structures rather than a ready-made guarantee that
-execution evidence will survive every runtime policy. Consequently,
-the safety analysis separates the presence of an intervention
-mechanism from its auditability and evidence lifetime.
+\input{related_literature/safety_context.tex}
 
 
 Safety systems actively monitor and intervene in agent execution to prevent harmful actions. We review eight Tier-1 systems spanning three architectural patterns: graph-based guardrails, modular safety agents, and control-theoretic recovery.
@@ -378,16 +353,7 @@ management --- particularly KV cache eviction policies --- can affect safety sys
 
 
 \subsection{Benchmarks}
-\paragraph{Adjacent task-evaluation environments.}
-AgentBench~\cite{ext072} evaluates broad agent abilities, while
-WebArena~\cite{ext133}, WorkArena~\cite{ext134},
-OSWorld~\cite{ext136}, and SWE-bench~\cite{ext137}
-test interactions in web, workplace, desktop, or software repositories.
-These environments can supply task outcomes and trajectories,
-but an end-state task-success score must not be reinterpreted as
-benchmark-native ground truth for the earliest causal failure step.
-The benchmark label audit therefore distinguishes task success,
-safety violations, agent blame, and decisive-step annotations.
+\input{related_literature/benchmark_context.tex}
 
 
 Progress in diagnostics depends on benchmarks that vary in failure coverage, trace fidelity, and evaluation scope. Table 3 summarizes 12 Tier-1 benchmarks.
@@ -452,17 +418,7 @@ dynamic control flow (conditional branches, native function calls) must still ex
 
 
 \subsection{Exact KV-Cache Reuse}
-\paragraph{General serving foundations.}
-Exact KV reuse and retention policies depend on fast attention kernels,
-memory placement and request scheduling. FlashAttention~\cite{ext147}
-and FlashAttention-2~\cite{ext148} address attention computation;
-FlashInfer~\cite{ext149} provides a serving-focused attention engine.
-Orca~\cite{ext150} and Splitwise~\cite{ext151} address different
-request-scheduling and phase-placement concerns, while
-Punica~\cite{ext152} studies multi-tenant LoRA serving.
-These papers inform serving cost and scheduling baselines,
-not the existence of a causal link between cache eviction and
-lost out-of-band telemetry.
+\input{related_literature/serving_context.tex}
 
 
 Exact KV-cache reuse retains computed attention tensors across requests that share identical token prefixes, avoiding redundant prefill computation. This is the dominant category among surveyed systems.
@@ -1234,7 +1190,7 @@ unsupported database screening counts are shown.}
 \end{figure}
 \endgroup
 
-\input{literature_coverage_2026.tex}
+
 
 \begin{thebibliography}{999}
 \bibitem{v5ref1} Reyna Abhyankar, Zijian He, Vikranth Srivatsa, Hao Zhang, and Yiying Zhang. InferCept: Efficient intercept support for augmented large language model inference. In Proceedings of the 41st International Conference on Machine Learning (ICML), volume 235 of PMLR, pages 81--95, 2024. arXiv:2402.01869.
