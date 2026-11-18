@@ -11,20 +11,21 @@
 \setlength{\tabcolsep}{2.0pt}
 \renewcommand{\arraystretch}{1.0}
 \newcommand{\bcell}[2]{\cellcolor{#1}\parbox[c][0.79cm][c]{1.91cm}{\centering\fontsize{9.5}{11.3}\selectfont #2}}
+\newcommand{\bhead}[1]{\parbox[c][1.32cm][c]{1.84cm}{\centering\fontsize{8.25}{9.3}\selectfont\bfseries #1}}
 \fontsize{9.5}{11.3}\selectfont
 {\bfseries\Large Benchmark Capability Matrix --- Native Labels vs. Task Outcomes}\par\bigskip
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.70cm}|*{10}{>{\centering\arraybackslash}p{1.97cm}|}@{}}
 \textbf{Benchmark} &
-\textbf{\shortstack[c]{Multi-agent\\support}} &
-\textbf{\shortstack[c]{Native\\step RCA}} &
-\textbf{\shortstack[c]{Native\\agent RCA}} &
-\textbf{\shortstack[c]{Failure\\taxonomy}} &
-\textbf{\shortstack[c]{Safety\\evaluation}} &
-\textbf{\shortstack[c]{Adver-\\sarial\\robustness}} &
-\textbf{\shortstack[c]{Collabo-\\ration\\quality}} &
-\textbf{\shortstack[c]{Reliability\\under faults}} &
-\textbf{\shortstack[c]{Diag--infra\\interaction}} &
-\textbf{\shortstack[c]{Public\\availability}}\\
+\bhead{\shortstack[c]{Multi-agent\\support}} &
+\bhead{\shortstack[c]{Native\\step RCA}} &
+\bhead{\shortstack[c]{Native\\agent RCA}} &
+\bhead{\shortstack[c]{Failure\\taxonomy}} &
+\bhead{\shortstack[c]{Safety\\evaluation}} &
+\bhead{\shortstack[c]{Adver-\\sarial\\robustness}} &
+\bhead{\shortstack[c]{Collabo-\\ration\\quality}} &
+\bhead{\shortstack[c]{Reliability\\under faults}} &
+\bhead{\shortstack[c]{Diag--infra\\interaction}} &
+\bhead{\shortstack[c]{Public\\availability}}\\
 \hline
 \bfseries TraceElephant & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchgreen}{Yes} & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchgreen}{Yes} \\
 \hline
