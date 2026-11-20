@@ -1,9 +1,8 @@
 % Figure 2 - faithful 4-by-6 diagnostic taxonomy matrix.
 % Editable text; same row/column arrangement as original, enlarged by
-% using a dedicated landscape page instead of shrinking a raster image.
-\clearpage
-\begin{landscape}
-\begin{center}
+% scaling the original vector matrix to portrait page text width.
+\begin{figure}[!htbp]
+\centering
 \begingroup
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.0}
@@ -13,6 +12,7 @@
 \newcommand{\taxtext}[2]{\cellcolor{#1}\parbox[c][2.12cm][c]{3.00cm}{\centering\fontsize{10.5}{12.6}\selectfont #2}}
 \fontsize{10.5}{12.6}\selectfont
 {\bfseries\Large Diagnostic Taxonomy Matrix}\par\bigskip
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.67cm}|*{6}{>{\centering\arraybackslash}p{3.13cm}|}@{}}
 & \textbf{Evidence inputs} & \textbf{Training required} & \textbf{Replay required} & \textbf{Attribution granularity} & \textbf{Intervention timing} & \textbf{Runtime cost type}\\
 \cline{2-7}
@@ -48,10 +48,10 @@
 \taxtext{taxgreen}{Offline evaluation} &
 \taxtext{taxblue}{Scale (\# traces), coverage}\\
 \cline{2-7}
-\end{tabular}
+\end{tabular}%
+}
 \par\medskip
-\captionof{figure}{Functional diagnostic taxonomy. The original four roles, six method dimensions, cell content, and color coding are preserved; labels are re-typeset as searchable, enlarged LaTeX text. Role-level descriptions are representative, not universal requirements for each method.}
+\caption{Functional diagnostic taxonomy. The original four roles, six method dimensions, cell content, and color coding are preserved; labels are re-typeset as searchable, enlarged LaTeX text. Role-level descriptions are representative, not universal requirements for each method.}
 \label{fig:v5_3}
 \endgroup
-\end{center}
-\end{landscape}
+\end{figure}
