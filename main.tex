@@ -10,10 +10,11 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
 \usepackage{hyperref}
+\Urlmuskip=0mu plus 1mu
 \usepackage[section]{placeins}
 \usepackage{caption}
-\setmainfont{DejaVu Serif}
-\setmonofont{DejaVu Sans Mono}[Scale=0.78]
+\setmainfont{lmroman10}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setmonofont{lmmono10-regular.otf}[Scale=0.85]
 \geometry{a4paper,margin=24mm}
 \captionsetup{font=small}
 \setlength{\emergencystretch}{3em}
@@ -25,7 +26,7 @@
 \newcolumntype{Y}[1]{>{\raggedright\arraybackslash}p{#1}}
 \begin{document}
 \begin{frontmatter}
-\title{Diagnostics and Serving Infrastructure for Foundation Model-Based Multi-Agent Systems: An Evidence-Aware Review}
+\title{Diagnostics and Serving Infrastructure for Foundation Model-Based Multi-Agent Systems: A Survey}
 \author[upenn]{Yu Sun\corref{cor1}}\ead{yu.sun@alumni.upenn.edu}
 \author[ucd]{Zuodong Xiang}\author[jhu]{Yike Zhang}
 \author[glasgow]{Xinyu Guan}\author[uci]{Pengcheng Xu}
@@ -40,54 +41,46 @@
 \address[scnu]{School of Computer Science, South China Normal University, Guangzhou, China}
 \address[csulb]{Department of Computer Engineering and Computer Science, California State University, Long Beach, CA, USA}
 \begin{abstract}
-Foundation model-based multi-agent systems (MAS) introduce reliability requirements that span execution tracing, failure attribution, safety intervention, and serving-time resource management. Existing reviews typically analyze these functions separately. This evidence-aware critical review maps 60 representative diagnostic methods, serving systems, and evaluation benchmarks along explicit axes: required evidence inputs, replay and training demands, attribution granularity, intervention timing, state compatibility, workload assumptions, and runtime cost. We distinguish functional roles from implementation strategies. A central question is when serving-state reclamation impairs later diagnosis. We show that evicting a KV cache is not equivalent to deleting a diagnostic trace: interference arises only when evidence or a non-reconstructable execution dependency shares a constrained resource, is actually discarded, and is needed within the diagnostic horizon. We therefore formulate a conditional retention trade-off as a testable design hypothesis rather than an established universal conflict. We propose DRICE (Diagnostics evidence, Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth), a structured evaluation framework for cross-layer comparison. Finally, we outline an instrumented, replay-capable evaluation protocol with matched reliability and serving metrics, and report retention-ablation results on real multi-agent failure traces. The resulting synthesis highlights verifiable architectural interfaces and open questions without ranking non-comparable systems or claiming that a joint optimization has already been empirically demonstrated.
+A failed large language model (LLM) agent workflow can leave evidence in messages, tool logs, checkpoints, and inference telemetry. Which of these artifacts support diagnosis depends on how the workflow runs and which state the serving system retains. This survey reviews 48 diagnostic and serving systems and 12 benchmarks for foundation model-based multi-agent systems. We compare diagnostic methods by the evidence they consume, the granularity of their predictions, and their need for replay or training. We organize serving mechanisms by the state they reuse and the assumptions that make reuse valid. Their intersection depends on the diagnostic query: reclaiming a cached prefix primarily changes serving cost when the required execution record is independently available, whereas discarding the sole copy of an observation can make attribution impossible. The reviewed benchmarks evaluate attribution, safety, or task success, with no joint measurement of diagnostic quality and serving performance under a common resource constraint. We synthesize these gaps into a research agenda for evidence-aware telemetry, comparable attribution benchmarks, and joint evaluation of recovery quality and serving cost.
 \end{abstract}
+
 \begin{keyword}Multi-agent systems \sep Foundation models \sep Failure localization \sep Observability \sep LLM serving \sep KV-cache management\end{keyword}
 \end{frontmatter}
-\section{Introduction}
-Foundation model-based multi-agent systems (MAS), in which multiple Large Language Model (LLM) agents collaborate to solve complex tasks, are increasingly moving from demonstrations toward deployed workflows. As systems such as MetaGPT \cite{v5ref13}, CAMEL \cite{v5ref15}, ChatDev \cite{v5ref30}, and Internet of Agents \cite{v5ref7} operate within shared environments, reliability and efficiency depend on operational layers that are less mature than orchestration itself. As these systems become architecturally sophisticated, reliability and efficiency depend on operational layers that lag behind the orchestration layer: the diagnostics layer, which supports failure localization, observability, and safety intervention; and the infrastructure layer, which manages memory, scheduling, and resources for multi-agent workloads. Recent multi-agent applications span collaborative coding, scientific discovery, financial analysis, and social simulation. Within these applications, failure patterns are qualitatively different from single-agent errors: MAST \cite{v5ref5} identifies 14 recurring failure modes in MAS, motivating runtime diagnostics rather than evaluation only at the final task output. When a multi-agent workflow fails, the central question is not just what failed but which agent caused the failure, at which step, and whether the serving infrastructure's resource management decisions contributed to or masked the failure. Recent preprints illustrate adjacent model-level problems that may arise in agent-enabled workloads: finite-beam reachability and continuous-query generation in generative recommendation, attribution-based forgetting in LoRA adaptation, and reading and reconciling temporal evidence in time-series forecasting. These are contextual examples rather than multi-agent diagnostic or serving systems, and are not included in our core system tables.
+\section{Introduction}\label{sec:introduction}
+In a multi-agent workflow, a mistaken assumption can pass from a planner to a tool-using agent and surface only after another agent produces the final answer. A task score records the outcome. Identifying the decisive action requires evidence about what the agents saw, did, and shared. Systems such as CAMEL, ChatDev, and MetaGPT make these dependencies explicit through roles or structured communication \cite{v5ref15,v5ref30,v5ref13,v5ref7}. Failure taxonomies document recurring breakdowns in specification, coordination, and verification \cite{v5ref5}. Together, these studies motivate an examination of how failures are diagnosed and what the execution environment can preserve for later analysis.
 
+At the same time, the serving layer schedules model requests, reuses compatible attention states, and reclaims memory under load. Sharing a textual prefix can cut repeated computation across agents. Its cached attention tensors and the record of which messages or tool results actually reached an agent have different reconstruction requirements. This distinction matters for evaluating reliability: a cache miss may add latency, a missing trace event may change an attribution, and repeating an external action may produce a different observation. The consequences depend on the artifact, its storage and lifetime, and the diagnostic question.
 
-\subsection{Scope and Positioning}
-Existing surveys largely treat diagnostics and infrastructure separately. General agent surveys cover architectural patterns and collaboration mechanisms; AgentOps addresses telemetry and operational practice; offline agent evaluation benchmarks focus on task quality; single-model serving surveys address latency and throughput optimization; and MAS collaboration/failure surveys examine interaction patterns and failure modes. In our curated corpus, we review 48 entries across four categories (12 failure-localization, 6 observability, 8 safety, 22 infrastructure) and 12 evaluation benchmarks (60 table entries; Appendix A). The resulting literature exposes complementary pieces of the runtime stack, but the relationship between the state required for diagnosis and the state managed by serving policies remains under-analyzed. This review examines the interface between these two selected runtime functions. The title does not imply exhaustive treatment of orchestration, storage, networking, security operations, or all layers of a production stack. Our analytical contribution is a state-dependency and cost framework, not a claim that the reviewed mechanisms themselves are new. Table 1 contrasts our scope against five adjacent review areas, specifying the conceptual dimension this review adds to each. Three broad system properties recur across the literature reviewed here: (1) distributed execution across multiple agents, which creates traces spanning agent boundaries; (2) interagent communication, which allows failures to propagate through communication channels; and (3) inter-agent memory sharing, where prompts, tools, and cached state may be reused across the system. Section 5 derives serving-side implications from these properties, highlighting sparse activation, invocation distance, and inter-agent memory sharing as the workload characteristics that directly affect memory placement, scheduling, and cache policy.
+\subsection{Scope and contributions}
+We focus on text-centric, foundation model-based multi-agent workflows that invoke models and tools. We ask three questions. What evidence do diagnostic methods use, and what conclusions can they support? Which forms of serving-state reuse benefit multi-agent workloads, and under what compatibility and placement constraints? When does reclaiming state change what can be diagnosed?
 
-
-\begin{center}
-\begingroup
-\setlength{\tabcolsep}{2pt}
-\renewcommand{\arraystretch}{1.16}
-\footnotesize
-\begin{longtable}{|p{0.233\linewidth}|p{0.233\linewidth}|p{0.233\linewidth}|p{0.233\linewidth}|}
-\caption{Conceptual differences from adjacent reviews. Comparison reflects emphasis, not an exclusive coverage claim.}\label{tab:v5_1}\\
-\hline
-\textbf{Review area} & \textbf{Unit of analysis} & \textbf{Principal concern} & \textbf{Contribution of this review} \\ \hline
-\endfirsthead
-\textbf{Review area} & \textbf{Unit of analysis} & \textbf{Principal concern} & \textbf{Contribution of this review} \\ \hline
-\endhead
-MAS orchestration & Agent roles, workflow graph & Coordination, framework design & Serving-state lifetimes and diagnostic dependencies \\ \hline
-AgentOps & Telemetry, operational practice & Monitoring, trace collection & Evidence preservation versus reclamation cost \\ \hline
-Agent evaluation & Benchmark tasks and scores & Offline task quality & Replayability, granularity, online timing \\ \hline
-LLM serving & Requests, KV blocks, workers & Latency and throughput & Agent-level future calls and restoration \\ \hline
-MAS collaboration & Inter-agent interactions & Failures and collaboration patterns & Shared evidence and retention conditions \\ \hline
-This review & Diagnostic evidence and serving state & Conditional cross-layer dependencies & Evidence inputs, training, replay, timing, cost and recoverability \\ \hline
-\end{longtable}
-\endgroup
-\end{center}
-\subsection{The Diagnostic-Infrastructure Gap}
-The gap between diagnostic and infrastructure research is both conceptual and practical. Conceptually, diagnostic methods are designed under an implicit assumption that execution traces are always available --- stored in a log database, replay buffer, or trace store that is independent of the serving engine's memory management. Infrastructure systems, conversely, optimize for throughput and latency without considering whether their eviction decisions affect downstream diagnostic capability. Neither community has systematically characterized the conditions under which these assumptions interact. Practically, this gap manifests in three ways. First, among the 12 evaluation benchmarks in our curated corpus, we did not identify one that evaluates how diagnostic overhead affects serving throughput or how eviction policies affect attribution accuracy. Second, within the serving-infrastructure studies examined at full-text depth, we did not identify a reported system that jointly optimizes diagnostic retention and serving throughput under a single measured resource budget --- the closest system (TOPAS) optimizes serving throughput alone. Third, the observability standards that could bridge the gap (OpenTelemetry GenAI conventions) lack serving-side attributes: there are no standardized attributes for KV cache residency, eviction events, or memory pressure. This review addresses the gap by mapping both layers along shared dimensions (evidence inputs, training, replay, granularity, timing, cost), formalizing the conditions for cross-layer conflict (Section 6), and proposing a structured evaluation framework (DRICE, Section 8) and validation protocol (Section 7.3) that make the shared-budget hypothesis testable. This is a curated critical review rather than a systematic review. The inclusion boundary, evidence-selection rules, and verification tiers are described in Section 3. Quantitative claims used for comparison come from full-text sources; abstract-level results are marked [a] and are not used to compute cross-system deltas or rankings.
-
-
-Why gap identification is a contribution. Identifying that a widely assumed conflict is conditional (not universal) changes the design space for joint diagnostic-infrastructure systems. If the conflict were universal, practitioners would need to build shared-budget managers for every deployment. Because the conflict requires three specific conditions (Eq. 1), practitioners should instead instrument for the specific conditions under which interference occurs. The simulated KV-eviction experiment (Section 6.6) illustrates that, in a simplified CPU-based cache model, naive policy augmentation produces a negative trade-off; live GPU-serving validation remains future work. The retention ablation (Section 7.3) reveals a further non-obvious interaction on
+We synthesize the literature in three steps. First, we compare failure localization, tracing, intervention, and benchmarks by the evidence each consumes or exposes. Second, we distinguish textual context sharing, exact attention-state reuse, and cross-model transfer and relate each to workload structure. Third, we identify the conditions that couple diagnostic recoverability to serving policy and use them to derive priorities for evaluation. Figure~\ref{fig:v5_1} shows the two layers and their points of contact. Section~\ref{sec:method} describes corpus selection and evidence limits, and Appendix~\ref{app:curated_flow} documents the selection process.
 
 
 \begin{figure}[!htbp]\centering
 \includegraphics[width=0.94\linewidth,height=0.66\textheight,keepaspectratio]{figures/figure_1.jpg}
 \caption{Bounded review scope. The diagnostics layer (top, blue) and infrastructure layer (bottom, green) manage different state objects. Dashed arrows indicate conditional cross-layer dependencies: diagnostic evidence loss requires all three conditions (shared constrained resource, evidence actually discarded, needed within the diagnostic horizon). Most traces are stored out-of-band and survive KV cache eviction.}\label{fig:v5_1}\end{figure}
-real traces: heuristic attributors can improve under subsampling, and a controlled recoveryablation confirms the mechanism (Section 7.3). Together, these findings provide actionable design guidance that the existing literature --- which either ignores the cross-layer interaction or assumes a universal conflict --- does not. Our contributions are: 1. A multi-axis diagnostic comparison (C1). We separate function (localization, monitoring, intervention, evaluation) from methods' evidence inputs, replay demands, training requirements, attribution granularity, intervention timing, and runtime cost. These dimensions may overlap and are not mutually exclusive method families. We review 12 failure-localization methods (8 T1), 6 observability systems, and 8 safety/guardrail systems. 2. A workload-conditioned serving analysis (C2). We distinguish textual context sharing, exact KV-cache reuse, and cross-model cache transfer, and characterize the compatibility, recomputation, and placement assumptions that delimit each optimization across 22 Tier- 1 infrastructure systems. 3. A conditional cross-layer hypothesis (C3). We formalize when state reclamation can actually harm diagnosis as an evidence-loss event Li(T) = Ni(T) $\wedge$Di(T) $\wedge$$\neg$Ri(T), document the conditions under which this occurs, and identify TOPAS as the closest existing system to a shared diagnostic-serving budget. 4. A structured evaluation framework (C4). We propose DRICE (Diagnostics evidence, Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth) to organize cross-layer comparison tables and highlight the D--R gap between diagnostic and infrastructure systems. 5. A concrete validation protocol (C5). We specify online signals, baselines, timing as-
 
+\subsection{Positioning among recent surveys}
+Recent surveys available online in Neurocomputing offer complementary perspectives on agent lifecycles, architecture and evaluation, graph-based coordination, embodied decision-making, and inference serving \cite{survey_lifecycle,survey_agentic,survey_graph,survey_embodied,survey_serving}. Li et al.~\cite{ext043} connect multi-agent workflows to supporting infrastructure at a broader level. Table~\ref{tab:v5_1} identifies where these perspectives inform the present review. Our unit of comparison is the execution artifact and the conditions under which it can support diagnosis after a serving decision.
 
-sumptions, and metrics (false-alarm rate, detection lead time, task success, recovery rate) for testing the shared-budget hypothesis, and report retention-ablation results on real TraceElephant traces (220 failures across 5 task suites from 3 MAS frameworks). The remainder of this paper is organized as follows. Section 3 describes our review methodology, including the PRISMA-inspired search strategy, inclusion criteria, and evidence coding. Section 4 reviews the diagnostic layer organized by function. Section 5 analyzes the infrastructure layer with emphasis on state-sharing distinctions. Section 6 formalizes the cross-layer retention trade-off. Section 7 proposes research directions and the validation protocol. Section 8 introduces the DRICE framework. Section 9 discusses limitations and threats to validity. Section 10 concludes.
-
+\begin{table}[!htbp]
+\centering
+\small
+\caption{Scope of related Neurocomputing surveys and the questions they motivate here.}
+\label{tab:v5_1}
+\begin{tabularx}{\linewidth}{@{}p{.26\linewidth}XX@{}}
+\toprule
+Survey & Organizing principle & Question for diagnostic and serving research \\
+\midrule
+Agent lifecycles \cite{survey_lifecycle} & Lifecycle stages and graph augmentation & Which artifacts connect evidence across stages? \\
+Agentic AI systems \cite{survey_agentic} & Architecture, interaction, and evaluation & What evidence supports attribution at the agent or step level? \\
+LLMs and graph neural networks \cite{survey_graph} & Coupling between language models and graph components & When do graph relations represent observed dependencies in an execution? \\
+Embodied AI \cite{survey_embodied} & Hierarchical and end-to-end decision-making & Which external observations must be recorded because replay can change them? \\
+Inference load balancing \cite{survey_serving} & Serving control and learning mechanisms & Which resource decisions affect access to diagnostic evidence? \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \section{Background}
 This section establishes the technical context for the diagnostic and infrastructure layers reviewed in subsequent sections. We describe the architecture of foundation model-based multiagent systems (\S{}2.1), the workload characteristics that distinguish multi-agent serving from single-model inference (\S{}2.2), and the runtime layers we focus on (\S{}2.3).
@@ -131,7 +124,7 @@ systems surveyed, eviction mechanisms range from simple LRU (SGLang) to learned 
 
 
 % The extended source map is contextual; it does not change the 60-core census.
-\section{Review Methodology}
+\section{Review Methodology}\label{sec:method}
 We assembled a curated critical-review corpus through iterative database exploration, backward/forward citation chaining, and eligibility-based selection. Because database-specific search logs and screening decisions were not retained, we do not report a PRISMA-style numerical flow or claim systematic completeness. The PRISMA 2020 guidelines \cite{v5ref26} informed the reporting structure only. The sources, inclusion criteria, and final corpus composition are summarized in \ref{app:curated_flow} (Figure~\ref{fig:v5_corpus_flow}). We describe our search strategy, selection criteria, evidence-coding scheme, and the classification taxonomy below.
 
 
@@ -191,12 +184,8 @@ For each Tier-1 system, we performed a structured extraction following a fixed t
 finding to its source section, table, or figure; and (10) cross-layer analysis notes assessing the system's relevance to the diagnostic-infrastructure interaction. This structured template ensures that the comparison tables in Sections 4 and 5 report consistent dimensions across all systems. The template was developed iteratively: the first five systems (SGLang, ScaleSim, DistServe, Mooncake, Parrot) were extracted using a preliminary template, and the template was refined based on which dimensions proved most informative for cross-system comparison. All subsequent extractions used the refined template. A verification step was applied to each extraction: quantitative claims in the extraction template were cross-checked against the source paper's tables and figures (not just the text). Several discrepancies were identified and corrected: for example, a preliminary extraction attributed 66\% accuracy to FAMAS, but the source paper's Table 2 shows 62.07\% as the best agent-level figure on handcrafted scenarios; similarly, TrajAudit's trajectory folding was initially recorded as 86--92\% but the source paper (\S{}VII-D) reports 94.6\%.
 
 
-\subsection{Corpus Summary}
-The core census comprises 60 entries, while the broader bibliography includes agent architectures, security, benchmarks, and serving systems used to delimit context. Unlike the previous source catalog in Appendix D, supporting references are now integrated into the specific claims of the Background, Diagnostics, Benchmark, Safety and Serving Infrastructure sections. Their presence does not imply that all source-level findings were independently reproduced.
-
-
-The 60 core table entries comprise 56 entries assessed at Tier 1 (T1a or T1b) and four at Tier 2. The core failure-localization table includes eight full-text-verified (T1) methods and four abstract-verified (T2) methods. The T2 entries --- StepFinder, FALAT, DoVer, and VerifyMAS --- are retained for landscape coverage but are not used to support fine-grained mechanistic or quantitative cross-method comparisons unless their primary full texts are independently checked. Additional contextual works discussed in the running text are not included in this count. By category: 12 failure-localization methods (8 T1, 4 T2), 6 observability entries (all T1), 8 safety and guardrail systems (4 T1a, 4 T1b), 22 infrastructure systems (all T1), and 12 evaluation benchmarks (all T1). See Appendix A for the complete census. Additionally, we include a retention-ablation experiment on real TraceElephant traces (220 failures) to support the validation protocol proposed in Section 7. \ref{app:curated_flow} records the curated selection workflow without implying a PRISMA-compliant screening count.
-
+\subsection{Corpus Composition}
+The core corpus contains 48 diagnostic and serving entries and 12 evaluation benchmarks (Appendix~\ref{app:census}). The 48 entries comprise 12 localization methods, 6 observability systems, 8 intervention and guardrail systems, and 22 serving systems. The source census records full-text assessment for 56 entries and abstract-level assessment for four localization methods (StepFinder, FALAT, DoVer, and VerifyMAS). We use the latter to map coverage and reserve detailed comparisons for sources with fuller evidence. Related surveys provide context for the review and fall outside the core census.
 
 \section{Diagnostics}
 This section organizes the diagnostic landscape along functional roles rather than implementation categories, following the taxonomy introduced in Section 3.4. We cover failure localization (\S{}4.1), observability and tracing (\S{}4.2), safety intervention and guardrails (\S{}4.3), and diagnostic benchmarks (\S{}4.4). For each subsection, methods are characterized along the six method dimensions defined in Section 3.4: evidence inputs, training requirements, replay demands, attribution granularity, intervention timing, and runtime cost. Figure~\ref{fig:v5_3} provides a matrix view of the taxonomy with representative systems placed in cells.
@@ -210,50 +199,17 @@ Failure localization identifies which agent, step, or action caused an observed 
 
 
 \input{figures/diagnostic_taxonomy_readable.tex}
-Statistical methods. FAMAS \cite{v5ref11} adapts spectrum-based fault localization (SBFL) from software engineering to multi-agent failure attribution. The method parses failed execution logs into structured $\langle$agent, action, state$\rangle$triples using an LLM (Qwen2.5-72B) for log parsing, then applies the Kulczynski2 suspiciousness formula with two domain-specific modifications: temporal decay weighting (later actions receive higher suspiciousness) and action-frequency normalization (\S{}3--4). The method requires k=20 environment replays per failure to build the execution spectrum (\S{}5.1, confirmed). Sensitivity analysis shows monotonic accuracy improvement with replay count: k=5 yields 46.0 action-level correct attributions, k=10 yields 47.6, k=15 yields 50.8, and k=20 yields 54 (\S{}5.4, Figure 4). The best agent-level accuracy is 62.07\% on handcrafted multi-agent systems and 57.61\% overall in the Who\&When benchmark; the best action-level accuracy is 41.38\% (handcrafted) and 29.35\% (overall) (Table 2). The method's principal cost is replay time: on average 105 minutes per task (range 38-- 248 minutes), while the spectrum analysis itself completes in under one minute (\S{}5.2). This makes FAMAS the most expensive T1 method by wall-clock time, but the only one with formal coverage guarantees from SBFL theory. The method degrades on very short trajectories (<11 steps, where the spectrum is too sparse) and very long ones (38--65 steps, where the action space dilutes individual suspiciousness scores) (\S{}6.1, Figure 6). A single benchmark (Who\&When with 184 failure logs) limits generalizability (\S{}6.2).
+\paragraph{Localization from repeated executions.}
+FAMAS \cite{v5ref11} contrasts action patterns across runs using spectrum-based fault localization. Repeated executions provide variation that a static trace cannot supply, at the cost of reconstructing the environment and paying for additional runs. DoVer \cite{v5ref22} is an emerging intervention-based approach. The evidence available for this review supports its inclusion in the landscape, with limited basis for comparing operational cost or attribution accuracy.
 
+\paragraph{Localization from recorded trajectories.}
+CHIEF and TrajAudit structure a trajectory before using a language model to narrow the candidate failure region \cite{v5ref38,v5ref35}. CHIEF backtracks through dependencies between subtasks and agents, while RAFFLES searches for a failure location through iterative reasoning \cite{v5ref51}. AgentRx examines actions against mined constraints \cite{v5ref3}. These choices trade richer local context against the cost of analyzing long trajectories. A static record can support competing explanations when the agent's inputs, tool responses, or downstream effects are missing. Textual hypothesis verification, as explored by VerifyMAS \cite{v5ref31}, inherits this dependence on the trace.
 
-LLM-guided methods. Four systems use off-the-shelf language models without task-specific training:
+\paragraph{Localization from learned or internal signals.}
+AgenTracer and supervised verifiers adapt the diagnostic model to labeled trajectories or generated supervision \cite{v5ref45,v5ref40}. MASPrism instead extracts prefill-stage signals from an open-weight model \cite{v5ref19}. This lowers the need for task-specific training and introduces a different dependency: the evaluator must have access to model internals. StepFinder and FALAT are additional emerging approaches represented by limited evidence in the corpus \cite{v5ref52,v5ref33}.
 
-
-$\bullet$ CHIEF \cite{v5ref38} constructs a three-level hierarchical causal graph G = (V, E) with subtask nodes, agent nodes characterized by OTAR attributes (Objective, Tools, Authority,
-
-
-Role), and three edge types connecting them (\S{}4.1). The system backtracks through this graph in reverse topological order using synthesized virtual oracles Ok = $\langle$Goal, Preconditions, Key Evidence, Acceptance Criteria$\rangle$, then applies counterfactual attribution through four progressive stages: local analysis, planning-control analysis, data-flow analysis, and deviation-aware analysis (\S{}4.2--4.3). A RAG knowledge base constructed from 165 GAIA and 33 AssistantBench examples supports subtask decomposition. Using DeepSeek-V3.2 (671B parameters, approximately 37B active via sparse MoE) as its backbone, CHIEF achieves the highest reported agent-level accuracy at 77.59\% on handcrafted scenarios and 76.80\% on algorithm-generated scenarios (Table 1). Step-level accuracy is 29.31\% (handcrafted) and 52.00\% (algorithm-generated). The system consumes 55,085 tokens per trajectory on handcrafted scenarios and 19,504 on algorithmgenerated ones (Table 2). Reported costs are presented in original units; we avoid crosspaper cost ratios when workloads and measurement conditions differ. The method was tested on TITAN RTX with 32GB RAM using API inference (\S{}5). Its effectiveness depends on graph fidelity: hallucinated edges in the causal graph propagate attribution errors through the backtracking process (\S{}7). A single-benchmark evaluation (Who\&When) and single-root-cause assumption (no cumulative error propagation verification) limit generalizability. $\bullet$ TrajAudit \cite{v5ref35} addresses the challenge of long execution trajectories (often thousands of steps in coding agents) through two preprocessing stages before LLM-based diagnosis. Semantic Structure Folding (SSF) merges consecutive actions with similar semantics, reducing the trajectory length while preserving the decision structure; the paper reports 94.6\% of steps folded on average (\S{}VII-D). Progressive Failure Reasoning (PFR) then applies a multi-round narrowing strategy that progressively identifies the earliest decisive error step. The system was tested with five LLM backbones: Claude Sonnet 4.5 (default), Gemini 3.1 Pro, GPT-5.2, DeepSeek V4 Pro, and Qwen3-235B (Table VI). The best configuration achieves 52.0\% step-level RootSE accuracy without reference trajectories and 49.0\% with reference trajectories, representing +21.6 and +10.8 percentage-point gains over directprompting baselines respectively (Table II). Token consumption averages 138K per case (Table VII, \S{}VII-C), making TrajAudit the most token-intensive single-trajectory method in the survey. Several limitations are notable (\S{}IX). The dataset was filtered from 500 to 102 instances, excluding ambiguous and multi-failure cases. The method is evaluated on single-agent coding tasks only; 37\% of MAS failures are inter-agent cooperation breakdowns, which TrajAudit does not address. A strong positional bias exists: accuracy drops to 19--26\% when errors occur in the first 20\% of steps, and 81\% of mispredictions are later than the true error step by an average of 14.5 steps. Ablation confirms SSF as critical (-11.4\% vs. -3.5\% for PFR, Table VII). $\bullet$ AgentRx \cite{v5ref3} synthesizes behavioral constraints from toolset schemas and domain policies, then uses an LLM judge to evaluate each step against the generated constraints. The method operates in two phases: first, constraint generation produces semantic assertions for each step based on the available tool definitions and optional domain policy $\Pi$ (9 failure categories in a structured taxonomy); second, a judge protocol evaluates each step against these constraints. On $\tau$-bench \cite{v5ref42} (airline and retail scenarios), AgentRx achieves 42.7\% step accuracy, with the AgentRx W\&W* variant showing +23.9 percentage points over the 18.8\% baseline (Table 3). Cost is \$0.18 per trajectory versus \$0.05 for judge-only evaluation (3.6$\times$ overhead), with constraint generation consuming 81\% of the
-
-
-total cost (\S{}5.3). The method generalizes across four domains and three LLM backbones (GPT-5, o3, DeepSeek-V3.2; Table 9) without per-domain fine-tuning. Token consumption varies with trajectory complexity: 4,889 tokens per trajectory on $\tau$-bench versus 16,484 on Magentic-One (Table 6). Limitations include potential taxonomy incompleteness, false positives from weak validation signals, and a tendency to surface downstream symptoms rather than root causes (\S{}7). Accepted at EMNLP Findings 2026. $\bullet$ FALAT \cite{v5ref33} frames attribution as a dependency-guided search problem over a hierarchical trajectory representation with typed inter-step dependencies. Given a failed trajectory $\tau$ = (s1, . . . , sT), FALAT constructs a dependency graph encoding causal, dataflow, and control-flow relationships between steps, then searches this graph for the decisive step using LLM-judged counterfactual reasoning (hypothetical, not re-executed). The method requires no training and no replays, using off-the-shelf API models (GPT- 5.4-Mini, DeepSeek V3.2, MiniMax 2.5). It achieves 46.0\% step-level accuracy on algorithm-generated and 29.1\% on hand-crafted Who\&When scenarios (Table 2, \S{}4). Limitations include dependence on LLM judgment quality and window-based processing that may miss long-range dependencies.
-
-
-Supervised methods. Two systems use task-specific supervised training rather than RL or LLM prompting: Xia et al. \cite{v5ref40} propose a multi-perspective verification approach with adaptive refinement (COLM 2026). A judge LLM generates a failure hypothesis, multiple independent evaluator LLMs verify it from different viewpoints (structural, temporal, semantic), and confidenceweighted voting aggregates their assessments. The evaluator feedback is then used to fine-tune the judge via LoRA (rank 64, $\alpha$=128, dropout 0.05, 3 epochs). This iterative judge-evaluator loop reaches 69.05\% agent-level accuracy on algorithm-generated scenarios, competitive with AgenTracer's RL approach. A key efficiency advantage: the system uses only 451K tokens per attribution on algorithm-generated scenarios versus AgenTracer's 16.4M tokens --- a 36$\times$ reduction --- at \$0.063 versus \$2.275 per case (\S{}5). StepFinder \cite{v5ref52} takes a different supervised approach, using a BiLSTM with agent-aware attention and multi-scale differencing on top of Qwen3-Embedding-0.6B features (KDD 2026). The system is trained on LLM-prompted trajectory regeneration data (1,564 algorithm-generated and 2,604 hand-crafted trajectories, up to 50 epochs). At inference, StepFinder produces zero output tokens --- it generates a step-level attribution from the learned representations without any LLM decoding. Inference time is 0.61s on algorithm-generated scenarios versus 2.92s for the best LLM baseline, running on a single NVIDIA RTX 3080 Ti (Table 6, \S{}7). Accuracy is modest at 29.63\% (algorithm-generated) and 22.99\% (hand-crafted), below LLM causal methods, but the approach demonstrates that lightweight learned attributors can operate at <1s latency.
-
-
-Intervention-based methods. DoVer \cite{v5ref22} is unique among surveyed methods in using a ``Dothen-Verify'' paradigm: it generates failure hypotheses from logs, then validates each by replaying the execution with targeted interventions at the hypothesized failure point. Each case requires 4--12 environment re-executions with stateful checkpoints. If the intervention (replacing the hypothesized faulty action with a corrected one) leads to task success, the hypothesis is confirmed. This makes DoVer the only method besides FAMAS that requires environment replay, but unlike FAMAS's statistical approach (k=20 blind replays), DoVer's replays are hypothesisdirected. The method also supports a recovery mode: once the root cause is identified, the corrective intervention can be applied to resume the task. This dual diagnosis-and-recovery
-
-
-capability distinguishes it from purely analytical methods. VerifyMAS \cite{v5ref31} formulates attribution as hypothesis verification using natural language inference (NLI). The system generates candidate failure hypotheses, then uses NLI to verify each against the execution evidence. An optional SFT fine-tuning stage adapts the NLI model to agent-specific failure patterns. The output is an agent-level attribution paired with an error-type classification. Accepted at NeurIPS 2026. AgenTracer \cite{v5ref45} trains an 8B-parameter failure attribution model (Qwen3-8B) via Group Relative Policy Optimization (GRPO) with multi-granular reward signals on TracerTraj-2.5K, a dataset of approximately 2,476 annotated trajectory pairs spanning coding, math, and agentic domains. The annotation pipeline uses DeepSeek-R1 for counterfactual replay and fault injection: for each trajectory, up to T+1 replays are performed during the annotation phase (not inference) to establish ground-truth attribution (\S{}3.2, Algorithm 1). At inference time, the trained model requires zero replays and zero environment access. On the Who\&When benchmark (184 failures from 127 MAS), AgenTracer achieves 69.10\% agent-level accuracy on handcrafted scenarios with ground truth (Table 1, confirmed), outperforming DeepSeek-R1 by 12.21 percentage points (ICLR 2026). Step-level accuracy is lower: 20.68\% on handcrafted and 42.86\% on algorithm-generated scenarios (Table 1). Training requires 8$\times$ H100-80GB GPUs on the verl platform (\S{}5.1). Downstream self-correction experiments show +4.8\% to +14.21\% task completion improvement when AgenTracer's attribution feeds back into the agent (\S{}5.3, Figure 3). Limitations include: low step-level accuracy on handcrafted scenarios (20.68\%), expensive annotation pipeline requiring frontier model replays, modest evaluation scale (approximately 127 trajectories), instability when ground truth is provided (sometimes hurts accuracy), and no evaluation on embodied, web, or scientific agent domains. Xia et al. \cite{v5ref40} uses LoRA-based supervised fine-tuning with a multi-perspective verification strategy: the system generates multiple candidate attributions from different viewpoints (structural, temporal, semantic) and selects the one with highest cross-verification confidence. This reaches 69.05\% agent-level on algorithm-generated scenarios, competitive with AgenTracer's RL approach. StepFinder \cite{v5ref52} takes a different supervised approach, using BiLSTM to model temporal semantics of execution traces for step-level failure detection, achieving 29.63\% step accuracy on algorithm-generated scenarios without requiring LLM inference at attribution time.
-
-
-Training-free signal extraction. MASPrism \cite{v5ref19} extracts diagnostic signals directly from a 0.6B-parameter model's (Qwen3-0.6B) prefill stage without any training, replays, or outputtoken generation. The method operates in two deterministic prefill passes (\S{}3.2--3.3, confirmed). In the first pass (Filtering), next-token NLL scores and attention patterns identify symptomatic steps: tokens with unexpectedly high NLL indicate points where the execution deviates from the model's expectations. The top 20--50\% of steps by NLL score (configurable per benchmark) are retained as symptom candidates (\S{}4.1.3). In the second pass (Diagnosis), the retained candidates are restored into context and rescored; attention weight patterns link symptoms to root-cause candidates through a ranked scoring mechanism. The method requires zero training, zero replays, and zero output tokens --- only two deterministic prefill passes. It processes trajectories at 2.66 seconds on average on an RTX 5090, consuming only 7,066 input tokens versus 17,748 for A2P (\S{}5, Table 4). This yields 6.69$\times$ speed improvement over comparable approaches. On TRAIL/SWE-bench, MASPrism outperforms Gemini-2.5-Pro by 89.50\% relative (Table 1). Model robustness testing across different backbone sizes (Table 5) confirms that the 0.6B model provides the best cost-accuracy trade-off. Key limitations (\S{}5.1, 5.3) include: signals are diagnostic ranking evidence rather than for-
-
-
-mal causal estimators; the method requires open-weight SLMs (closed APIs are incompatible with prefill-stage signal extraction); only failed traces are evaluated, with false-positive control on mixed-success runs left as future work; the symptom ratio must be manually configured per benchmark; and on short traces (the AG subset of Who\&When), explicit reasoning methods such as A2P outperform MASPrism (43.65\% vs. 36.51\%, Table 1). Without the filtering stage, the method encounters out-of-memory failures on 73 of 117 GAIA traces (Table 3).
-
-
-Additional LLM-guided methods. Beyond the four systems detailed above, the LLM-guided family has expanded rapidly. RAFFLES \cite{v5ref51} applies iterative reasoning chains to progressively narrow the failure location, achieving 50.79\% step-level accuracy on algorithm-generated scenarios in the Who\&When benchmark (EACL 2026). VerifyMAS \cite{v5ref31} formulates attribution as hypothesis verification using natural language inference (NLI), optionally fine-tuned via SFT, producing agent-level attribution paired with error-type classification. At the abstract-verified tier, additional systems reveal design directions: CausalFlow applies causal responsibility scores to agent trajectories via step-level counterfactual intervention. CAR (Causal Agent Replay) combines structural causal models with five do-operations and Shapley credit-splitting for multi-agent attribution. DCFA (EMNLP 2026) introduces a training-free dual-view approach: a global causal dependency graph combined with local counterfactual reasoning, achieving +8.27\% step accuracy over the state of the art. HPFA (COLM 2026) uses hypergraph-based paired failure attribution with SFT + RL training. EDGE (EMNLP 2026) constructs multi-error dependency graphs, addressing the challenging case of multiple simultaneous failures. DeFA achieves the highest accuracy on both Who\&When and Who\&When Pro's text subset through protocol + semantic dependency propagation. EMFA establishes a new state of the art on step-level Who\&When attribution by modeling cascading + persistent error propagation loops. These systems illustrate the field's rapid progression from single-failure linear analysis toward multi-fault, graph-structured attribution. Three additional architectural directions are visible: SDBL (AAAI 2026) proposes scoping the failure before localization --- defining the failure boundary first, then identifying the root cause within that boundary. DuoTrace separates detection from attribution, using a first pass to identify whether a failure occurred and a second pass to attribute where it originated. REFLECT (ICML 2026 Workshop) bridges diagnosis to intervention by generating repair actions from attributed failures --- the only system in our survey that closes the loop from attribution to recovery in a single framework. Together, these 23 additional systems (all abstract-verified) suggest that the failure-localization landscape is maturing from isolated tools toward integrated pipelines with standardized interfaces.
-
-
-Benchmarks and evaluation. TRAIL \cite{v5ref10} provides the first OTel-format benchmark for trace debugging: 1,987 spans across 148 traces from GAIA (multi-agent) and SWE-Bench Lite (single-agent) systems, with structured error categorization. The best model (Gemini 2.5 Pro) achieves only $\sim$11\% joint accuracy, revealing that current LLMs struggle with long structured traces. Token consumption is substantial: GAIA traces average 263--314K input tokens, while SWE-Bench traces average 617--728K, with a pronounced anti-correlation between trace length and accuracy (Pearson r = -0.29 to -0.38, \S{}5.1.3). The annotation protocol required \$12.66 per trace and 30--40 minutes of expert time, illustrating the cost of ground-truth creation for diagnostic evaluation. RAFFLES \cite{v5ref51} achieves 50.79\% step-level accuracy on algorithm-generated scenarios through iterative reasoning (K=2 rounds) at \$0.12 per short log and \$0.31 per long log using Claude Sonnet --- 21--41$\times$ cheaper than a junior engineer (\S{}5.1, Appendix D). Parallelized latency is
-
-
-15.6s for short and 29.2s for long trajectories (Table 11). The system is entirely simulation-free: it operates on the static execution log without replays, using an iterative memory H that stores prior evaluator rationales and confidence scores across reasoning rounds.
-
-
-Emerging patterns. Three trends are visible across the failure-localization systems surveyed. First, zero-replay methods dominate: 10 of 12 methods operate on a single trajectory without environment re-execution. This reduces the infrastructure burden from multi-minute replays to single-pass inference and makes failure localization compatible with production workloads where replay may be infeasible (non-deterministic environments, stateful APIs, cost constraints). Second, multi-granular attribution is becoming standard: AgenTracer, CHIEF, and Who\&When Pro all support simultaneous agent-level and step-level attribution, recognizing that different debugging workflows require different granularities. Third, small models are competitive: MASPrism's 0.6B model achieves accuracy comparable to frontier models at 6.69$\times$ lower latency. This suggests that diagnostic signal extraction does not require the same model capacity as task execution, opening the door to dedicated lightweight diagnostic co-processors that run alongside the serving infrastructure.
-
-
-Design trade-offs. Table 2 presents the multi-axis comparison. Three trade-off axes emerge: 1. Replay cost vs. statistical coverage. FAMAS (T1) and DoVer (T2) are the only methods among the surveyed localization systems that require environment replays (FAMAS: k=20 blind replays for spectrum analysis; DoVer: 4--12 hypothesis-directed re-executions). All other T1 methods operate on a single trajectory without re-execution. 2. Model size vs. cost. MASPrism uses a 0.6B model at 2.66s/case; CHIEF uses a 671B model at 55K tokens/case. The accuracy gap (MASPrism varies by benchmark; CHIEF at 77.59\% agent-level) does not scale linearly with model size. 3. Agent-level vs. step-level accuracy. Across all methods, step-level accuracy is substantially lower than agent-level accuracy. The best step-level result is 52.0\% (TrajAudit RootSE and CHIEF on algorithm-generated scenarios), suggesting that fine-grained attribution remains an open challenge.
-
+\paragraph{What the comparisons establish.}
+Table~\ref{tab:v5_2} compares input, training, replay, granularity, timing, and cost. A method evaluated only on known failures supports attribution after detection. Using it for online monitoring also requires evidence about false alarms and decision delay on successful runs. Likewise, agent-level and step-level attribution require different labels, and figures from separate benchmarks cannot establish a common ordering. TRAIL's span annotations illustrate the additional supervision needed to evaluate localization within a trace \cite{v5ref10}.
 
 \subsection{Observability and Tracing}
 \input{related_literature/observability.tex}
@@ -349,33 +305,21 @@ Additional safety systems. SAIGuard \cite{v5ref34} implements proactive defense 
 Diagnostic-safety overlap. Safety systems and diagnostic systems share a key requirement: both need access to the agent's execution state (tool calls, outputs, and intermediate reasoning). Three of the eight safety systems (SentinelAgent, AGrail, AgentDoG) explicitly consume diagnostic traces as input to their safety decisions. This overlap suggests that serving-side state
 
 
-management --- particularly KV cache eviction policies --- can affect safety system effectiveness when it removes state that safety monitors depend on. We formalize this interaction in Section 6.
+management --- particularly KV cache eviction policies --- can affect safety system effectiveness when it removes state that safety monitors depend on. Section~\ref{sec:retention} discusses when these dependencies matter.
 
 
 \subsection{Benchmarks}
 \input{related_literature/benchmark_context.tex}
+Following the practice of aligning benchmark targets with levels of capability \cite{survey_humor}, we group evaluations by the claim their labels support. Outcome benchmarks test whether the task reached a target state. Safety evaluations test whether actions violate a policy or whether a monitor intervenes. Attribution benchmarks ask where the decisive failure occurred. These outcomes require different labels, even when they are extracted from the same workflow.
 
+\paragraph{Outcome and safety.}
+Task-success and repeated-run metrics, such as those used by $\tau$-bench \cite{v5ref42}, can reveal brittle behavior without recording its origin. Safety tests can isolate unsafe actions, but an unsafe action label does not by itself identify the upstream decision that caused it. Table~\ref{tab:v5_3} distinguishes these capabilities from native causal annotations.
 
-Progress in diagnostics depends on benchmarks that vary in failure coverage, trace fidelity, and evaluation scope. Table 3 summarizes 12 Tier-1 benchmarks.
+\paragraph{Attribution and evidence resolution.}
+Who\&When and TraceElephant provide agent- and step-level annotations \cite{v5ref48,v5ref6}. RootSE provides step-oriented cases, while TRAIL evaluates localization within instrumented spans \cite{v5ref35,v5ref10}. These annotations support distinct units of analysis. A method can identify the agent associated with failure while failing to locate the decisive action or explain how the failure propagated. Meaningful comparisons require agreement on what counts as the decisive event and how earlier contributing events are treated.
 
-
-Failure-attribution benchmarks. TraceElephant \cite{v5ref6} provides the highest trace fidelity among surveyed benchmarks: 220 annotated agent failures across three production systems (Captain- Agent, Magentic-One, SWE-Agent) and three task sources (GAIA, AssistantBench, SWE- Bench Verified), with 380 total execution traces (\S{}3.1, Table 1). Each trace is a structured JSON with two layers: trace metadata (task ID, system architecture, agent configuration) and steplevel records (agent ID, input context, output content, tool logs with tool name/inputs/outputs/status) (\S{}3.3). Annotation was performed by three human annotators with at least one year of MAS debugging experience in a three-round protocol (independent $\rightarrow$joint consensus $\rightarrow$cross-review), achieving Krippendorff's $\alpha$ of 0.72 at the agent level and 0.64 at the step level (\S{}3.4). The central quantitative finding is the impact of trace completeness on attribution accuracy. Under the same All-at-Once attribution protocol, complete traces raise agent-level accuracy from 51\% (output-only logs matching Who\&When's observability) to 62.2\% (+11.2 percentage points, a 22\% relative gain) (ACL 2026, \S{}4.3, Table 3). At the step level, the gain is more pronounced: 16\% to 28.1\% (+12.1pp, 76\% relative), confirming that step-level attribution is substantially more sensitive to missing trace information. Dynamic replay-based attribution adds a further 10\% step improvement (Table 2). Environment-interacting agents account for over 50\% of failure attributions, with orchestrators responsible for 18--29\% (\S{}4.2.2, Figure 4). Average LLM invocations per trace range from 20.5 (Captain-Agent) to 29.3 (Magentic-One) (\S{}4.2.3). The benchmark is available under CC BY 4.0 with a reproducible execution environment. Who\&When \cite{v5ref48} provides 184 failures from 127 multi-agent systems as the first dedicated failure-attribution benchmark (ICML 2025). The benchmark uses algorithm-generated (via CaptainAgent) and hand-crafted (via Magentic-One) MAS configurations with up to 5 agents each, producing log lengths of 5--130 steps (\S{}3.1). Attribution is defined through a ``decisive error'' concept (Definitions 2.1, 2.2): the earliest agent action whose correction would change the task outcome from failure to success. Three annotators with AI-agent expertise performed an 84.3 human-hour annotation protocol (\S{}3.3), with 15--30\% of instances marked as uncertain. Best reported accuracy is 53.5\% at the agent level and only 14.2\% at the step level; step-level accuracy degrades to approximately 0\% on trajectories exceeding 93 steps (\S{}4.4, Figure 4). The hybrid attribution method costs 149,177 tokens per instance (Table 3), making it one of the most expensive evaluation protocols. Domain-specific alternatives include RootSE (introduced alongside TrajAudit \cite{v5ref35}, 102 coding failures with step-level annotations from 35 repositories across Python, Go, and JavaScript; average 51.7 steps per trajectory) and $\tau$-bench (airline and retail customer-service scenarios used in AgentRx evaluation). The Who\&When Pro benchmark (NeurIPS 2026) extends the original with 12,326 traces across 26 benchmarks.
-
-
-Reliability and safety benchmarks. ReliabilityBench (1,280 episodes) evaluates pass@1 overestimation by 20--40\% [a], identifying a systematic optimism bias in current evaluation:
-
-
-agents appear more capable than they are when evaluated on single attempts rather than repeated trials. BenchGuard (COLM 2026) audits benchmark quality itself, examining three existing benchmarks for annotation consistency, task ambiguity, and reproducibility issues. Safety-specific benchmarks span three evaluation dimensions. GuardianAgentBench (580 scenarios, 81 tools, 5 failure types across 3 agent frameworks) is the most comprehensive, providing multi-agent scenarios with structured failure-type annotations. Agent Security Bench (ASB, ICLR 2025) evaluates security vulnerabilities across 10 scenarios with 400+ tools, finding that existing defense mechanisms are ``barely effective'' against adversarial attacks (attack success above 84\%). TAMAS (ACL 2026) tests adversarial robustness of multi-agent systems with 300 instances covering Byzantine, colluding, and contradicting agent behaviors. OSGuard (324 examples, 45 tasks) evaluates OS-level action safety with a guardrail architecture. Agent- SafetyBench (2,000 test cases) and AgentHarm (440 tasks, ICLR 2025) focus on single-agent safety evaluation.
-
-
-Gap: no cross-layer benchmark. A striking finding from the benchmark analysis is that none of the 12 Tier-1 benchmarks evaluates the diagnostics-infrastructure interaction: how diagnostic trace capture affects serving throughput, or how serving-side eviction policies affect diagnostic fidelity. TraceElephant's middleware is described as ``lightweight'' (\S{}3.2) but provides no quantitative overhead measurements. Who\&When's attribution is purely offline post-hoc analysis. This gap is not merely an oversight --- it reflects the architectural separation between diagnostic and serving research communities, and motivates the validation protocol proposed in Section 7.
-
-
-Cross-cutting analysis. Figure~\ref{fig:v5_4} presents a coverage matrix across 10 evaluation dimensions for all 12 benchmarks. Three systematic gaps are visible:
-
-
-1. No benchmark tests diagnostic-infrastructure interaction. The ``Diag-infra interaction'' column is entirely empty: 0 of 12 benchmarks measure how diagnostic trace capture affects serving throughput, or how eviction policies affect attribution accuracy. This is the strongest visual evidence for the survey's gap thesis. 2. No benchmark tests concurrent agents. All attribution benchmarks evaluate singleagent or sequential multi-agent traces; none evaluates attribution under concurrent agent execution where KV cache contention and scheduling decisions may affect trace availability. 3. Attribution and scale are inversely related. Only 4 of 12 benchmarks provide steplevel attribution labels (TraceElephant, Who\&When, TrajAudit). The largest benchmarks (Who\&When Pro at 12,326 traces, Agent-SafetyBench at 2,000 cases) have no attribution labels. The annotation cost barrier (TraceElephant's \$12.66/trace, Who\&When's 84.3 human-hours) explains this inverse relationship: high-fidelity attribution at large scale would exceed \$150K. Trace fidelity is bipartite: benchmarks either provide full execution traces (TraceElephant, Who\&When, RootSE) or output-only evaluation (ReliabilityBench, Agent-SafetyBench, AgentHarm, OSGuard). The intermediate case --- partial trace with structured metadata but without full step-level tool logs --- is absent, despite being the most common deployment scenario. Failure-attribution benchmarks and safety benchmarks use entirely different evaluation protocols: attribution benchmarks measure causal agent/step identification accuracy, while safety benchmarks measure attack success rate or scenario coverage. No benchmark evaluates both dimensions simultaneously.
-
+\paragraph{Cross-layer coverage.}
+Figure~\ref{fig:v5_4} maps the coverage of the twelve benchmarks in the core corpus. None provides matched diagnostic and serving measurements under controlled retention policies. A benchmark for this gap needs both annotated workflow events and serving events linked to the same execution.
 
 \input{figures/benchmark_capability_readable.tex}
 \begin{table}[!tbp]
@@ -486,14 +430,6 @@ Design trade-offs. Tables 4 and 5 present the detailed comparison. Three key dis
 1. Textual vs. KV sharing. Textual context sharing (Parrot, DistServe) incurs recomputation cost but avoids cache coherence issues. Exact KV reuse (SGLang, Mooncake) eliminates recomputation but requires compatible tokenizers and model architectures. Crossmodel transfer (DroidSpeak) enables the broadest reuse but introduces approximation error at non-reused layers. 2. Single-model vs. multi-agent. Most systems (SGLang, vLLM, Mooncake, InferCept) manage a single model instance with shared cache. Agent-specific systems (ScaleSim, KVFlow, the policy-driven runtime) introduce per-agent state tracking that enables differentiated eviction policies but increases metadata overhead. 3. Reactive vs. predictive eviction. LRU/LFU eviction (SGLang, Mooncake) reacts to memory pressure. Workflow-aware (KVFlow) and survival-based (the policy-driven runtime) policies predict future reuse, potentially retaining diagnostically valuable state longer, but require workload characterization that may not generalize.
 
 
-\section{Conditional Cross-Layer Retention Trade-offs}
-The diagnostic methods reviewed in Section 4 consume execution evidence; the serving systems in Section 5 manage objects that may be expensive to keep available. A natural question is whether these two layers compete for the same resources. This section formalizes the conditions under which serving-state reclamation actually harms diagnostic capability, and shows that the relationship is conditional rather than universal.
-
-
-\subsection{Distinguishing Computational and Execution State}
-A KV cache is a computational acceleration structure: it stores precomputed attention tensors so that subsequent tokens can be generated without reprocessing the prompt. Removing a KV
-
-
 \begin{table}[!tbp]
 \centering
 \caption{Infrastructure serving systems (part 1): general-purpose and prefix-caching systems.}
@@ -502,7 +438,7 @@ A KV cache is a computational acceleration structure: it stores precomputed atte
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.13}
 \footnotesize
-\begin{tabular}{@{}Y{.146\linewidth}Y{.233\linewidth}Y{.280\linewidth}Y{.123\linewidth}Y{.132\linewidth}@{}}
+\begin{tabular}{@{}Y{.145\linewidth}Y{.225\linewidth}Y{.260\linewidth}Y{.120\linewidth}Y{.125\linewidth}@{}}
 \toprule
 \textbf{System} & \textbf{State} & \textbf{Policy} & \textbf{Agent-aware} & \textbf{Venue} \\
 \midrule
@@ -539,8 +475,8 @@ KVCOMM & Compressed KV & Anchor LFU + FIFO & Yes & NeurIPS 2025 \\ \hline
 ForkKV & KV CoW & Deduplication & Yes & arXiv 2026 \\ \hline
 TokenDance\cite{v5supp2} & KV block-sparse & Sparse difference & Yes & arXiv 2026 \\ \hline
 KAIROS & Per-agent context & Context growth aware & Yes & arXiv 2026 \\ \hline
-Policy-driven runtime & Agent+events & Survival-learned & Yes & arXiv 2026 \\ \hline
-ScaleSim & KV+adapter+draft & Invocation distance & Yes & arXiv 2026 \\ \hline
+Policy-driven runtime & Agent+events & Survival-\allowbreak learned & Yes & arXiv 2026 \\ \hline
+ScaleSim & KV, adapter, draft & Invocation distance & Yes & arXiv 2026 \\ \hline
 DroidSpeak & Per-layer KV & Selective recompute & No & arXiv 2024 \\ \hline
 LRAgent\cite{v5supp4} & KV base+LoRA & Shared base & Yes & ICML 2026 \\ \hline
 PolyKV\cite{v5supp5} & Shared compressed & Asymmetric compress & No & arXiv 2026 \\ \hline
@@ -548,6 +484,13 @@ PolyKV\cite{v5supp5} & Shared compressed & Asymmetric compress & No & arXiv 2026
 \endgroup
 \end{center}
 cache induces a new prefill pass but does not destroy information --- the prompt text remains available, and the same KV tensors can be recomputed deterministically. A diagnostic trace is an execution record: it captures what happened during a particular run, including tool responses, stochastic environment observations, causal orderings, and intermediate model outputs. Removing a trace may be irreplaceable if the underlying tool response was non-deterministic, the external environment has changed, or the causal ordering was never logged. This distinction is fundamental: removing a KV cache does not delete a diagnostic trace unless the trace is co-located with the cache and no independent copy exists. The two objects are stored in different subsystems, consumed by different layers, and retained under different policies. Their resource budgets can overlap but need not.
+
+\section{Conditional Cross-Layer Retention Trade-offs}\label{sec:retention}
+The diagnostic methods reviewed in Section 4 consume execution evidence; the serving systems in Section 5 manage objects that may be expensive to keep available. A natural question is whether these two layers compete for the same resources. This section formalizes the conditions under which serving-state reclamation actually harms diagnostic capability, and shows that the relationship is conditional rather than universal.
+
+
+\subsection{Distinguishing Computational and Execution State}
+A KV cache is a computational acceleration structure: it stores precomputed attention tensors so that subsequent tokens can be generated without reprocessing the prompt. Removing a KV
 
 
 \subsection{When Is the Conflict Real?}
@@ -600,10 +543,10 @@ Environment observations & Diagnostics & Trace & If unrepeatable & External API/
 
 
 \subsection{State Types and Dependency Boundaries}
-Table 6 distinguishes the physical state, its consumer, and the outcome of reclamation. Colocation alone does not create a diagnostic dependency: a trace stored in an independently retained object store survives GPU KV eviction. Conversely, diagnostic information can be lost even without cache eviction when telemetry sampling discards an unrepeatable tool observation.
+Table~\ref{tab:v5_6} distinguishes the physical state, its consumer, and the outcome of reclamation. Colocation alone does not create a diagnostic dependency: a trace stored in an independently retained object store survives GPU KV eviction. Conversely, diagnostic information can be lost even without cache eviction when telemetry sampling discards an unrepeatable tool observation.
 
 
-\subsection{Three-Tier Diagnostic-Serving Overlap Classification}
+\subsection{Cross-layer dependencies}\label{sec:overlap}
 Based on the evidence-loss formalization and the reviewed systems, we classify diagnosticserving interactions into three tiers:
 
 
@@ -614,7 +557,7 @@ diagnostic attention scores in GPU memory --- evicting the KV cache forces repre
 
 
 \subsection{Counterexamples: When the Conflict Does Not Arise}
-The three-tier classification in Section 6.4 predicts specific cases where cross-layer conflict should not arise. We verify these predictions against the surveyed systems:
+The three-tier classification in Section~\ref{sec:overlap} predicts specific cases where cross-layer conflict should not arise. We verify these predictions against the surveyed systems:
 
 
 Independent trace stores. All T1 failure-localization methods store their input evidence independently of the serving KV cache. FAMAS operates on re-executable runs stored in a log database. TrajAudit, CHIEF, AgentRx, and MASPrism operate on trajectory logs that are persisted before the KV cache is populated for the next request. Even AgenTracer's RL-trained model operates on stored trajectory data, not on live KV state. This architectural pattern --- trace persistence before KV allocation --- is the primary reason the cross-layer conflict is rare: the diagnostic layer's input is already decoupled from the serving layer's managed state.
@@ -626,6 +569,90 @@ Deterministic recomputation. The distinction between evidence loss and delayed a
 Non-KV state types. Model weights and adapters are versioned and persistent: evicting a LoRA adapter from GPU memory does not destroy the adapter (it remains on disk). ScaleSim explicitly manages adapter state alongside KV cache, but adapter eviction is a latency event (requiring reload), not a data-loss event. Random seeds, when recorded in trace metadata, are trivially reconstructable. The only state type with genuine evidence-loss risk is unrepeatable environment observations --- tool-call responses from external APIs, stochastic environment states, and real-time sensor data --- and these are typically stored in the trace, not in the KV cache.
 
 
+The supplementary examples in Appendix~\ref{app:illustrations} illustrate two distinct manipulations: reclaiming simulated cache blocks and selecting events from recorded traces. Their results cannot establish the effect of cache eviction on attribution in a deployed serving system.
+
+\subsection{Serving mechanisms with cross-layer relevance}
+TOPAS jointly selects retained prefixes and schedules requests under a capacity constraint \cite{v5ref24}. It demonstrates joint resource management for serving, with throughput as the objective. The policy-driven runtime and TokenCake use agent identity, workflow structure, or engine events to guide cache placement and eviction \cite{v5ref47,v5ref4}. ConServe reacts to conversation state and KAIROS uses workload signals to manage GPU power \cite{v5supp6,v5ref44}. In these systems, workflow signals help predict serving demand. Establishing their relevance to diagnosis would require measuring how a policy changes the observations or states available to a diagnostic consumer.
+
+\section{Open Research Directions}\label{sec:agenda}
+\paragraph{Link diagnostic and serving telemetry.}
+Tool and agent events record the workflow, while serving events record where and when inference state was allocated, transferred, or reclaimed. Aligning these streams through request and workflow identifiers would make it possible to distinguish a missing event from a cache miss. Trace-oriented datasets such as TraceElephant and TRAIL provide complementary starting points \cite{v5ref6,v5ref10}. Their integration with serving telemetry requires stable event identities and documented semantics for sampling, redaction, and dropped events.
+
+\paragraph{Measure attribution under controlled evidence loss.}
+A benchmark should report agent-level and step-level localization separately and distinguish task outcomes from causal annotations. Comparisons across trace-only, replay-based, and model-signal methods should control which artifacts each method receives. Where omission changes accuracy, evaluation should establish whether it removes a decisive observation, changes the interpretation of an event, or simply alters a method's input length. The supplementary trace ablation in Appendix~\ref{app:illustrations} illustrates this concern for a particular heuristic.
+
+\paragraph{Evaluate shared budgets in realistic workloads.}
+The key comparison is between a serving-only policy, independently retained traces, and joint retention under matched workloads. Useful outcomes include attribution quality and recovery alongside throughput, tail latency, and the size and location of retained state. Comparing isolated and contended storage helps identify when joint optimization addresses a genuine dependency. Serving policies that already adapt cache lifetimes to workload structure provide starting points \cite{v5ref16,v5ref47}. Evaluation should keep cache reuse, evidence retention, and fallback execution distinguishable.
+
+\section{Comparing Diagnostic and Serving Assumptions}
+Table~\ref{tab:v5_12} applies the DRICE dimensions to representative systems. The dimensions record diagnostic evidence, retention policy, infrastructure assumptions, costs, and depth of evidence. Cheng et al.'s cross-layer comparison of on-device retrieval and generation illustrates why placement and cost belong alongside model quality in a system-level survey \cite{survey_edge_rag}. Here, the shared object is the execution artifact, and its value depends on both reuse and recoverability.
+
+The literature shows a recurring separation. Trace-based diagnosis consumes detailed event records and typically leaves retention to the deployment. Serving systems manage cache retention but usually optimize reuse, scheduling, or memory pressure. Agent identity and engine events can inform those decisions without establishing which observations will be needed for attribution. Even an architecture that jointly schedules requests and retains prefixes must specify whether diagnostic events share that resource before it can measure an attribution effect.
+
+The dimensions describe evidence and assumptions rather than providing aggregate scores. Token count, replay time, network traffic, and storage occupancy may dominate in different settings. Reporting them alongside source depth and deployment assumptions helps readers judge which comparisons transfer to their workloads.
+
+
+\begin{center}
+\begingroup
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.16}
+\scriptsize
+\begin{longtable}{|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|}
+\caption{DRICE assessment of representative diagnostic and serving systems. D: diagnostic evidence; R: retention policy; I: assumptions; C: dominant cost; E: evidence depth.}\label{tab:v5_12}\\
+\hline
+\textbf{System} & \textbf{Layer} & \textbf{D} & \textbf{R} & \textbf{Infrastructure assumption} & \textbf{Dominant cost} & \textbf{Tier} \\ \hline
+\endfirsthead
+\textbf{System} & \textbf{Layer} & \textbf{D} & \textbf{R} & \textbf{Infrastructure assumption} & \textbf{Dominant cost} & \textbf{Tier} \\ \hline
+\endhead
+CHIEF & Diagnostics & Yes & -- & Independent trace store & 55K tokens/trace & T1a \\ \hline
+MASPrism & Diagnostics & Yes & -- & GPU for 0.6B model & 2.66s/trace & T1a \\ \hline
+FAMAS & Diagnostics & Yes & -- & Replayable environment & 105min replay & T1a \\ \hline
+AgenTracer & Diagnostics & Yes & -- & 8 H100 (training) & RL training & T1b \\ \hline
+AgentRx & Diagnostics & Yes & -- & LLM API & US\$0.18/trace & T1a \\ \hline
+TrajAudit & Diagnostics & Yes & -- & Frontier LLM API & 138K tokens/trace & T1a \\ \hline
+SGLang & Infrastructure & -- & Yes & GPU shared pool & Dynamic memory pool & T1a \\ \hline
+Mooncake & Infrastructure & -- & Yes & Disaggregated RDMA & Memory and network & T1a \\ \hline
+InferCept & Infrastructure & -- & Yes & GPU and tool calls & Memory P/S/D & T1a \\ \hline
+KVFlow & Infrastructure & -- & Yes & Workflow DAG & Workflow cache & T1a \\ \hline
+Continuum & Infrastructure & -- & Yes & Single model multi-turn & TTL pinning & T1a \\ \hline
+DroidSpeak & Infrastructure & -- & Yes & Same-arch multi-LLM & Selective recompute & T1a \\ \hline
+ForkKV & Infrastructure & -- & Yes & Multi-LoRA & CoW deduplication & T1a \\ \hline
+PolyKV & Infrastructure & -- & -- & Multi-agent shared pool & Asymmetric compression & T1a \\ \hline
+ConServe & Infrastructure & -- & Yes & Disaggregated & Conversation pinning & T1a \\ \hline
+Policy-driven runtime & Bridge & Partial & Yes & Agent-aware GPU & Memory and metadata & T1a \\ \hline
+TOPAS & Bridge & -- & Yes & Shared serving budget & Shared scheduling & T1a \\ \hline
+TokenCake & Bridge & Partial & Yes & DAG-aware & Dual scheduler & T1a \\ \hline
+ScaleSim & Bridge & -- & Yes & Agent-aware multi-state & Invocation distance & T1a \\ \hline
+KAIROS & Bridge & Partial & Yes & GPU frequency & Context growth & T1a \\ \hline
+Leyline & Bridge & -- & Yes & Policy directives & Directive splice & T1a \\ \hline
+\end{longtable}
+\endgroup
+\end{center}
+
+\section{Discussion}
+The surveyed methods expose a mismatch between the resolution of the evidence and the resolution of the diagnosis. Outcome benchmarks can indicate that a workflow failed, while agent and step attribution require increasingly detailed labels and records. Trace-only methods can analyze executions with irreversible tool actions, but their conclusions depend on what was logged. Replay-based methods can test whether a change affects the outcome when checkpoints, tool behavior, and execution conditions can be recovered. Reported results from these settings answer different questions and should be interpreted with their respective evidence requirements.
+
+Serving research exposes a complementary mismatch. A prefix may be valuable because it saves computation across many requests. An observation may be valuable because it records a rare event that cannot be reproduced. Reuse frequency and diagnostic value can therefore favor different lifetimes. When their storage and execution dependencies are independent, they can be managed separately. When they share a constrained resource, comparability depends on specifying which state disappears, how it can be restored, and when it is needed.
+
+\paragraph{Limitations.}
+This is a curated review of text-centric systems. The selection records support the reported corpus composition, but coverage cannot be inferred from the corpus counts. Evidence depth varies across the 60 core entries, with four failure-localization methods represented by abstract-level material. Published results use different datasets, annotation rules, models, and cost definitions, which preclude pooled rankings. Evidence extraction was performed within the author team without independent double coding. The supplementary simulations and trace ablations provide bounded examples and leave effects in production serving environments open.
+
+\section{Conclusion}
+The diagnostic and serving literatures intersect at the artifacts that an execution leaves behind. The survey identifies two requirements for studying that intersection: specify the observations or checkpoints needed for a diagnostic decision, and document which serving policies can remove or delay access to them. Existing research provides mechanisms for localization, tracing, and efficient inference. Benchmarks that connect their telemetry and measure diagnostic quality alongside serving performance would establish where separate resource management suffices and where a joint policy is warranted.
+
+
+\section*{Declaration of Competing Interests}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+
+\section*{Data and Code Availability}
+The public TraceElephant dataset is described by Chen et al.\ \cite{v5ref6}. Appendix~\ref{sec:evidence-audit} documents the available data and code for the supplementary analyses.
+
+
+\appendix
+\section{Supplementary Illustrations and Evaluation Design}\label{app:illustrations}
+The following examples are author-reported. The simulations use simplified CPU workloads, and the TraceElephant ablation evaluates two heuristic attributors on a fixed collection of traces. These settings address different questions and provide no joint measurement of diagnostic quality and GPU serving performance. Appendix~\ref{sec:evidence-audit} records the available reproducibility evidence.
+
 \subsection{Illustrative Cross-Layer Simulation}
 To illustrate the cross-layer interaction concretely, we simulated a 3-agent pipeline with a 100- block KV cache serving 50 conversations (simulated CPU workload). Each agent generates
 
@@ -633,7 +660,7 @@ To illustrate the cross-layer interaction concretely, we simulated a 3-agent pip
 tool-call spans, reasoning traces, and intermediate outputs. These simulations model a deployment where diagnostic buffers share GPU memory with KV cache blocks, representing architectures where traces are embedded in the serving state rather than stored independently.
 
 
-KV-cache eviction diagnostic impact. Table 7 reports the results for a 50-conversation, 100- block cache with 3 agents (deterministic, seed=42, warm-up=5 conversations). Under LRU eviction, 58.5\% of evictions removed blocks containing diagnostic content, while maintaining 100\% cache hit rate (67/100 diagnostic blocks retained). FIFO showed similar behavior. A diagnostic-aware policy achieved 58.2\% diagnostic eviction (a 0.3 pp reduction) but at substantial serving cost: cache hit rate dropped to 88.4\%. The diagnostic-aware policy trades 11.6 percentage points of cache hit rate for complete diagnostic block retention --- suggesting, in this simulated setting, that naive policy augmentation is insufficient and supporting the need for joint optimization (direction O1 in Section 7).
+KV-cache eviction diagnostic impact. Table~\ref{tab:v5_7} reports the results for a 50-conversation, 100- block cache with 3 agents (deterministic, seed=42, warm-up=5 conversations). Under LRU eviction, 58.5\% of evictions removed blocks containing diagnostic content, while maintaining 100\% cache hit rate (67/100 diagnostic blocks retained). FIFO showed similar behavior. A diagnostic-aware policy achieved 58.2\% diagnostic eviction (a 0.3 pp reduction) but at substantial serving cost: cache hit rate dropped to 88.4\%. The diagnostic-aware policy trades 11.6 percentage points of cache hit rate for complete diagnostic block retention --- suggesting, in this simulated setting, that naive policy augmentation is insufficient and supporting the need for joint optimization (direction O1 in Section 7).
 
 
 \begin{center}
@@ -654,7 +681,7 @@ Diagnostic-aware & 2,658 & 58.2\% & 88.4\% & 100/100 \\ \hline
 \end{longtable}
 \endgroup
 \end{center}
-Serving-system comparison. Table 8 reports a separate scenario: 20 conversations, 240 requests, 5,000-token cache (deterministic, seed=42). Flat LRU and RadixTree achieve comparable hit rates but dramatically different eviction counts, illustrating that infrastructure architecture choice affects the frequency of potential diagnostic-evidence disruption events even when aggregate serving performance is similar.
+Serving-system comparison. Table~\ref{tab:v5_8} reports a separate scenario: 20 conversations, 240 requests, 5,000-token cache (deterministic, seed=42). Flat LRU and RadixTree achieve comparable hit rates but dramatically different eviction counts, illustrating that infrastructure architecture choice affects the frequency of potential diagnostic-evidence disruption events even when aggregate serving performance is similar.
 
 
 \begin{center}
@@ -663,7 +690,7 @@ Serving-system comparison. Table 8 reports a separate scenario: 20 conversations
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|p{0.183\linewidth}|}
-\caption{Serving-system simulation (illustrative: 20 conversations, 240 requests, 5,000-token cache, seed 42, simulated CPU workload). Hit rate = hits/(hits+misses); utilization = occupied cache tokens / capacity. Metrics cumulative after warm-up. Results are not directly comparable with Table 7.}\label{tab:v5_8}\\
+\caption{Serving-system simulation (illustrative: 20 conversations, 240 requests, 5,000-token cache, seed 42, simulated CPU workload). Hit rate = hits/(hits+misses); utilization = occupied cache tokens / capacity. Metrics cumulative after warm-up. Results are not directly comparable with Table~\ref{tab:v5_7}.}\label{tab:v5_8}\\
 \hline
 \textbf{Policy} & \textbf{Hit rate} & \textbf{Utilization} & \textbf{Mean TTFT (ms)} & \textbf{Evictions} \\ \hline
 \endfirsthead
@@ -676,79 +703,8 @@ RadixTree & 95.74\% & 25.6\% & 13.240 & 0 \\ \hline
 \end{center}
 Three caveats apply. The two scenarios use different cache sizes and workloads and are not directly comparable. The simulations use a simplified pipeline (simulated CPU workload, not production GPU serving); the cache sizes are small relative to production deployments; and the diagnostic-content classification uses keyword-based detection rather than actual attribution value assessment.
 
-
-\subsection{TOPAS as the Closest Existing System}
-TOPAS \cite{v5ref24} formulates KV-cache management as a joint optimization over prefix selection and request scheduling under a shared capacity constraint:
-
-
-X
-
-
-j tputj s.t. X
-
-
-\begin{equation}\sum_k x_k\operatorname{size}_k\leq B_t,\qquad s\in\mathcal{S}.\end{equation}
-max x,s
-
-
-where Bt is the total KV-cache budget, xk indicates prefix retention, s is the scheduling assignment, and S is the set of feasible schedules. This is the closest existing system to a shared diagnostic-serving budget: it demonstrates that joint optimization across caching and scheduling under a single capacity constraint is tractable and improves throughput over decoupled policies. However, TOPAS optimizes exclusively for serving throughput --- Bt does not include a diagnostic-evidence retention term. Extending the objective to max $\alpha$$\cdot$throughput+(1-$\alpha$)$\cdot$diagnostic\_value would require: (a) a measurable definition of diagnostic value, (b) a mechanism to estimate Ni(T) at eviction time, and (c) empirical validation that the trade-off is worthwhile. We propose such a validation protocol in Section 7.
-
-
-\subsection{Additional Bridge Candidates}
-Beyond TOPAS, four infrastructure systems partially bridge the diagnostic-serving boundary, ranked by the directness of their bridge:
-
-
-the policy-driven runtime. The policy-driven runtime \cite{v5ref47} constructs agent-identity embeddings and engine-event transition matrices, using learned transition probabilities for survivalbased eviction. This represents an observe$\rightarrow$act loop: observability signals (agent identity and engine events) feed into serving decisions (eviction policy). However, the observability signals are serving-oriented (predicting cache reuse) rather than diagnostic-oriented (preserving attribution evidence). The policy-driven runtime is the closest system to a diagnostic-serving bridge in architecture, but the farthest in intent --- it uses observation to improve serving, not to protect diagnostic state.
-
-
-TokenCake. TokenCake \cite{v5ref4} feeds runtime signals (function-call events, GPU pressure snapshots, DAG structural information) into its temporal-spatial cache scheduling. The temporal scheduler's event-driven offload and predictive upload mechanisms demonstrate that runtime diagnostic signals can inform serving decisions with low overhead (offload decision overhead is subsumed by the function-call stall time). However, like the policy-driven runtime, the signals serve the caching objective; diagnostic trace retention is not a first-class constraint.
-
-
-ConServe. ConServe replaces predictive cache management with observation-based policies: rather than estimating future access patterns from workload models, it pins KV cache at the conversation level based on observed access patterns from deployment data. This observationreplaces-prediction approach is relevant because diagnostic trace retention could similarly be driven by observed failure rates rather than predicted diagnostic value.
-
-
-KAIROS. KAIROS \cite{v5ref44} monitors per-agent context growth rate and memory pressure to make power-management decisions. Context growth acts as a serving-side observable that correlates with diagnostic complexity: agents with rapidly growing context are more likely to generate complex execution traces that are expensive to reconstruct if evicted. However, KAIROS optimizes for power efficiency, not diagnostic retention.
-
-
-Key insight: observation without protection. All four bridge candidates share a common pattern: they use diagnostic-adjacent signals (agent identity, execution events, context patterns) to improve serving decisions, but none uses serving-side state management to protect diagnostic evidence. The bridge is unidirectional: diagnostics$\rightarrow$serving, not serving$\rightarrow$diagnostics. Building the reverse direction --- serving-side retention that considers diagnostic value --- is the central open question addressed in Section 7.
-
-
-\subsection{Counterexamples: When Eviction Does Not Harm Diagnosis}
-To sharpen the conditional nature of the cross-layer relationship, we enumerate cases where KV-cache eviction explicitly does not create an evidence-loss event:
-
-
-1. Independent trace storage. When diagnostic traces are stored in a log database or object store separate from GPU memory, KV-cache eviction has no effect on diagnostic availability. This is the default architecture for 16 of 22 infrastructure systems and all T1 failure-localization methods. 2. Deterministic environments. When tool responses are deterministic (same input always produces same output) and the input is logged, any lost KV state can be recomputed from the prompt text. The recomputation cost is a Tier B effect (increased latency), not a Tier C effect (information loss). 3. Post-hoc attribution. 10 of 12 failure-localization methods operate on completed trajectories after the task has finished. By the time attribution runs, the KV cache for that task has typically already been evicted. These methods read from logs, not from GPU memory. 4. Prefix-sharing under exact match. SGLang's radix tree and Mooncake's distributed pool serve the same text to multiple requesters without any diagnostic state being embedded in the cached prefix. Evicting a shared prefix forces recomputation for future requests but does not destroy any agent-specific diagnostic information. These counterexamples explain why the cross-layer conflict is empirically uncommon despite the theoretical possibility: current systems are architected to avoid it.
-
-
-\section{Research Directions and Validation Protocol}
-This section identifies five open research directions that emerge from the cross-layer analysis, and specifies a concrete validation protocol for the most actionable one: testing whether a shared diagnostic-serving budget can improve end-to-end system reliability without unacceptable throughput loss.
-
-
-\subsection{Open Directions}
-O1: Joint diagnostic-serving optimization. Within the studies examined at full-text depth in our curated corpus, we did not identify a system that jointly optimizes diagnostic evidence retention and serving throughput under a shared budget. TOPAS demonstrates that joint prefixscheduling optimization under a capacity constraint is tractable, but its objective function does not include diagnostic value. Extending TOPAS-style formulations to incorporate a diagnosticretention term requires three capabilities that no system in our corpus provides: (a) a measurable proxy for diagnostic value at eviction time --- the retention ablation results (Section 7.3) show that this depends on the attribution method, since heuristic methods benefit from selective
-
-
-retention while the effect on LLM-judge methods is unknown; (b) an estimation of the probability Ni(T) at eviction time, which requires predicting whether a failure will occur within the diagnostic horizon --- a fundamentally harder problem than predicting prefix reuse; and (c) empirical validation on realistic workloads where diagnostic queries may be rare compared to serving requests. The architectural pathway is clearer than the algorithmic one. The policy-driven runtime \cite{v5ref47} already constructs agent-identity embeddings and engine-event transition matrices; adding a diagnostic-value signal to these features would extend the survival-based eviction policy to consider both serving reuse and diagnostic retention. Continuum's TTL-based framework \cite{v5ref16} provides another natural extension point: diagnostic-critical state could receive longer TTL values, implementing a cost-benefit retention policy that weighs serving throughput against diagnostic value.
-
-
-O2: Cross-layer benchmarks. The benchmark gap identified in Section 4.4 is particularly acute for cross-layer evaluation. A cross-layer benchmark would need four components that currently exist in isolation: (a) a realistic multi-agent workload generator (TraceElephant \cite{v5ref6} provides 220 failures from production systems but no serving-side workload); (b) a configurable serving backend with tunable eviction policy and memory pressure; (c) injected failures at known locations for ground-truth attribution; and (d) matched diagnostic and serving metrics measured simultaneously. The closest existing infrastructure is the TRAIL benchmark \cite{v5ref10}, which uses OTel-format traces architecturally compatible with serving-side telemetry. Extending TRAIL to include serving-side OTel spans (cache hit/miss events, eviction decisions) would create the first cross-layer dataset. However, TRAIL's low baseline accuracy ($\sim$11\%) suggests that cross-layer evaluation may be premature until single-layer attribution reaches higher accuracy.
-
-
-O3: Scalability of training-free methods. MASPrism's \cite{v5ref19} 0.6B-parameter signal-extraction approach achieves competitive accuracy at dramatically lower cost than frontier-model methods (2.66s vs. 105 min for FAMAS). Whether this paradigm scales to longer trajectories, multiagent coordination failures (37\% of MAS failures per TrajAudit \S{}IX), and heterogeneous architectures remains open. The approach relies on the assumption that prefill-stage NLL and attention signals carry diagnostic information --- an assumption that may weaken for distributed coordination failures. A promising direction is combining lightweight signal extraction with targeted LLM reasoning: use MASPrism-style filtering to identify candidate failure regions cheaply, then deploy CHIEF-style hierarchical analysis only on the narrowed candidate set.
-
-
-O4: Observability standards for multi-agent state. The OpenTelemetry GenAI conventions \cite{v5ref25} cover LLM inference spans but lack serving-side attributes: cache residency, eviction events, memory pressure, adapter loading. The proposed agentic extensions (Issue \#35) remain at Todo status. Extending the standard would enable three capabilities: (a) diagnostic systems detecting when evidence is at eviction risk; (b) cross-layer benchmarks using standardized telemetry; and (c) automated DRICE I-dimension assessment. The implementation challenge is frequency: serving events occur per-token while diagnostic events occur per-failure, so aggregate attributes (cache utilization, eviction rate) are more practical than per-token instrumentation.
-
-
-O5: Safety-infrastructure coupling. Three safety systems (SentinelAgent, AGrail, Agent- DoG) consume diagnostic traces as input. If the serving layer evicts state these safety monitors
-
-
-depend on, coverage may degrade silently. The risk is acute for ShieldAgent \cite{v5ref8}, which maintains short-term KV-cache memory ``discarded after verification'' --- if the serving system evicts this before verification completes, the safety check is bypassed. Characterizing this coupling requires controlled experiments varying memory pressure while measuring safety coverage metrics (false negative rate, bypass frequency).
-
-
 \subsection{Diagnostic Overhead Characterization}
 A prerequisite question for the validation protocol is whether diagnostic tracing itself introduces meaningful overhead. We benchmarked four tracing modes in a simulated multi-agent pipeline: no tracing, string-formatted logging, structured OTel-style spans, and causal DAG construction. All tracing modes add estimated less than 3\% CPU overhead relative to the untraced baseline in our simulated multi-agent pipeline (single-threaded Python, 3 agents, 50 conversations; averaged over 3 runs). Structured OTel-style spans are slightly more efficient than string-formatted logging (the formatting overhead of string concatenation exceeds the metadata overhead of span construction). Causal DAG mode uses approximately 2$\times$ the memory of structured spans at high verbosity, because it maintains the full parent-child relationship graph in memory rather than streaming events to a sink. These measurements reflect CPU-side tracing cost in isolation; GPU-level overhead from shared memory contention with KV cache is not captured by this benchmark. This result establishes that tracing overhead in isolation is negligible on CPU. The diagnosticinfrastructure interaction gap is therefore not about the raw cost of trace capture --- it is about resource contention with serving at the GPU level, where KV cache memory and diagnostic evidence may compete for the same limited pool. No existing benchmark measures this GPUlevel contention, and the overhead benchmark confirms that the right measurement target is GPU memory allocation under concurrent diagnostic and serving workloads, not CPU tracing cost.
-
 
 \subsection{Validation Protocol for the Shared-Budget Hypothesis}
 We propose a concrete experimental protocol for testing whether integrating diagnostic evidence retention into the serving-side eviction objective improves end-to-end failure attribution without unacceptable throughput loss.
@@ -828,13 +784,13 @@ S4 Importance & 0.532 & 0.500 \\ \hline
 \end{longtable}
 \endgroup
 \end{center}
-agent if all errors appear recovered); and (b) a last-error heuristic baseline that attributes to the agent of the last error event in the retained window. The results show three patterns: 1. Subsampling paradoxically improves heuristic accuracy. At 10\% retention budget, both random sampling (S2, 0.524) and importance-weighted sampling (S4, 0.532) exceed full-retention accuracy (S1, 0.459) under the causal-graph heuristic. The full budget curve (Table 10) shows accuracy decreasing as budget approaches 100\%, revealing a limitation of heuristic attributors rather than a universal benefit of less data. 2. The mechanism: noise removal exposes the true root cause. The causal-graph heuristic marks an error as ``recovered'' if the same agent later produces a normal event. On full traces, the mistake agent typically continues producing normal events after its error, causing the heuristic to skip the true root cause. Subsampling strips these post-error normal events, making the decisive error visible. Importance-weighted sampling amplifies this effect by systematically concentrating error events. 3. Importance scoring adds only marginal value over random at low budgets. At 10\% budget, the S4--S2 gap is +0.008, within noise. At intermediate budgets (20--40\%), S4 shows a more consistent advantage (Table 10). This suggests the primary benefit at extreme subsampling derives from noise removal rather than from the specific importance scores. Recency-based retention (S3, 0.391 at 10\%) is worst at low budgets because failures whose root cause occurs early in the trace are systematically missed. Table 9 reports the verified results at 10\% retention budget. Table 10 shows the full causalmethod curve across all 10 budget levels. At full retention, the causal method outperforms last-error by 2.7 pp (0.459 vs. 0.432). This
+agent if all errors appear recovered); and (b) a last-error heuristic baseline that attributes to the agent of the last error event in the retained window. The results show three patterns: 1. Subsampling paradoxically improves heuristic accuracy. At 10\% retention budget, both random sampling (S2, 0.524) and importance-weighted sampling (S4, 0.532) exceed full-retention accuracy (S1, 0.459) under the causal-graph heuristic. The full budget curve (Table~\ref{tab:v5_10}) shows accuracy decreasing as budget approaches 100\%, revealing a limitation of heuristic attributors rather than a universal benefit of less data. 2. The mechanism: noise removal exposes the true root cause. The causal-graph heuristic marks an error as ``recovered'' if the same agent later produces a normal event. On full traces, the mistake agent typically continues producing normal events after its error, causing the heuristic to skip the true root cause. Subsampling strips these post-error normal events, making the decisive error visible. Importance-weighted sampling amplifies this effect by systematically concentrating error events. 3. Importance scoring adds only marginal value over random at low budgets. At 10\% budget, the S4--S2 gap is +0.008, within noise. At intermediate budgets (20--40\%), S4 shows a more consistent advantage (Table~\ref{tab:v5_10}). This suggests the primary benefit at extreme subsampling derives from noise removal rather than from the specific importance scores. Recency-based retention (S3, 0.391 at 10\%) is worst at low budgets because failures whose root cause occurs early in the trace are systematically missed. Table 9 reports the verified results at 10\% retention budget. Table 10 shows the full causalmethod curve across all 10 budget levels. At full retention, the causal method outperforms last-error by 2.7 pp (0.459 vs. 0.432). This
 
 
-gap varies across retention strategies and budgets (Table 10). S4 and S3 have zero seed variance (deterministic strategies); only S2 has genuine uncertainty bars.
+gap varies across retention strategies and budgets (Table~\ref{tab:v5_10}). S4 and S3 have zero seed variance (deterministic strategies); only S2 has genuine uncertainty bars.
 
 
-Recovery-ablation: confirmed mechanism. A controlled follow-up experiment isolated the recovery-detection heuristic as the mechanism behind the inverted slope. The original causalgraph heuristic marks an error as ``recovered'' when the failure-causing agent subsequently produces any non-error event, suppressing it from the attribution. We tested three conditions (Table 11):
+\paragraph{Sensitivity to the recovery rule.} A controlled follow-up experiment isolated the recovery-detection heuristic as the mechanism behind the inverted slope. The original causalgraph heuristic marks an error as ``recovered'' when the failure-causing agent subsequently produces any non-error event, suppressing it from the attribution. We tested three conditions (Table 11):
 
 
 \begin{center}
@@ -867,181 +823,8 @@ Correcting the recovery heuristic accounts for most of the apparent subsampling 
 Implications. This finding characterizes a specific heuristic--retention interaction with a confirmed and statistically tested mechanism. Different attribution methods (e.g., LLM-judge approaches such as CHIEF or TrajAudit) would likely produce different strategy rankings and may not exhibit the inverted slope, since they do not rely on the ``recovered error'' heuristic. The practical takeaway is that retention policy design must account for the attribution method's assumptions: a retention strategy that improves one attributor may be neutral or harmful for another. Replication with step-level attribution and LLM-judge methods remains necessary to establish generality.
 
 
-\section{DRICE Evaluation Framework}
-Existing comparison tables in multi-agent diagnostics and serving reviews typically list systems by method category and report headline accuracy or throughput numbers. This makes crosslayer comparison difficult: a diagnostic method with 70\% attribution accuracy and zero replay cost is not directly comparable to an infrastructure system with 3$\times$ throughput gain and 74\%
-
-
-cache hit rate. We propose DRICE --- Diagnostics evidence, Retention policy, Infrastructure assumptions, Cost decomposition, Evidence depth --- as a structured evaluation framework for characterizing systems that span both layers.
-
-
-\subsection{Framework Dimensions}
-D --- Diagnostics evidence. What diagnostic signal does the system consume or produce? We assess: (a) the evidence type (execution traces, attention scores, tool-call logs, prefill NLL, or none); (b) the capture mechanism (instrumentation, model introspection, or external logging); and (c) the evidence availability --- whether the signal is available at runtime or only post-hoc. A system that produces diagnostic evidence as a byproduct of serving (e.g., the policy-driven runtime's agent-identity embeddings) receives a higher D score than one that requires a separate diagnostic pipeline.
-
-
-R --- Retention policy. How does the system decide what to keep and what to discard? We characterize the retention policy along three sub-dimensions: (a) the eviction trigger (memory pressure, TTL expiry, explicit release, or never); (b) the retention criterion (recency, frequency, cost-benefit, workflow-awareness, or learned); and (c) the diagnostic awareness --- whether the retention criterion considers the diagnostic value of the retained state. Among surveyed systems, only the policy-driven runtime incorporates observability signals into eviction decisions; no system explicitly weights diagnostic evidence retention.
-
-
-I --- Infrastructure assumptions. What serving-infrastructure constraints does the system assume? We distinguish: (a) model homogeneity (single-model, multi-adapter, or multi-model); (b) memory topology (GPU-only, CPU offload, disaggregated, or tiered); (c) multi-tenancy (dedicated, shared-nothing, or shared-pool); and (d) workload pattern (request-level, session-level, workflow-level, or agent-level). Infrastructure assumptions determine whether a diagnostic method's evidence requirements are compatible with the serving system's state management.
-
-
-C --- Cost decomposition. We decompose runtime cost into four components: (a) compute cost (replays, model inference, signal extraction); (b) memory cost (trace storage, cache overhead, metadata); (c) latency cost (per-request overhead, diagnostic pipeline delay); and (d) communication cost (inter-node transfers, cache synchronization). This decomposition enables identifying which cost component dominates and whether diagnostic and serving costs share the same bottleneck.
-
-
-E --- Evidence depth. At what level of verification is the system's performance characterized? We use the three-tier coding from Section 3.3: T1 (full-text with section-level evidence), T1b (full-text without page-level citation), and T2 (abstract-verified). Evidence depth determines how much confidence can be placed in comparative claims.
-
-
-\subsection{Applying DRICE}
-Table 12 applies the framework to 21 representative systems spanning the diagnostic-serving spectrum. Three observations emerge:
-
-
-1. The D--R gap. Most diagnostic systems (CHIEF, MASPrism, FAMAS, AgenTracer) have strong D scores (they consume rich evidence) but no R dimension (they do not interact
-
-
-\begin{center}
-\begingroup
-\setlength{\tabcolsep}{2pt}
-\renewcommand{\arraystretch}{1.16}
-\scriptsize
-\begin{longtable}{|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|p{0.126\linewidth}|}
-\caption{DRICE assessment of representative diagnostic and serving systems. D: diagnostic evidence; R: retention policy; I: assumptions; C: dominant cost; E: evidence depth.}\label{tab:v5_12}\\
-\hline
-\textbf{System} & \textbf{Layer} & \textbf{D} & \textbf{R} & \textbf{Infrastructure assumption} & \textbf{Dominant cost} & \textbf{Tier} \\ \hline
-\endfirsthead
-\textbf{System} & \textbf{Layer} & \textbf{D} & \textbf{R} & \textbf{Infrastructure assumption} & \textbf{Dominant cost} & \textbf{Tier} \\ \hline
-\endhead
-CHIEF & Diagnostics & Yes & -- & Independent trace store & 55K tokens/trace & T1a \\ \hline
-MASPrism & Diagnostics & Yes & -- & GPU for 0.6B model & 2.66s/trace & T1a \\ \hline
-FAMAS & Diagnostics & Yes & -- & Replayable environment & 105min replay & T1a \\ \hline
-AgenTracer & Diagnostics & Yes & -- & 8 H100 (training) & RL training & T1b \\ \hline
-AgentRx & Diagnostics & Yes & -- & LLM API & US\$0.18/trace & T1a \\ \hline
-TrajAudit & Diagnostics & Yes & -- & Frontier LLM API & 138K tokens/trace & T1a \\ \hline
-SGLang & Infrastructure & -- & Yes & GPU shared pool & Dynamic memory pool & T1a \\ \hline
-Mooncake & Infrastructure & -- & Yes & Disaggregated RDMA & Memory and network & T1a \\ \hline
-InferCept & Infrastructure & -- & Yes & GPU and tool calls & Memory P/S/D & T1a \\ \hline
-KVFlow & Infrastructure & -- & Yes & Workflow DAG & Workflow cache & T1a \\ \hline
-Continuum & Infrastructure & -- & Yes & Single model multi-turn & TTL pinning & T1a \\ \hline
-DroidSpeak & Infrastructure & -- & Yes & Same-arch multi-LLM & Selective recompute & T1a \\ \hline
-ForkKV & Infrastructure & -- & Yes & Multi-LoRA & CoW deduplication & T1a \\ \hline
-PolyKV & Infrastructure & -- & -- & Multi-agent shared pool & Asymmetric compression & T1a \\ \hline
-ConServe & Infrastructure & -- & Yes & Disaggregated & Observability-based pinning & T1a \\ \hline
-Policy-driven runtime & Bridge & Partial & Yes & Agent-aware GPU & Memory+metadata & T1a \\ \hline
-TOPAS & Bridge & -- & Yes & Shared serving budget & Shared scheduling & T1a \\ \hline
-TokenCake & Bridge & Partial & Yes & DAG-aware & Dual scheduler & T1a \\ \hline
-ScaleSim & Bridge & -- & Yes & Agent-aware multi-state & Invocation distance & T1a \\ \hline
-KAIROS & Bridge & Partial & Yes & GPU frequency & Context growth & T1a \\ \hline
-Leyline & Bridge & -- & Yes & Policy directives & Directive splice & T1a \\ \hline
-\end{longtable}
-\endgroup
-\end{center}
-with retention policies). Most infrastructure systems (SGLang, Mooncake, InferCept) have strong R scores (sophisticated retention) but no D dimension (they are unaware of diagnostic value). Only the policy-driven runtime and TOPAS partially bridge this gap. This gap is the central architectural finding of the review: the two communities have built complementary capabilities but have not integrated them. 2. Infrastructure assumption mismatch. Diagnostic methods assume logged traces are always available (I dimension: independent trace store). Infrastructure systems assume GPU-resident KV cache (I dimension: GPU-only or disaggregated). The assumption mismatch explains why cross-layer conflicts are rare in practice: the two layers typically operate on separate storage. 3. Cost dominance shifts. For diagnostic methods, compute cost dominates (105 minutes of replays for FAMAS, 55K tokens of LLM inference for CHIEF, 8$\times$ H100 of training for AgenTracer). For infrastructure systems, memory cost dominates (cache capacity, eviction overhead, RDMA transfer bandwidth). In a joint system, the dominant cost component would shift depending on workload intensity and failure frequency. 4. Evidence depth correlates with specificity. Systems with T1a evidence depth (fulltext reading with page-level citations) provide the most reliable comparison basis. For FAMAS, we can trace every accuracy number to a specific table cell in the source paper. For T2 systems, claims are reported as stated and cannot be independently verified against the source's internal evidence.
-
-
-\subsection{Applying DRICE to Cross-Layer Scenarios}
-Beyond the per-system assessment in Table 12, DRICE identifies three actionable cross-layer scenarios:
-
-
-Scenario 1: Diagnostic-unaware eviction (majority case). Systems like SGLang and Mooncake score high on R (sophisticated retention policies) and I (well-characterized infrastructure assumptions) but have null D scores. A deployment pairing SGLang with CHIEF for failure attribution would have no mechanism to protect CHIEF's trace inputs from eviction. DRICE makes this gap explicit: the D--R disconnect means the diagnostic and infrastructure layers operate independently (Tier A in the overlap classification).
-
-
-Scenario 2: Observability-informed eviction (emerging). The policy-driven runtime scores partially on both D and R: it consumes observability signals (agent identity, engine events) and uses them to predict cache residency. This is not yet diagnostic-aware in the sense of protecting evidence for later attribution, but the architecture demonstrates that the D--R bridge is technically feasible. DRICE's C dimension reveals that the metadata overhead is the binding constraint: agent-identity embeddings and transition matrices consume memory proportional to the number of distinct agents.
-
-
-Scenario 3: Joint budget optimization (hypothetical). TOPAS scores high on R (joint prefix-scheduling optimization under shared Bt) but null on D. Extending TOPAS to score on D would require adding a diagnostic-value term to the objective: max $\alpha$ $\cdot$ throughput + (1-$\alpha$) $\cdot$ diag\_value. DRICE's E dimension prescribes what evidence would be needed to validate such an extension: the retention ablation protocol (Section 7.3) provides one path, but the framework also requires throughput measurements under the modified policy, which no existing study provides.
-
-
-\subsection{DRICE as a Practitioner Checklist}
-To illustrate how DRICE translates to actionable deployment decisions, we walk through two contrasting configurations:
-
-
-Case 1: SGLang with independent trace store. D: full OTel-style spans captured out-ofband (step-level attribution available). R: traces stored in an independent log database, not in GPU memory. I: RadixTree prefix cache with LRU leaf-first eviction. C: negligible diagnostic overhead (tracing is asynchronous and does not contend with serving memory). E: T1a evidence depth for SGLang's eviction mechanics. Decision: no diagnostic-serving conflict exists because R is decoupled from I. The retention policy for diagnostic traces is unconstrained by servingside memory pressure. This is the Tier A (independent operation) configuration that the majority of surveyed deployments use.
-
-
-Case 2: Hypothetical co-located system (TOPAS-like). D: diagnostic signals embedded in KV cache block metadata (tool-call markers, error flags). R: shared GPU memory pool --- evicting a KV block destroys the embedded diagnostic content. I: PagedAttention with LRU eviction under memory pressure. C: the illustrative simulation (\S{}6.6) shows an 11.6 pp cache hit-rate cost for complete diagnostic block retention. E: agent-level attribution only (step-level requires additional trace infrastructure). Decision: joint optimization is needed. Either accept
-
-
-the serving cost, implement selective retention that protects only high-value diagnostic blocks, or redesign the trace storage to decouple D from I (converting to Case 1).
-
-
-\subsection{Relationship to ALEMC}
-The DRICE framework is complementary to ALEMC (Accuracy, Latency, Energy, Memory, Carbon) proposed for on-device RAG evaluation. Where ALEMC focuses on single-system performance metrics with explicit sustainability dimensions, DRICE focuses on cross-system characterization --- what each system assumes about, produces for, and depends on from adjacent layers. The two frameworks can be composed: ALEMC dimensions apply within each DRICE component (e.g., the C dimension's compute cost can be further decomposed into ALEMC's latency and energy metrics). A system's DRICE profile identifies which layers it spans; ALEMC quantifies how well it performs within each layer.
-
-
-\subsection{Limitations of DRICE}
-DRICE is a characterization framework, not a ranking system. It does not produce a single score because the dimensions are incommensurable: a high D score (rich evidence consumption) is not inherently better than a high R score (sophisticated retention) --- the relative importance depends on the deployment context. The framework assumes that each dimension can be independently assessed, which may not hold when dimensions interact (e.g., a higher R score may increase C costs). We present DRICE as a structured vocabulary for cross-layer comparison, not as a quantitative evaluation methodology. Several extensions could strengthen the framework. First, the E dimension (evidence depth) currently uses our three-tier coding scheme; a more granular scale that captures the distinction between verified numbers and verified mechanisms would improve comparative precision. Second, the C dimension aggregates four cost components; future work could weight these components by their binding-constraint relevance in specific deployment scenarios. Third, the framework does not capture temporal dynamics: a system's DRICE profile may change as workload patterns shift, memory pressure varies, or the diagnostic horizon extends. A dynamic DRICE assessment that tracks profile changes over time would better capture the reality of production deployments. The framework's primary value lies in making implicit assumptions explicit. When a researcher proposes a new diagnostic method, DRICE asks: what infrastructure assumptions does it make (I)? When an infrastructure researcher designs a new eviction policy, DRICE asks: does it consider diagnostic value (D)? This structured questioning is more actionable than a generic call for ``cross-layer optimization.''
-
-
-\section{Discussion}
-\subsection{Key Patterns}
-Five patterns recur across the diagnostic and infrastructure layers:
-
-
-The replay-accuracy trade-off is disappearing. Among the 12 failure-localization methods, only two require environment replays (FAMAS, k=20; DoVer, 4--12 per case). The remaining
-
-
-10 operate on single-trajectory analysis. MASPrism's signal-extraction approach achieves competitive accuracy with a 0.6B model and zero output tokens, at 6.69$\times$ lower latency than comparable methods. This trend suggests that the diagnostic layer's demand on the infrastructure layer is decreasing: newer methods require only logged traces, not re-execution access. The implication for cross-layer design is significant --- if future diagnostic methods universally operate on logged traces stored independently of GPU memory, the Tier C evidence-loss scenario becomes architecturally impossible.
-
-
-Agent-aware infrastructure is emerging but single-objective. Nine of 22 infrastructure systems incorporate agent-level metadata into their management policies (ScaleSim, TokenCake, KVFlow, KVCOMM, ForkKV, TokenDance, KAIROS, the policy-driven runtime, LRAgent). However, all optimize for serving metrics (throughput, latency, cache hit rate) rather than diagnostic value. The agent-awareness is used to improve serving predictions, not to protect diagnostic state. This creates an architectural asymmetry: the infrastructure layer is increasingly capable of agent-level reasoning, but the objective function it optimizes does not include diagnostic value.
-
-
-The cross-layer conflict is narrower than assumed. The evidence-loss formalization (Eq. 1) reveals that most diagnostic-serving interactions fall into Tier A (independent operation) or Tier B (shared resource, reconstructable evidence). Tier C evidence-loss scenarios require nonreconstructable state co-managed by the serving layer --- a condition that current architectures generally avoid by storing traces independently. Among 82 surveyed systems, we identified no system where KV-cache eviction demonstrably destroyed diagnostic evidence in a production deployment.
-
-
-Step-level attribution remains an open challenge. Across the 12 failure-localization methods, step-level accuracy is substantially lower than agent-level accuracy. The best step-level results are approximately 52\% (TrajAudit RootSE and CHIEF on algorithm-generated scenarios), compared to agent-level accuracies exceeding 70\%. Who\&When reports step-level accuracy degrades to approximately 0\% on trajectories exceeding 93 steps. TraceElephant demonstrates that complete traces improve step-level accuracy by 76\% relative (16\% to 28.1\%), compared to only 22\% relative improvement at the agent level. This granularity gap implies that infrastructure decisions affecting trace completeness have a disproportionate impact on the most challenging --- and often most useful --- level of diagnostic attribution.
-
-
-Benchmark infrastructure is fragmented. The 12 surveyed benchmarks collectively cover failure attribution, reliability, and safety evaluation, but use different trace formats, annotation protocols, evaluation metrics, and failure definitions. No common evaluation protocol exists, and 0 of 12 benchmarks evaluate diagnostic-infrastructure interaction. TraceElephant \cite{v5ref6} provides the richest traces (380 structured JSONs with step-level tool logs) but no serving-side instrumentation. Who\&When \cite{v5ref48} defines the first standardized attribution protocol but operates entirely offline. TRAIL \cite{v5ref10} is the first OTel-format benchmark, enabling integration with serving-side telemetry, but its best model achieves only 11\% joint accuracy --- suggesting that structured traces alone are insufficient without specialized attribution methods. The absence of a cross-layer benchmark is both a gap and an opportunity: building one would require combining a realistic multi-agent workload generator, a configurable serving backend (with tunable eviction policy and memory pressure), injected failures at known locations, and matched diagnostic and serving metrics.
-
-
-The subsampling paradox reveals heuristic limitations. The retention ablation results (Section 7.3) demonstrate that heuristic attributors can improve when given less data --- a finding that challenges the intuition that more evidence is always better for diagnosis. The mechanism is specific: the causal-graph heuristic marks an error as ``recovered'' if the same agent later produces a normal event, causing it to skip the true root cause on full traces where normal post-error events are abundant. Subsampling strips these misleading normal events, making the decisive error visible. This finding has two implications for cross-layer design: first, retention policies that prioritize recency (keeping the most recent events) perform worst at low budgets because they systematically discard early root causes. Second, the optimal retention strategy depends on the attribution method --- a finding that argues against one-size-fits-all retention policies and for the retention-aware diagnostic design advocated in our validation protocol.
-
-
-\subsection{Implications for System Design}
-The patterns above suggest three concrete architectural recommendations:
-
-
-1. Decouple diagnostic storage from serving memory. Since 10 of 12 failure-localization methods operate on logged traces rather than live serving state, the simplest way to avoid Tier C evidence-loss events is to ensure traces are written to a durable store before the corresponding KV cache is eligible for eviction. This is already the default architecture in most surveyed systems, which is why the cross-layer conflict is rare in practice. 2. Expose serving-side events to diagnostic consumers. The observability gap (no OTel attributes for KV cache residency, eviction events, or memory pressure) prevents diagnostic systems from detecting when their evidence might be at risk. Extending the OTel GenAI conventions with serving-side attributes would enable diagnostic systems to request trace retention proactively when they detect that a future attribution may be needed. 3. Design retention policies with attribution method awareness. The subsampling paradox shows that the same retention strategy can help one attribution method and hurt another. Future serving systems that incorporate diagnostic retention should parameterize the retention policy on the expected attribution method, or provide a general-purpose noise-filtering retention strategy that benefits multiple methods.
-
-
-\subsection{Limitations}
-This review has several limitations:
-
-
-1. Curated, not systematic. The corpus was assembled through iterative exploration and citation chaining rather than a pre-registered protocol with reproducible database queries. The reported counts are a curated landscape, not an exhaustive census. 2. Evidence depth variation. Of the 60 entries, 56 received full-text verification (T1a or T1b), comprising 44 systems and all 12 benchmarks; the remaining 4 entries are discussed at the T2 text-mention level. Cross-system comparisons involving T2 systems should be interpreted with this asymmetry in mind. 3. Retention ablation scope. The retention-ablation experiment uses real TraceElephant traces (220 failures, 5 task suites from 3 MAS frameworks) but tests only two heuristic attribution methods. LLM-judge approaches (CHIEF, TrajAudit, AgentRx) were not tested and may not exhibit the subsampling paradox, since they do not rely on the recoverydetection heuristic that drives the effect. Step-level attribution was not tested. 4. Rapidly evolving landscape. Multi-agent runtime research is moving faster than review cycles. Several systems in the corpus are preprints without peer review. The search cutoff
-
-
-(7 November 2026) means that concurrent or subsequent work is not covered. 5. Single-reviewer evidence extraction. The evidence extraction was performed by the author team without an independent second coder. Inter-coder reliability cannot be assessed.
-
-
-\subsection{Threats to Validity}
-Construct validity. The evidence-loss formalization (Eq. 1) assumes that the three conditions (Ni, Di, Ri) can be independently assessed. In practice, the need for evidence (Ni) may depend on the outcome of reconstruction attempts (Ri), creating a circular dependency that the static formalization does not capture.
-
-
-External validity. The surveyed systems primarily target text-based LLM agents. Multimodal agents (combining vision, audio, or embodied action) may introduce state types not covered by the current taxonomy. The DRICE framework's dimensions are designed to be extensible, but we have not validated them on non-text workloads.
-
-
-\section{Conclusion}
-This review has mapped 48 diagnostic methods and serving infrastructure systems, complemented by 12 evaluation benchmarks, for foundation model-based multi-agent systems, organizing them by functional role and characterizing them along six method dimensions. Four main findings emerge. First, the diagnostic-infrastructure interaction is conditional: evidence loss requires that needed diagnostic state is discarded from a shared resource before the diagnostic horizon and cannot be reconstructed (Eq. 1). Most current architectures avoid this scenario by storing traces independently of serving state, placing the majority of systems in Tier A (independent operation). Among the T1 systems surveyed, none demonstrated a production case where KV-cache eviction destroyed diagnostic evidence. Second, the DRICE evaluation framework reveals a systematic D--R gap: diagnostic methods consume rich evidence but do not interact with retention policies, while infrastructure systems implement sophisticated retention but are unaware of diagnostic value. The policy-driven runtime and TOPAS partially bridge this gap --- the former feeds observability signals into eviction, the latter jointly optimizes prefix retention and scheduling under a shared capacity constraint --- but within our curated corpus, we did not identify a system that jointly optimizes diagnostic retention and serving throughput. Third, the retention ablation on real TraceElephant traces (220 failures, 5 task suites from 3 MAS frameworks) reveals a subsampling paradox: heuristic attributors achieve higher accuracy at 10\% retention than at full retention, because subsampling removes normal events that cause false recovery signals. Importance-weighted sampling provides only marginal improvement over uniform random at low budgets (+0.008, within noise), suggesting the benefit derives from noise removal rather than from the specific importance scores. This finding characterizes a heuristic--retention interaction and motivates retention-aware diagnostic design, though replication with LLM-judge attribution methods is necessary to establish generality. Fourth, the diagnostic landscape is rapidly consolidating around zero-replay, single-trajectory methods: 10 of 12 failure-localization methods require no environment re-execution. Trainingfree signal-extraction approaches (MASPrism, 0.6B model, 2.66s/case) achieve competitive
-
-
-accuracy at dramatically lower cost than frontier-model methods, suggesting that dedicated lightweight diagnostic co-processors can run alongside serving infrastructure without meaningful resource competition. The five open research directions identified --- joint optimization (O1), cross-layer benchmarks (O2), scalability of training-free methods (O3), observability standards for serving-side state (O4), and safety-infrastructure coupling (O5) --- provide a concrete research agenda. The validation protocol (Section 7.3) specifies the experimental design needed to test the sharedbudget hypothesis: a multi-agent system with configurable eviction policy, injected failures for ground-truth attribution, and matched reliability and serving metrics. We hope this framework moves the field from isolated component optimization toward integrated diagnostic-aware system design.
-
-
-\section*{Acknowledgements}
-We thank the reviewers for their detailed feedback.
-
-
-\section*{Declaration of Competing Interests}
-The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
-
-
-\section*{Data and Code Availability}
-The TraceElephant dataset is publicly available at https://github.com/microsoft/ TraceElephant (CC-BY-4.0). Heuristic evaluation code, including the recovery-ablation conditions (C1--C3), sampling policies, and table-generation scripts, will be released at [anonymized repository URL upon acceptance]. Environment requirements: Python 3.10+, no GPU dependency.
-
-
-\appendix
-\section{System Census}
-Table 13 lists all systems and benchmarks included in this review. Systems are categorized by function; benchmarks are listed separately. The Tier column indicates evidence depth: T1a (full-text with section-level citations), T1b (full-text without page-level citations), T2 (abstractverified). Totals: 48 systems (12 failure-localization + 6 observability + 8 safety + 22 infrastructure) and 12 benchmarks = 60 entries with dedicated table rows. An additional 22+ systems are discussed at the T2 level in the text without dedicated table entries, bringing the total corpus to approximately 70 non-benchmark entries and 12 benchmarks (about 82 combined entries before deduplication).
+\section{System Census}\label{app:census}
+Table~\ref{tab:v5_13} lists all systems and benchmarks included in this review. Systems are categorized by function; benchmarks are listed separately. The Tier column indicates evidence depth: T1a (full-text with section-level citations), T1b (full-text without page-level citations), T2 (abstractverified). Totals: 48 systems (12 failure-localization + 6 observability + 8 safety + 22 infrastructure) and 12 benchmarks = 60 entries with dedicated table rows. An additional 22+ systems are discussed at the T2 level in the text without dedicated table entries, bringing the total corpus to approximately 70 non-benchmark entries and 12 benchmarks (about 82 combined entries before deduplication).
 
 
 \begin{center}
@@ -1178,7 +961,7 @@ screening logs were not preserved; only the final 48 non-benchmark entries and
 
 \begingroup
 \setcounter{figure}{0}
-\renewcommand{\thefigure}{C.\arabic{figure}}
+\renewcommand{\thefigure}{\thesection.\arabic{figure}}
 \begin{figure}[!htbp]
 \centering
 \resizebox{\textwidth}{!}{\input{figures/curated_corpus_flow.tex}}
@@ -1259,6 +1042,13 @@ unsupported database screening counts are shown.}
 \bibitem{v5supp12} Ishan Kavathekar et al. TAMAS: Benchmarking Adversarial Risks in Multi-Agent LLM Systems. ACL 2026.
 \bibitem{v5supp13} Hanrong Zhang et al. Agent Security Bench (ASB): Formalizing and Benchmarking Attacks and Defenses in LLM-based Agents. ICLR 2025.
 \bibitem{v5supp14} Mina Mohammadmirzaei and Jeffrey Flanigan. OSGuard: A Benchmark for Safety in Computer-Use Agents. arXiv:2606.15034, 2026.
+\bibitem{survey_lifecycle} Chen Kang and Kunyan Li. A lifecycle-oriented survey of LLM-based agents: Workflow, graph augmentation, and future directions. Neurocomputing 704, 134838, 2026. \url{https://doi.org/10.1016/j.neucom.2026.134838}.
+\bibitem{survey_agentic} Smita Khapre, Melkamu Abay Mersha, Zainab Olalekan, Hassan Shakil, Samer Iskander, Asser Moustafa, and Jugal Kalita. Agentic AI systems: A systematic survey of multi-agent architectures, cognitive foundations, interaction, explainability, security, and performance evaluation. Neurocomputing 696, 134049, 2026. \url{https://doi.org/10.1016/j.neucom.2026.134049}.
+\bibitem{survey_graph} Panpan Zhou, Haowei Zhu, Liwei Li, Yan Liang, Kaibing Yin, Lixiang Xu, Mingru Lei, and Yuhua Chen. Large language models meet graph neural networks: A survey. Neurocomputing 710, 135372, 2027. \url{https://doi.org/10.1016/j.neucom.2026.135372}.
+\bibitem{survey_embodied} Rui Zhou, Wenlong Liang, Yang Ma, Bing Zhang, Songlin Li, Yijia Liao, and Ping Kuang. Large model empowered embodied AI: A survey on decision-making and embodied learning. Neurocomputing 711, 135458, 2027. \url{https://doi.org/10.1016/j.neucom.2026.135458}.
+\bibitem{survey_serving} Hanbo Ma, Zhongguo Li, Junan Wang, Chunyi Cao, Donglin Li, Jun Yang, and Zhengtao Ding. Load balancing for large language model inference serving: A control and learning oriented survey. Neurocomputing 706, 134973, 2026. \url{https://doi.org/10.1016/j.neucom.2026.134973}.
+\bibitem{survey_edge_rag} Zhiyuan Cheng, Longying Lai, Yue Liu, and Yu Sun. Toward sustainable on-device intelligence: A survey on energy-efficient RAG systems with small language models. Research Square preprint, 2026. \url{https://doi.org/10.21203/rs.3.rs-10597421/v1}.
+\bibitem{survey_humor} Tuo Liang, Zhe Hu, Disheng Liu, Juncheng Wang, Jing Li, and Yu Yin. Computational humor with multimodal LLMs: Methods, datasets, evaluation, and challenges. arXiv preprint, 2026. \url{https://arxiv.org/abs/2607.19011}.
 \input{bibliography_restored_2026.tex}
 \end{thebibliography}
 \end{document}

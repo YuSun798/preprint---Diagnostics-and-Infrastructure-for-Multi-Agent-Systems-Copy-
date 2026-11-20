@@ -51,10 +51,10 @@ jobs:
           cite_groups=re.findall(r"\\cite\{([^}]+)\}", content)
           cited={x.strip() for c in cite_groups for x in c.split(",")}
           all_keys=set(re.findall(r"\\bibitem\{([^}]+)\}", root)+keys)
-          assert len(all_keys)==205 and all_keys==cited, (len(all_keys),len(cited),sorted(all_keys-cited),sorted(cited-all_keys))
+          assert len(all_keys)==212 and all_keys==cited, (len(all_keys),len(cited),sorted(all_keys-cited),sorted(cited-all_keys))
           assert all(rf"\input{{related_literature/{p.stem}.tex}}" in root for p in files)
           assert r"\input{bibliography_restored_2026.tex}" in root
-          print("PASS: 13 tables, 4 figures, 205 referenced bibliography records in body; Appendix D list removed")
+          print("PASS: 13 tables, 4 figures, 212 cited bibliography records; Appendix D list removed")
           PY
       - uses: actions/upload-artifact@v4
         with:

@@ -1,0 +1,5 @@
+- Maps 48 diagnostic and serving systems and 12 evaluation benchmarks.
+- Compares attribution methods by evidence, replay, and prediction granularity.
+- Distinguishes computational cache reuse from retention of execution evidence.
+- Identifies when reclaiming serving state can affect failure attribution.
+- Defines benchmark gaps for joint measurement of diagnosis and serving.
