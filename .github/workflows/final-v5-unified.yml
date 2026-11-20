@@ -33,8 +33,8 @@ jobs:
           assert r"\label{fig:v5_3}" in figure_2
           assert r"\label{fig:v5_4}" in figure_3
           assert r"\label{fig:v5_corpus_flow}" in root
-          assert r"\begin{landscape}" in figure_2
-          assert r"\begin{landscape}" in figure_3
+          assert r"\resizebox{\linewidth}{!}" in figure_2 and r"\begin{landscape}" not in figure_2
+          assert r"\resizebox{\linewidth}{!}" in figure_3 and r"\begin{landscape}" not in figure_3
           assert root.count(r"\bibitem{v5ref") == 52
           assert root.count(r"\bibitem{v5supp") == 14
           assert r"\input{literature_coverage_2026.tex}" not in root
