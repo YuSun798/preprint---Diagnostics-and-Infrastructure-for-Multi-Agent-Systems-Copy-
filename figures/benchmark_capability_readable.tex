@@ -1,9 +1,8 @@
 % Figure 3 - faithful 12-by-10 benchmark capability matrix.
 % Retains the original grid, order, Yes/Partial/NR/No values and color semantics.
-% Landscape page allows >= 9 pt readable, fully searchable text.
-\clearpage
-\begin{landscape}
-\begin{center}
+% Portrait-width floating figure preserves the fully editable original matrix.
+\begin{figure}[!htbp]
+\centering
 \begingroup
 \definecolor{benchgreen}{RGB}{197,226,202}
 \definecolor{benchyellow}{RGB}{255,242,186}
@@ -14,6 +13,7 @@
 \newcommand{\bhead}[1]{\parbox[c][1.32cm][c]{1.84cm}{\centering\fontsize{8.25}{9.3}\selectfont\bfseries #1}}
 \fontsize{9.5}{11.3}\selectfont
 {\bfseries\Large Benchmark Capability Matrix --- Native Labels vs. Task Outcomes}\par\bigskip
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.70cm}|*{10}{>{\centering\arraybackslash}p{1.97cm}|}@{}}
 \textbf{Benchmark} &
 \bhead{\shortstack[c]{Multi-agent\\support}} &
@@ -51,10 +51,10 @@
 \hline
 \bfseries OSGuard & \bcell{benchyellow}{Partial} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} & \bcell{benchgreen}{Yes} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchpink}{NR/No} & \bcell{benchyellow}{Partial} \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \par\medskip
-\captionof{figure}{Re-audited benchmark capability matrix for the same twelve benchmarks and ten columns as the source. Green = Yes; yellow = Partial; pink = NR/No (not reported or no verified native label). Task success and safety scoring do not constitute step-level causal-attribution labels.}
+\caption{Re-audited benchmark capability matrix for the same twelve benchmarks and ten columns as the source. Green = Yes; yellow = Partial; pink = NR/No (not reported or no verified native label). Task success and safety scoring do not constitute step-level causal-attribution labels.}
 \label{fig:v5_4}
 \endgroup
-\end{center}
-\end{landscape}
+\end{figure}
