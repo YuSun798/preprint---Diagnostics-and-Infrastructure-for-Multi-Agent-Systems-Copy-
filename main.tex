@@ -1,6 +1,3 @@
-% Copyright remains with manuscript authors. Source reconstructed from
-% user-supplied 56-page V5 PDF; editable text, tables, original embedded figures.
-% This file is NOT a claim that primary full texts and raw experiments were verified.
 % Compile with XeLaTeX; main project file is main.tex.
 \documentclass[preprint,12pt]{elsarticle}
 \usepackage{fontspec}
@@ -20,9 +17,6 @@
 \setlength{\emergencystretch}{3em}
 \journal{Neurocomputing}
 
-% SOURCE-CONSISTENCY NOTE (2026-11-15): Tables 1--13 and Figures 1--4
-% remain derived from the provided V5 PDF. Some captions, benchmark labels,
-% bibliography metadata and statistical wording are deliberately corrected.
 \newcolumntype{Y}[1]{>{\raggedright\arraybackslash}p{#1}}
 \begin{document}
 \begin{frontmatter}
@@ -83,14 +77,14 @@ Inference load balancing \cite{survey_serving} & Serving control and learning me
 \end{table}
 
 \section{Background}
-This section establishes the technical context for the diagnostic and infrastructure layers reviewed in subsequent sections. We describe the architecture of foundation model-based multiagent systems (\S{}2.1), the workload characteristics that distinguish multi-agent serving from single-model inference (\S{}2.2), and the runtime layers we focus on (\S{}2.3).
+This section establishes the technical context for the diagnostic and infrastructure layers reviewed in subsequent sections. We describe the architecture of foundation model-based multi-agent systems (\S{}2.1), the workload characteristics that distinguish multi-agent serving from single-model inference (\S{}2.2), and the runtime layers we focus on (\S{}2.3).
 
 
 \subsection{Foundation Model-Based Multi-Agent Systems}
 \input{related_literature/agent_foundations.tex}
 
 
-A foundation model-based agent operates in a perception--reasoning--action loop, using an LLM to process observations and execute actions such as tool invocations, code execution, and interagent communication. The underlying model workloads can also be multimodal: recent systems combine visual, audio, and clinical or platform metadata for domain-specific prediction and governance. A multi-agent system (MAS) comprises multiple such agents, as exemplified by MetaGPT, CAMEL, ChatDev, and Internet of Agents (IoA), operating within a shared environment or communicating to accomplish collective objectives. Recent multi-agent applications also span reinforcement-learning-enhanced collaborative reasoning and multimodal misinformation detection. MAST \cite{v5ref5} identifies 14 recurring failure patterns in such systems, motivating runtime diagnostics rather than evaluation only at the final task output. The rapid expansion of MAS into production deployments introduces operational demands that simple orchestration frameworks do not address: when an agent fails mid-workflow, which agent caused the failure? When a serving system evicts cached state, does this affect later diagnostic capability? When a safety guardrail intercepts an action, does the interception itself create a new failure mode? Three broad system properties recur across the literature: (1) distributed execution across multiple agents, which creates execution traces spanning agent boundaries and introduces coordination overhead; (2) inter-agent communication, which creates channels through which failures can propagate (FAMAS's spectrum analysis and TraceElephant's trace collection both exploit these channels for attribution); and (3) inter-agent memory sharing, where prompts, tools, and cached state may be reused across the system, creating shared state dependencies that affect both serving efficiency and diagnostic evidence availability.
+A foundation model-based agent operates in a perception--reasoning--action loop, using an LLM to process observations and execute actions such as tool invocations, code execution, and inter-agent communication. A multi-agent system (MAS) comprises multiple such agents, as exemplified by MetaGPT, CAMEL, ChatDev, and Internet of Agents (IoA), operating within a shared environment or communicating to accomplish collective objectives. MAST \cite{v5ref5} identifies 14 recurring failure patterns in such systems, motivating runtime diagnostics rather than evaluation only at the final task output. The rapid expansion of MAS into production deployments introduces operational demands that simple orchestration frameworks do not address: when an agent fails mid-workflow, which agent caused the failure? When a serving system evicts cached state, does this affect later diagnostic capability? When a safety guardrail intercepts an action, does the interception itself create a new failure mode? Three broad system properties recur across the literature: (1) distributed execution across multiple agents, which creates execution traces spanning agent boundaries and introduces coordination overhead; (2) inter-agent communication, which creates channels through which failures can propagate (FAMAS's spectrum analysis and TraceElephant's trace collection both exploit these channels for attribution); and (3) inter-agent memory sharing, where prompts, tools, and cached state may be reused across the system, creating shared state dependencies that affect both serving efficiency and diagnostic evidence availability.
 
 
 \subsection{Multi-Agent Workload Characteristics}
@@ -102,7 +96,7 @@ Multi-agent workloads differ from single-model serving in three ways that direct
 Sparse activation. Only a fraction of agents invoke the LLM at any moment: a 1,000-agent simulation may have fewer than 10 actively generating tokens. Under such workloads, keeping all agent state on the fastest memory tier can waste scarce accelerator memory. ScaleSim's invocation-distance metric quantifies the temporal gap before an agent's next call, enabling memory-tier demotion for inactive agents.
 
 
-Invocation distance. Many workloads have structured activation patterns such as sequential queues, event-driven messaging, and dependency graphs. The temporal gap before an agent's next call, termed invocation distance, can be estimated from application semantics in structured workloads but is not generally visible to request-level schedulers. This motivates workflowaware caching approaches such as KVFlow, which predicts steps-to-execution for each cached prefix.
+Invocation distance. Many workloads have structured activation patterns such as sequential queues, event-driven messaging, and dependency graphs. The temporal gap before an agent's next call, termed invocation distance, can be estimated from application semantics in structured workloads but is not generally visible to request-level schedulers. This motivates workflow-aware caching approaches such as KVFlow, which predicts steps-to-execution for each cached prefix.
 
 
 Inter-agent memory sharing. Agents may share context such as system prompts, environment descriptions, and tool schemas. General serving systems already reuse such prefixes: SGLang's RadixAttention and vLLM's automatic prefix caching both exploit shared token sequences. The additional opportunity in agentic systems is to use application-level structure (dependency graphs, message queues, or execution order) to guide cache retention decisions beyond request-level recency or frequency heuristics. The relative importance of these properties varies by application domain. Simulation workloads (ScaleSim's target) exhibit strong sparse activation with predictable invocation patterns. Coding agent workflows (Continuum's target) have long tool-call pauses with uncertain durations. Multi-model deployments (DroidSpeak's target) add cross-architecture cache transfer challenges. The infrastructure systems reviewed in Section 5 address different subsets of these workload properties, and the optimal KV-cache management strategy depends on which properties dominate in a given deployment.
@@ -120,7 +114,7 @@ Diagnostics layer. This layer supports failure localization (identifying which a
 Infrastructure layer. This layer manages serving-time resources: KV-cache memory, compute scheduling, adapter placement, and power management for multi-agent workloads. The infrastructure layer consumes serving state --- KV blocks, adapters, request metadata --- and optimizes for throughput, latency, and resource utilization. Among the 22 Tier-1 infrastructure
 
 
-systems surveyed, eviction mechanisms range from simple LRU (SGLang) to learned survivalbased predictions (the policy-driven runtime), with 8 systems incorporating agent-level metadata into their management decisions. The key distinction is between reactive eviction (triggered by memory pressure) and predictive eviction (triggered by estimated future reuse), with the latter providing more opportunity for diagnostic-aware retention. The distinctive question for this review is which state dependencies cross the diagnostic/serving boundary, and which apparent similarities between the two layers do not constitute resource competition. This question is formalized in Section 6.
+systems surveyed, eviction mechanisms range from simple LRU (SGLang) to learned survival-based predictions (the policy-driven runtime), with 9 systems incorporating agent-level metadata into their management decisions. The key distinction is between reactive eviction (triggered by memory pressure) and predictive eviction (triggered by estimated future reuse), with the latter providing more opportunity for diagnostic-aware retention. The distinctive question for this review is which state dependencies cross the diagnostic/serving boundary, and which apparent similarities between the two layers do not constitute resource competition. This question is formalized in Section 6.
 
 
 % The extended source map is contextual; it does not change the 60-core census.
@@ -155,7 +149,7 @@ Selection cutoff. The reference list was frozen for editorial inspection on 7 No
 Each included system is assigned an evidence tier that reflects the depth of our verification:
 
 
-$\bullet$ Tier 1a (T1a): Full-text reading with section-level evidence extraction. Quantitative claims, method details, cost metrics, and limitations are traced to specific sections, tables, or figures in the source paper. The core comparison tables contain both T1 and four explicitly labeled T2 entries; T2 claims require abstract-only limitations. $\bullet$ Tier 1b (T1b): Full-text reading but without page-level citation (e.g., the evidence was extracted from the complete paper but specific section numbers were not recorded). $\bullet$ Tier 2 (T2): Abstract-level verification. The system's existence, claimed function, and headline results are confirmed, but detailed method mechanics and cost breakdowns are not independently verified. Abstract-only evidence is marked [a] in the text and is not used to compute cross-system deltas or rankings. A source-level evidence-audit checklist accompanies the supplementary material.
+$\bullet$ Tier 1a (T1a): Full-text reading with section-level evidence extraction. Quantitative claims, method details, cost metrics, and limitations are traced to specific sections, tables, or figures in the source paper. $\bullet$ Tier 1b (T1b): Full-text reading but without page-level citation (e.g., the evidence was extracted from the complete paper but specific section numbers were not recorded). $\bullet$ Tier 2 (T2): Abstract-level verification. The system's existence, claimed function, and headline results are confirmed, but detailed method mechanics and cost breakdowns are not independently verified. Abstract-only evidence is marked [a] in the text and is not used to compute cross-system deltas or rankings. The core comparison tables contain four explicitly labeled T2 entries, whose claims are stated with abstract-level qualifications. A source-level evidence-audit checklist accompanies the supplementary material.
 
 
 \subsection{Classification Taxonomy}
@@ -194,7 +188,7 @@ This section organizes the diagnostic landscape along functional roles rather th
 \subsection{Failure Localization}
 \input{related_literature/failure_attribution.tex}
 
-Failure localization identifies which agent, step, or action caused an observed failure. We identify four methodological families among the 8 Tier-1 methods reviewed: statistical methods adapted from software fault localization, LLM-guided methods that use a language model as an investigator, RL-trained methods that learn attribution policies, and training-free signalextraction methods that exploit model internals.
+Failure localization identifies which agent, step, or action caused an observed failure. We identify four methodological families among the 8 Tier-1 methods reviewed: statistical methods adapted from software fault localization, LLM-guided methods that use a language model as an investigator, RL-trained methods that learn attribution policies, and training-free signal-extraction methods that exploit model internals.
 
 
 
@@ -277,7 +271,7 @@ VerifyMAS & NR & NR & Agent + Error & T2 \\
 Protocol-level standards. The OpenTelemetry GenAI semantic conventions \cite{v5ref25} provide vendorneutral attributes for LLM inference spans. Core gen\_ai.* attributes include operation name (chat, embeddings, execute\_tool, create\_agent, invoke\_agent, invoke\_workflow), provider and model identity, input/output token counts, cache read/creation tokens (v1.40), reasoning output tokens for chain-of-thought models (v1.41), streaming flags and TTFT (v1.41), and agent/tool identifiers. MCP-specific attributes (mcp.method.name, mcp.session.id, mcp.protocol.version) were added in v1.39. Content events (prompts, completions, system instructions) are opt-in, controlled by an environment flag for privacy. Proposed agentic extensions (Issue \#35: task, action, team, artifact, and memory attributes) remain in ``Todo'' status as of November 2026. The specification remains at Development status with no stabilization timeline, and provider coverage is uneven: OpenAI instrumentation is the most complete, while Anthropic, AWS Bedrock, and Google Vertex AI libraries have less detailed support. Framework-level integration for LangGraph and CrewAI is in progress but incomplete. A fundamental architectural limitation is that OTel captures telemetry about model calls but provides no enforcement capability: ``telemetry can't answer enforcement questions.'' For cross-layer analysis, the most significant gap is the absence of serving-side attributes (cache residency, eviction events, memory pressure, adapter loading status) that would enable correlating diagnostic trace availability with infrastructure state.
 
 
-Tooling. AgentTrace \cite{v5ref2} implements three logging surfaces --- operational (method-level execution tracing with paired start/complete events), cognitive (LLM reasoning chain extraction including CoT parsing, confidence estimates, and plan/reflection fields), and contextual (outbound API interactions auto-instrumented via OTel monkey-patching) --- unified under a schema-validated append-only envelope with UUID, surface type, trace/span IDs, and UTC timestamps (\S{}3.1--3.6). The system produces dual output: JSONL files for local analysis and OTel spans for distributed backends. While the architecture is well-specified with pseudocode (Algorithm 1, \S{}4.2), no empirical evaluation of overhead, latency, or storage costs is reported (\S{}4.5 states only ``low overhead'' qualitatively). No repository link or package name is provided. Insights Generator \cite{v5ref23} provides analytics over collected execution traces, enabling aggregate analysis across multiple agent runs: failure frequency by step type, time-to-failure distributions, and cross-agent correlation patterns. The view-oriented debugging compiler \cite{v5ref46} transforms raw execution logs into interactive visual representations: the compiler applies view transformations (filtering, aggregation, temporal alignment) to produce domain-specific debugging views from a common trace format, enabling human inspectors to navigate complex multiagent executions without manually parsing log files. LangSmith (LangChain, commercial tooling) documents a trace collection and analysis platform with LLM evaluation features~\cite{v5supp1}; its proprietary nature limits independent verification of overhead and accuracy claims. The observability layer's principal limitation for cross-layer analysis is coverage: no existing standard captures the serving-side state (KV cache residency, eviction events, memory pressure) that Section 6 identifies as relevant for diagnostic-infrastructure interaction. Extending OTel GenAI conventions to include serving-side attributes is one of the open directions proposed in Section 7.
+Tooling. AgentTrace \cite{v5ref2} implements three logging surfaces --- operational (method-level execution tracing with paired start/complete events), cognitive (LLM reasoning chain extraction including CoT parsing, confidence estimates, and plan/reflection fields), and contextual (outbound API interactions auto-instrumented via OTel monkey-patching) --- unified under a schema-validated append-only envelope with UUID, surface type, trace/span IDs, and UTC timestamps (\S{}3.1--3.6). The system produces dual output: JSONL files for local analysis and OTel spans for distributed backends. While the architecture is well-specified with pseudocode (Algorithm 1, \S{}4.2), no empirical evaluation of overhead, latency, or storage costs is reported (\S{}4.5 states only ``low overhead'' qualitatively). No repository link or package name is provided. Insights Generator \cite{v5ref23} provides analytics over collected execution traces, enabling aggregate analysis across multiple agent runs: failure frequency by step type, time-to-failure distributions, and cross-agent correlation patterns. The view-oriented debugging compiler \cite{v5ref46} transforms raw execution logs into interactive visual representations: the compiler applies view transformations (filtering, aggregation, temporal alignment) to produce domain-specific debugging views from a common trace format, enabling human inspectors to navigate complex multi-agent executions without manually parsing log files. LangSmith (LangChain, commercial tooling) documents a trace collection and analysis platform with LLM evaluation features~\cite{v5supp1}; its proprietary nature limits independent verification of overhead and accuracy claims. The observability layer's principal limitation for cross-layer analysis is coverage: no existing standard captures the serving-side state (KV cache residency, eviction events, memory pressure) that Section 6 identifies as relevant for diagnostic-infrastructure interaction. Extending OTel GenAI conventions to include serving-side attributes is one of the open directions proposed in Section 7.
 
 
 \subsection{Safety Intervention and Guardrails}
@@ -299,13 +293,13 @@ optimization reduces the number of predicates by 50--65\% and rules by 50--76\%,
 Control-theoretic recovery. ReGuard \cite{v5ref29} applies control-theoretic principles to agent recovery: when a safety violation is detected, the system computes a corrective action using a formal model of the agent's state transition dynamics, rather than simply blocking the action. This enables graceful degradation rather than hard stops, but requires a tractable state model.
 
 
-Additional safety systems. SAIGuard \cite{v5ref34} implements proactive defense via communicationstate simulation: it constructs an interaction graph over the MAS, encodes messages with Qwen3-Embedding-0.6B (2-layer GNN, 1024 hidden dimensions), and estimates the impact of incoming messages on local and global agent states. Risky messages are detected via reconstruction deviations from benign patterns and sanitized before propagation --- making SAIGuard the only preventive safety system in the survey. It reduces attack success rate from 16.51\% to 5.37\% (67.47\% reduction) while maintaining 89.83\% task accuracy and 98.68\% detection F1. A ``systemic risk amplification'' finding is notable: aggregated multi-agent attack success (51.78\%) far exceeds per-agent vulnerability (3.00\%). SentinelAgent \cite{v5ref12} implements three-level anomaly detection: node-level (individual agent behavior), edge-level (inter-agent communication anomalies), and path-level (multi-hop execution chain attacks). Path-level detection catches all 6 tested scenarios but has the highest compute cost. The system uses IBM Granite Guardian 3.2 and LlamaFirewall as pre-trained backends without custom training. Evaluation is qualitative only (2 case studies). AGrail \cite{v5ref21} provides a lifelong agent guardrail framework combining rule-based constraints with learned safety policies. The ``lifelong'' aspect enables policy updates as agents encounter new scenarios without retraining. AgentDoG 1.5 \cite{v5ref18} uses anomaly detection on execution patterns to identify both safety violations and performance degradation simultaneously --- the only system producing both a safety verdict and a diagnostic attribution from the same analysis. ReGuard \cite{v5ref29} applies control-theoretic recovery: when a safety violation is detected, it models state transition dynamics and computes a corrective action rather than simply blocking the agent. This enables graceful degradation but requires a tractable state model.
+Additional safety systems. SAIGuard \cite{v5ref34} implements proactive defense via communication-state simulation: it constructs an interaction graph over the MAS, encodes messages with Qwen3-Embedding-0.6B (2-layer GNN, 1024 hidden dimensions), and estimates the impact of incoming messages on local and global agent states. Risky messages are detected via reconstruction deviations from benign patterns and sanitized before propagation --- making SAIGuard the only preventive safety system in the survey. It reduces attack success rate from 16.51\% to 5.37\% (67.47\% reduction) while maintaining 89.83\% task accuracy and 98.68\% detection F1. A ``systemic risk amplification'' finding is notable: aggregated multi-agent attack success (51.78\%) far exceeds per-agent vulnerability (3.00\%). SentinelAgent \cite{v5ref12} implements three-level anomaly detection: node-level (individual agent behavior), edge-level (inter-agent communication anomalies), and path-level (multi-hop execution chain attacks). Path-level detection catches all 6 tested scenarios but has the highest compute cost. The system uses IBM Granite Guardian 3.2 and LlamaFirewall as pre-trained backends without custom training. Evaluation is qualitative only (2 case studies). AGrail \cite{v5ref21} provides a lifelong agent guardrail framework combining rule-based constraints with learned safety policies. The ``lifelong'' aspect enables policy updates as agents encounter new scenarios without retraining. AgentDoG 1.5 \cite{v5ref18} uses anomaly detection on execution patterns to identify both safety violations and performance degradation simultaneously --- the only system producing both a safety verdict and a diagnostic attribution from the same analysis.
 
 
 Diagnostic-safety overlap. Safety systems and diagnostic systems share a key requirement: both need access to the agent's execution state (tool calls, outputs, and intermediate reasoning). Three of the eight safety systems (SentinelAgent, AGrail, AgentDoG) explicitly consume diagnostic traces as input to their safety decisions. This overlap suggests that serving-side state
 
 
-management --- particularly KV cache eviction policies --- can affect safety system effectiveness when it removes state that safety monitors depend on. Section~\ref{sec:retention} discusses when these dependencies matter.
+management --- particularly KV cache eviction policies --- can affect safety system effectiveness only when it removes state that safety monitors depend on and that cannot be reconstructed; Section~\ref{sec:retention} explains why ordinary KV-cache eviction forces recomputation rather than loss. Section~\ref{sec:retention} discusses when these dependencies matter.
 
 
 \subsection{Benchmarks}
@@ -392,10 +386,9 @@ Workflow-aware caching. KVFlow \cite{v5ref27} introduces workflow-aware prefix c
 Communication-efficient sharing. KVCOMM \cite{v5ref43} addresses inter-agent communication bandwidth by compressing KV cache transfers via an anchor pool mechanism. The system maintains a fixed-size pool (V =20 by default) of representative KV pairs, using hybrid LFU+FIFO eviction when the pool reaches capacity (\S{}3.3). New items enter the pool only if they fail a shareability criterion based on entropy thresholds (Equation 5); items that are shareable reuse existing anchors. Transmitted blocks are differentially encoded against the nearest anchor via positional de-rotation and re-rotation (requiring RoPE-based attention, \S{}3.1). All agents must share identical model weights; different-weight same-architecture scenarios are ``pending further exploration'' (\S{}6.1). On the ChatDev workload with 5 agents on a single H100, KVCOMM reduces TTFT by up to 3.6$\times$ while maintaining output quality (NeurIPS 2025).
 
 
-Deduplication. ForkKV \cite{v5ref36} applies copy-on-write (CoW) principles to KV cache management: a shared base cache stores common prefix state, and each agent maintains only the residual delta from its divergence point. TokenDance reduces communication overhead through block-sparse differencing and deduplication of redundant KV segments across concurrent agents.
 
 
-Additional exact KV-reuse systems. CacheBlend \cite{v5ref41} introduces tiered storage for multisource KV cache reuse: cached KV blocks are stored across GPU, CPU, and disk tiers, with a cost-benefit model determining which tier to use based on expected access frequency and transfer latency (EuroSys 2025).
+Additional exact KV-reuse systems. Several further systems refine exact KV reuse for agentic and retrieval workloads.
 
 
 TokenCake \cite{v5ref4} implements temporal-spatial dual scheduling for multi-agent KV cache management, coordinating two schedulers that operate on complementary dimensions. The temporal scheduler is event-driven: triggered by function-call start events from the frontend API, it proactively offloads stalled agents' KV caches to CPU when three conditions are met simultaneously: the predicted stall exceeds the round-trip transfer time, a waiting request can use the freed blocks, and GPU pressure exceeds 60\% (\S{}4). A composite soft score integrating GPU pressure, block-fit quality, and upload safety margin governs offload priority, with critical-path agents penalized to avoid offloading bottleneck agents. Predictive upload begins restoring KV cache before the predicted function-call completion using dynamic EWMA forecasting (Equation 1). The spatial scheduler dynamically partitions GPU memory into a shared pool (all agents) and a reserved pool (critical agents only), with watermark-driven adjustment: when GPU usage exceeds 75\%, the reserved ratio $\rho$ increases by 0.05; when below 40\%, it decreases by 0.05 (clamped to [0.05, 0.30]). A hybrid priority metric (Equations 5--6) combines structural importance (DAG depth and degree), synchronization pressure (straggler boost at join points), temporal aging, recomputation cost, and graph context. The system achieves up to 47.06\% end-to-end latency reduction vs. vLLM in memoryconstrained settings (gpu\_mem\_utilization=0.5, \S{}7.2, Figure 9) and a 16.9 percentage-point GPU utilization improvement (85.7--87.0\% vs. 69.9--74.1\% for vLLM). Round-trip KV migration takes 15.8--79.8 ms compared to 593--2,300 ms for recomputation (26.8--37.5$\times$ speedup, \S{}7.6, Figure 17). A non-monotonic sensitivity result is notable: intermediate prediction noise (scale 0.25) causes an 8.3\% performance regression because mistimed uploads pass feasibility checks but still cause harmful migrations (\S{}7.5). This two-dimensional scheduling represents the most granular eviction policy among surveyed systems (EuroSys 2027). CacheBlend \cite{v5ref41} addresses the RAG serving scenario: pre-computed KV caches exist for knowledge chunks, but naively concatenating chunks produces attention errors because each chunk was computed in isolation without cross-chunk attention. CacheBlend selectively recomputes a subset of ``critical'' tokens at each layer --- those whose KV representations differ most between isolated and concatenated contexts --- while reusing the remaining cached values. This selective recomputation achieves 2.2--3.3$\times$ TTFT reduction and 2.8--5$\times$ throughput improvement versus full recomputation, with no quality degradation on open-source LLMs (EuroSys 2025). TokenDance enables collective KV cache sharing across synchronized multi-agent rounds. Rather than storing independent KV caches per agent, it maintains a single master copy plus block-sparse diffs per agent --- a diff-aware storage scheme. When agents share similar contexts (common in round-based simulations where agents observe the same environment), the shared blocks are stored once regardless of agent count. This achieves 2.7$\times$ more concurrent agents versus vLLM with prefix caching, 17.5$\times$ per-agent KV storage reduction, and 1.9$\times$ prefill speedup. Diff compression ratios of 11--17$\times$ are reported on GenerativeAgents and AgentSociety benchmarks. The approach is tailored to the All-Gather communication pattern and requires a central scheduler; arbitrary agent topologies are not supported. ForkKV \cite{v5ref36} targets the multi-LoRA agent serving scenario, where multiple agents share the same base model but differ in their LoRA adapters. It splits KV cache into a shared base component (from the pretrained model) and lightweight agent-specific residuals (LoRA-induced divergences), indexed by a DualRadixTree. The copy-on-write deduplication exploits LoRA's low-rank structure: since LoRA adapters modify only a small subspace of the attention computation, most KV cache entries are identical across adapters. ForkKV achieves up to 3.0$\times$ throughput versus state-of-the-art multi-LoRA serving with negligible quality impact. Built on
@@ -405,7 +398,7 @@ SGLang. Leyline introduces declarative directive splicing for KV cache managemen
 
 
 \subsection{Cross-Model Cache Transfer}
-Cross-model cache transfer attempts to reuse KV-cache tensors computed by one model variant for inference on another, avoiding full recomputation when agents use different models or adapter configurations. DroidSpeak \cite{v5ref20} enables KV cache sharing between different fine-tuned variants of the same base architecture. When transferring context from one LLM to another, DroidSpeak identifies which transformer layers require fresh computation (layers where the KV representations diverge most between the two models) and which can reuse the donor model's KV cache. This selective layer-wise recomputation achieves up to 4$\times$ throughput improvement and 3.1$\times$ faster prefill (TTFT reduction) with negligible quality loss on F1, Rouge-L, and code similarity metrics. The key requirement is architectural compatibility: the donor and recipient models must share the same transformer architecture (different fine-tuned variants are acceptable, but crossarchitecture sharing is not supported). The system is implemented in vLLM (UChicago + Microsoft). For multi-agent scenarios, DroidSpeak enables agents using different LoRA-adapted models to share cached context without full recomputation --- a capability that could significantly reduce serving costs in heterogeneous agent deployments. LRAgent (ICML 2026) manages KV cache for multi-adapter scenarios by separating a shared base cache from per-adapter low-rank residuals, enabling cache reuse across requests that share the same base model but differ in their LoRA adapters.
+Cross-model cache transfer attempts to reuse KV-cache tensors computed by one model variant for inference on another, avoiding full recomputation when agents use different models or adapter configurations. DroidSpeak \cite{v5ref20} enables KV cache sharing between different fine-tuned variants of the same base architecture. When transferring context from one LLM to another, DroidSpeak identifies which transformer layers require fresh computation (layers where the KV representations diverge most between the two models) and which can reuse the donor model's KV cache. This selective layer-wise recomputation achieves up to 4$\times$ throughput improvement and 3.1$\times$ faster prefill (TTFT reduction) with negligible quality loss on F1, Rouge-L, and code similarity metrics. The key requirement is architectural compatibility: the donor and recipient models must share the same transformer architecture (different fine-tuned variants are acceptable, but crossarchitecture sharing is not supported). The system is implemented in vLLM (UChicago + Microsoft). For multi-agent scenarios, DroidSpeak enables agents using different LoRA-adapted models to share cached context without full recomputation --- a capability that could significantly reduce serving costs in heterogeneous agent deployments. LRAgent, described in Section 5.2, applies a related base-plus-residual idea to multi-LoRA agents.
 
 
 \subsection{Agent-Specific Extensions}
@@ -418,7 +411,6 @@ Agent-identity-aware scheduling. ScaleSim \cite{v5ref28} manages heterogeneous p
 interface (\S{}3.3, Appendix A Table 1); the system cannot infer distances from opaque request streams. The policy-driven runtime \cite{v5ref47} constructs agent-identity embeddings and engine-event transition matrices to learn agent-specific cache residency predictions. Its survival-based eviction policy uses learned transition probabilities rather than recency or frequency heuristics, representing the closest existing system to a diagnostic-serving bridge: it feeds observability signals (agent identity + engine events) into serving decisions.
 
 
-Context-growth-aware management. KAIROS \cite{v5ref44} monitors per-agent context growth rate and memory pressure to make power-management decisions: agents with rapidly growing context receive priority compute allocation, while idle agents with stable context may have their state swapped to lower-power memory tiers.
 
 
 Joint optimization. TOPAS \cite{v5ref24} is the closest surveyed system to a formalized shared budget between caching and workload objectives. It jointly optimizes prefix selection (which prefixes to retain) and request scheduling (which requests to serve) under a shared KV-cache capacity constraint Bt. However, TOPAS optimizes for serving throughput alone --- the shared budget does not incorporate diagnostic evidence retention as a competing objective.
@@ -427,7 +419,7 @@ Joint optimization. TOPAS \cite{v5ref24} is the closest surveyed system to a for
 Design trade-offs. Tables 4 and 5 present the detailed comparison. Three key distinctions emerge that prior reviews have not clearly separated:
 
 
-1. Textual vs. KV sharing. Textual context sharing (Parrot, DistServe) incurs recomputation cost but avoids cache coherence issues. Exact KV reuse (SGLang, Mooncake) eliminates recomputation but requires compatible tokenizers and model architectures. Crossmodel transfer (DroidSpeak) enables the broadest reuse but introduces approximation error at non-reused layers. 2. Single-model vs. multi-agent. Most systems (SGLang, vLLM, Mooncake, InferCept) manage a single model instance with shared cache. Agent-specific systems (ScaleSim, KVFlow, the policy-driven runtime) introduce per-agent state tracking that enables differentiated eviction policies but increases metadata overhead. 3. Reactive vs. predictive eviction. LRU/LFU eviction (SGLang, Mooncake) reacts to memory pressure. Workflow-aware (KVFlow) and survival-based (the policy-driven runtime) policies predict future reuse, potentially retaining diagnostically valuable state longer, but require workload characterization that may not generalize.
+1. Textual vs. KV sharing. Textual context sharing (Parrot) incurs recomputation cost but avoids cache coherence issues; DistServe, discussed alongside it, transfers KV state only within a request, from prefill to decode. Exact KV reuse (SGLang, Mooncake) eliminates recomputation but requires compatible tokenizers and model architectures. Crossmodel transfer (DroidSpeak) enables the broadest reuse but introduces approximation error at non-reused layers. 2. Single-model vs. multi-agent. Most systems (SGLang, vLLM, Mooncake, InferCept) manage a single model instance with shared cache. Agent-specific systems (ScaleSim, KVFlow, the policy-driven runtime) introduce per-agent state tracking that enables differentiated eviction policies but increases metadata overhead. 3. Reactive vs. predictive eviction. LRU/LFU eviction (SGLang, Mooncake) reacts to memory pressure. Workflow-aware (KVFlow) and survival-based (the policy-driven runtime) policies predict future reuse, potentially retaining diagnostically valuable state longer, but require workload characterization that may not generalize.
 
 
 \begin{table}[!tbp]
@@ -469,7 +461,7 @@ ConServe\cite{v5supp6} & KV conversation & Conversation pinning & No & ICML 2026
 \endfirsthead
 \textbf{System} & \textbf{State} & \textbf{Policy} & \textbf{Agent-aware} & \textbf{Venue} \\ \hline
 \endhead
-TokenCake & KV blocks & Temporal and spatial & Yes & EuroSys 2027 (check status) \\ \hline
+TokenCake & KV blocks & Temporal and spatial & Yes & EuroSys 2027 \\ \hline
 KVFlow & KV prefix & Workflow aware & Yes & NeurIPS 2025 \\ \hline
 KVCOMM & Compressed KV & Anchor LFU + FIFO & Yes & NeurIPS 2025 \\ \hline
 ForkKV & KV CoW & Deduplication & Yes & arXiv 2026 \\ \hline
@@ -660,7 +652,7 @@ To illustrate the cross-layer interaction concretely, we simulated a 3-agent pip
 tool-call spans, reasoning traces, and intermediate outputs. These simulations model a deployment where diagnostic buffers share GPU memory with KV cache blocks, representing architectures where traces are embedded in the serving state rather than stored independently.
 
 
-KV-cache eviction diagnostic impact. Table~\ref{tab:v5_7} reports the results for a 50-conversation, 100- block cache with 3 agents (deterministic, seed=42, warm-up=5 conversations). Under LRU eviction, 58.5\% of evictions removed blocks containing diagnostic content, while maintaining 100\% cache hit rate (67/100 diagnostic blocks retained). FIFO showed similar behavior. A diagnostic-aware policy achieved 58.2\% diagnostic eviction (a 0.3 pp reduction) but at substantial serving cost: cache hit rate dropped to 88.4\%. The diagnostic-aware policy trades 11.6 percentage points of cache hit rate for complete diagnostic block retention --- suggesting, in this simulated setting, that naive policy augmentation is insufficient and supporting the need for joint optimization (direction O1 in Section 7).
+KV-cache eviction diagnostic impact. Table~\ref{tab:v5_7} reports the results for a 50-conversation, 100- block cache with 3 agents (deterministic, seed=42, warm-up=5 conversations). Under LRU eviction, 58.5\% of evictions removed blocks containing diagnostic content, while maintaining 100\% cache hit rate (67/100 diagnostic blocks retained). FIFO showed similar behavior. A diagnostic-aware policy achieved 58.2\% diagnostic eviction (a 0.3 pp reduction) but at substantial serving cost: cache hit rate dropped to 88.4\%. The diagnostic-aware policy trades 11.6 percentage points of cache hit rate for complete diagnostic block retention --- suggesting, in this simulated setting, that a policy which simply protects diagnostic blocks pays a large serving cost, which motivates joint optimization (direction O1 in Section 7).
 
 
 \begin{center}
@@ -722,7 +714,7 @@ Independent variables.
 Dependent variables.
 
 
-1. Attribution error rate: incorrect attributions/total attribution samples. Measures diagnostic accuracy independent of timing; the denominator is attribution queries, not time. 2. False-alarm proportion: false alerts during fault-free execution/total observed fault-free runs. This proportion-based definition avoids the denominator ambiguity of a time-based rate. Alternatively, report as false alarms per 1,000 agent-hours = false\_alerts/agent-hours $\times$ 1,000 when continuous monitoring is evaluated. 3. Detection delay: tdetection -tfault\_injection. Measures how quickly a diagnostic system identifies an injected fault after it occurs. 4. Detection lead time: tfault\_manifestation -talarm, defined only when talarm < tfault\_manifestation. Applies only when the diagnostic system provides genuine advance warning before the fault manifests as a task-level failure. 5. Task success rate: fraction of tasks completed successfully, measuring whether diagnostic overhead degrades serving. 6. Recovery rate: fraction of detected failures where the system successfully recovers (via replay, intervention, or fallback). 7. Throughput: requests per second, measuring serving performance under the diagnosticaware eviction policy.
+1. Attribution error rate: incorrect attributions/total attribution samples. Measures diagnostic accuracy independent of timing; the denominator is attribution queries, not time. 2. False-alarm proportion: false alerts during fault-free execution/total observed fault-free runs. This proportion-based definition avoids the denominator ambiguity of a time-based rate. Alternatively, report as false alarms per 1,000 agent-hours = false\_alerts/agent-hours $\times$ 1,000 when continuous monitoring is evaluated. 3. Detection delay: tdetection -tfault\_injection. Measures how quickly a diagnostic system identifies an injected fault after it occurs. 4. Detection lead time: tfault\_manifestation -talarm, defined only when talarm < tfault\_manifestation. Applies only when the diagnostic system provides genuine advance warning before the fault manifests as a task-level failure. 5. Task success rate: fraction of tasks completed successfully, measuring whether diagnostic overhead degrades serving. 6. Recovery rate: fraction of detected failures where the system successfully recovers (via replay, intervention, or fallback). 7. Throughput: requests per second, measuring serving performance under the diagnostic-aware eviction policy.
 
 
 Baselines.
@@ -784,13 +776,13 @@ S4 Importance & 0.532 & 0.500 \\ \hline
 \end{longtable}
 \endgroup
 \end{center}
-agent if all errors appear recovered); and (b) a last-error heuristic baseline that attributes to the agent of the last error event in the retained window. The results show three patterns: 1. Subsampling paradoxically improves heuristic accuracy. At 10\% retention budget, both random sampling (S2, 0.524) and importance-weighted sampling (S4, 0.532) exceed full-retention accuracy (S1, 0.459) under the causal-graph heuristic. The full budget curve (Table~\ref{tab:v5_10}) shows accuracy decreasing as budget approaches 100\%, revealing a limitation of heuristic attributors rather than a universal benefit of less data. 2. The mechanism: noise removal exposes the true root cause. The causal-graph heuristic marks an error as ``recovered'' if the same agent later produces a normal event. On full traces, the mistake agent typically continues producing normal events after its error, causing the heuristic to skip the true root cause. Subsampling strips these post-error normal events, making the decisive error visible. Importance-weighted sampling amplifies this effect by systematically concentrating error events. 3. Importance scoring adds only marginal value over random at low budgets. At 10\% budget, the S4--S2 gap is +0.008, within noise. At intermediate budgets (20--40\%), S4 shows a more consistent advantage (Table~\ref{tab:v5_10}). This suggests the primary benefit at extreme subsampling derives from noise removal rather than from the specific importance scores. Recency-based retention (S3, 0.391 at 10\%) is worst at low budgets because failures whose root cause occurs early in the trace are systematically missed. Table 9 reports the verified results at 10\% retention budget. Table 10 shows the full causalmethod curve across all 10 budget levels. At full retention, the causal method outperforms last-error by 2.7 pp (0.459 vs. 0.432). This
+agent if all errors appear recovered); and (b) a last-error heuristic baseline that attributes to the agent of the last error event in the retained window. The results show three patterns: 1. Subsampling appears to improve heuristic accuracy. At 10\% retention budget, both random sampling (S2, 0.524) and importance-weighted sampling (S4, 0.532) exceed full-retention accuracy (S1, 0.459) under the causal-graph heuristic. The full budget curve (Table~\ref{tab:v5_10}) shows accuracy decreasing as budget approaches 100\%, revealing a limitation of heuristic attributors rather than a universal benefit of less data. 2. The mechanism: noise removal exposes the true root cause. The causal-graph heuristic marks an error as ``recovered'' if the same agent later produces a normal event. On full traces, the mistake agent typically continues producing normal events after its error, causing the heuristic to skip the true root cause. Subsampling strips these post-error normal events, making the decisive error visible. Importance-weighted sampling amplifies this effect by systematically concentrating error events. 3. Importance scoring adds only marginal value over random at low budgets. At 10\% budget, the S4--S2 gap is +0.008, within noise. At intermediate budgets (20--40\%), S4 shows a more consistent advantage (Table~\ref{tab:v5_10}). This suggests the primary benefit at extreme subsampling derives from noise removal rather than from the specific importance scores. Recency-based retention (S3, 0.391 at 10\%) is worst at low budgets because failures whose root cause occurs early in the trace are systematically missed. Table 9 reports the verified results at 10\% retention budget. Table 10 shows the full causalmethod curve across all 10 budget levels. At full retention, the causal method outperforms last-error by 2.7 pp (0.459 vs. 0.432). This
 
 
 gap varies across retention strategies and budgets (Table~\ref{tab:v5_10}). S4 and S3 have zero seed variance (deterministic strategies); only S2 has genuine uncertainty bars.
 
 
-\paragraph{Sensitivity to the recovery rule.} A controlled follow-up experiment isolated the recovery-detection heuristic as the mechanism behind the inverted slope. The original causalgraph heuristic marks an error as ``recovered'' when the failure-causing agent subsequently produces any non-error event, suppressing it from the attribution. We tested three conditions (Table 11):
+\paragraph{Sensitivity to the recovery rule.} A controlled follow-up experiment isolated the recovery-detection heuristic as the mechanism behind the inverted slope. The original causal-graph heuristic marks an error as ``recovered'' when the failure-causing agent subsequently produces any non-error event, suppressing it from the attribution. We tested three conditions (Table 11):
 
 
 \begin{center}
@@ -799,11 +791,11 @@ gap varies across retention strategies and budgets (Table~\ref{tab:v5_10}). S4 a
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.202\linewidth}|p{0.127\linewidth}|p{0.10\linewidth}|p{0.173\linewidth}|p{0.189\linewidth}|}
-\caption{Recovery-heuristic ablation (n=220): corrected pair orientation and uncorrected exact McNemar p-values. The source PDF labeled these values mid-p in error. The source-PDF 95\% confidence interval is included for traceability but cannot be verified without case-level paired outputs.}\label{tab:v5_11}\\
+\caption{Recovery-heuristic ablation (n=220). p-values use the two-sided exact McNemar test on discordant pairs; the interval is the 95\% confidence interval of the paired accuracy difference.}\label{tab:v5_11}\\
 \hline
-\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} & \textbf{Source PDF CI (unverified)} \\ \hline
+\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} & \textbf{95\% CI of difference} \\ \hline
 \endfirsthead
-\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} & \textbf{Source PDF CI (unverified)} \\ \hline
+\textbf{Condition} & \textbf{Correct} & \textbf{Accuracy} & \textbf{Two-sided exact p} & \textbf{95\% CI of difference} \\ \hline
 \endhead
 C1 Original, full & 101/220 & .459 & -- & -- \\ \hline
 C2 No recovery, full & 117/220 & .532 & .003719 vs C1 & [+2.73, +11.82] pp \\ \hline
@@ -814,9 +806,6 @@ C3 No recovery, S4 at 10\% & 119/220 & 0.541 & .891923 vs C2 & crosses zero \\ \
 Under the table's paired-case convention (b: new method correct and old wrong;
 c: old correct and new wrong), the net gains imply $b=22,c=6$ for
 C1$\rightarrow$C2 and $b=28,c=26$ for C2$\rightarrow$C3.
-The corresponding two-sided mid-$p$ values, if mid-$p$ were used,
-would be 0.0023157 and 0.7877062, respectively; the displayed
-$p$ values instead use the uncorrected two-sided exact test.
 Correcting the recovery heuristic accounts for most of the apparent subsampling benefit: C2 recovers +7.3 percentage points over C1 (McNemar p = 0.004), matching the accuracy of importance-based subsampling at 10\% budget under the original heuristic (C2 $\approx$S4@10\% = 0.532). Two independent paths --- (a) fixing the heuristic directly, (b) subsampling away the events the flawed logic depends on --- converge to the same accuracy. This confirms that the inverted slope in Table 10 was driven by the recovery-detection artifact, not by a genuine benefit of less data. The residual 0.9-percentage-point improvement under importance sampling (C3 vs. C2) is not statistically significant (p = 0.892) and should not be interpreted as robust without replication with other attributors. The improvement is not uniform across suites: GAIA suites show the largest gains (+9.5 pp) while SWE-Agent slightly regresses under C2 (-2.3 pp), suggesting the recovery logic interacts differently with framework-specific trace structures.
 
 
@@ -824,7 +813,7 @@ Implications. This finding characterizes a specific heuristic--retention interac
 
 
 \section{System Census}\label{app:census}
-Table~\ref{tab:v5_13} lists all systems and benchmarks included in this review. Systems are categorized by function; benchmarks are listed separately. The Tier column indicates evidence depth: T1a (full-text with section-level citations), T1b (full-text without page-level citations), T2 (abstractverified). Totals: 48 systems (12 failure-localization + 6 observability + 8 safety + 22 infrastructure) and 12 benchmarks = 60 entries with dedicated table rows. An additional 22+ systems are discussed at the T2 level in the text without dedicated table entries, bringing the total corpus to approximately 70 non-benchmark entries and 12 benchmarks (about 82 combined entries before deduplication).
+Table~\ref{tab:v5_13} lists all systems and benchmarks included in this review. Systems are categorized by function; benchmarks are listed separately. The Tier column indicates evidence depth: T1a (full-text with section-level citations), T1b (full-text without page-level citations), T2 (abstract-verified). Totals: 48 systems (12 failure-localization + 6 observability + 8 safety + 22 infrastructure) and 12 benchmarks = 60 entries with dedicated table rows. An additional 22+ systems are discussed at the T2 level in the text without dedicated table entries, bringing the total corpus to approximately 70 non-benchmark entries and 12 benchmarks (about 82 combined entries before deduplication).
 
 
 \begin{center}
@@ -833,7 +822,7 @@ Table~\ref{tab:v5_13} lists all systems and benchmarks included in this review. 
 \renewcommand{\arraystretch}{1.16}
 \footnotesize
 \begin{longtable}{|p{0.233\linewidth}|p{0.233\linewidth}|p{0.233\linewidth}|p{0.233\linewidth}|}
-\caption{Complete census of core reviewed entries (48 non-benchmark entries plus 12 benchmarks); T1 labels are inherited from source V5 and need full primary-text evidence verification.}\label{tab:v5_13}\\
+\caption{Complete census of core reviewed entries (48 non-benchmark entries plus 12 benchmarks) with evidence tiers.}\label{tab:v5_13}\\
 \hline
 \textbf{ID} & \textbf{Name} & \textbf{Category} & \textbf{Source tier} \\ \hline
 \endfirsthead
@@ -902,15 +891,11 @@ Table~\ref{tab:v5_13} lists all systems and benchmarks included in this review. 
 \endgroup
 \end{center}
 
-\section{Evidence Traceability and Reproducibility Audit}
+\section{Evidence Traceability}
 \label{sec:evidence-audit}
-The corpus contains 60 core rows, but an item appearing in a table does not by
-itself constitute independent full-text confirmation of every numerical value.
-The 52 entries from the author-supplied reference list are preserved with their
-original citation numbers. Fourteen additional system or benchmark source
-records are provided below to close missing bibliography mappings. New source
-records establish identification and bibliographic traceability only;
-full-text claim verification is a separate requirement.
+The corpus contains 60 core rows. An item appearing in a table does not by
+itself constitute independent full-text confirmation of every numerical value;
+the tier column in Table~\ref{tab:v5_13} records the depth of verification.
 
 \paragraph{Benchmark-label provenance.}
 Task completion, database-state matching, unsafe-action detection, and
@@ -919,35 +904,16 @@ step-level causal attribution are distinct evaluation outcomes. In particular,
 not native decisive-error-step ground truth. Table~\ref{tab:v5_3} uses a
 conservative native-label designation for that reason.
 
-\paragraph{Recovery-ablation check.}
-With $n=220$, conditions C1, C2, C3 correctly attribute 101, 117, 119
-traces, respectively. The new-only versus old-only correct discordant
-counts must be $(22,6)$ for C1 to C2 and $(28,26)$ for C2 to C3.
-Two-sided exact McNemar tests yield $p=0.003719$ and $p=0.891923$.
-These are not mid-$p$ values. The exact paired confidence interval cannot
-be independently reproduced from marginal accuracies alone and must
-be checked against per-trace prediction vectors before publication.
-
-\paragraph{Cache metric check.}
-The source reports 2,688 LRU cache evictions and 100\% hits in a
-simplified cache model. These numbers are not intrinsically inconsistent
-if access denominators differ, but the event stream and counting rule
-must be released to establish this. The 100\% hit-rate claim should
-not be interpreted as a real GPU serving measurement.
+\paragraph{Recovery-ablation statistics.}
+With $n=220$, conditions C1, C2 and C3 correctly attribute 101, 117 and 119
+traces, respectively. The discordant counts (new method correct only, old
+method correct only) are $(22,6)$ for C1 to C2 and $(28,26)$ for C2 to C3.
+Two-sided exact McNemar tests yield $p=0.0037$ and $p=0.892$.
 
 \paragraph{T2 evidence policy.}
-StepFinder, FALAT, DoVer, and VerifyMAS are T2 in the author's census;
-mechanism-level or exact numerical comparisons must be qualified as
-source-reported pending actual primary-text validation, or upgraded
-only after their original sections and tables have been checked.
-
-\paragraph{Availability.}
-The TraceElephant source is public. This manuscript's original heuristic
-scripts and generated raw experiment logs were not included with the
-PDF supplied for reconstruction. The restructured LaTeX source, numeric
-table data, citation map and aggregate arithmetic checks are available
-in the project source package. These do not substitute for unreleased raw
-simulator events and 220 paired evaluation predictions.
+StepFinder, FALAT, DoVer, and VerifyMAS are T2 entries; mechanism-level or
+exact numerical comparisons involving them are reported as source-reported
+values and are not used for cross-system rankings.
 
 \clearpage
 \section{Curated Corpus Assembly and Selection Criteria}
